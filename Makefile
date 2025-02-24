@@ -1,6 +1,12 @@
 .ONESHELL:
 SHELL=/bin/bash
-.PHONY: build
+.PHONY: all clean build dist
+
+# Variables
+JAVA_HOME ?= $(shell which java)
+GRADLE = ./NoiseModelling/wps_scripts/gradlew
+MVN = mvn
+DIST_DIR = dist
 
 config ?= .env
 
@@ -9,7 +15,7 @@ export $(shell sed 's/=.*//' $(config))
 
 GIT_COMMIT := $(shell git rev-parse --short HEAD)
 
-all: lock build-image run-local
+all: build dist lock build-image run-local
 
 lock:
 	@echo 'Creating poetry lockfile'
@@ -36,3 +42,29 @@ build-docs:
 clean-docs:
 	jupyter-book clean docs
 
+# Clean build artifacts
+clean:
+	cd NoiseModelling && $(MVN) clean
+	cd NoiseModelling/wps_scripts && $(GRADLE) clean
+	rm -rf $(DIST_DIR)
+
+# Build Java libraries and Groovy scripts
+build:
+	cd NoiseModelling && $(MVN) install -DskipTests
+	cd NoiseModelling/wps_scripts && $(GRADLE) build -x test
+
+# Create distribution
+dist: build
+	mkdir -p $(DIST_DIR)
+	cd NoiseModelling/wps_scripts && $(GRADLE) assembleDist
+	cd NoiseModelling/wps_scripts/build/distributions && unzip -o scriptrunner.zip
+	cp -r NoiseModelling/wps_scripts/build/distributions/scriptrunner/* $(DIST_DIR)
+
+# Check Java version
+check-java:
+	@echo "Checking Java version..."
+	@java -version
+	@if [ $$(java -version 2>&1 | head -n 1 | cut -d'"' -f2 | cut -d'.' -f1) -lt 11 ]; then \
+		echo "Error: Java 11 or higher is required"; \
+		exit 1; \
+	fi
