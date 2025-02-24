@@ -2,3 +2,4 @@ dependencies:
   - python=3.12
   - poetry=2.1.1
   - copier=9.5.0
+  - copier-templates-extensions=0.3.0
