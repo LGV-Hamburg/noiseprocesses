@@ -1,0 +1,3 @@
+[submodule "NoiseModelling"]
+	path = NoiseModelling
+	url = https://github.com/Universite-Gustave-Eiffel/NoiseModelling.git
