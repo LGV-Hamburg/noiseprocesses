@@ -4,9 +4,10 @@ SHELL=/bin/bash
 
 # Variables
 JAVA_HOME ?= $(shell which java)
-GRADLE = ./NoiseModelling/wps_scripts/gradlew
+GRADLE = ./gradlew
 MVN = mvn
 DIST_DIR = dist
+WPS_SCRIPTS = wps_scripts
 
 config ?= .env
 
@@ -45,20 +46,21 @@ clean-docs:
 # Clean build artifacts
 clean:
 	cd NoiseModelling && $(MVN) clean
-	cd NoiseModelling/wps_scripts && $(GRADLE) clean
+	cd $(WPS_SCRIPTS) && $(GRADLE) clean
 	rm -rf $(DIST_DIR)
 
 # Build Java libraries and Groovy scripts
 build:
 	cd NoiseModelling && $(MVN) install -DskipTests
-	cd NoiseModelling/wps_scripts && $(GRADLE) build -x test
+	cd $(WPS_SCRIPTS) && $(GRADLE) build -x test
 
 # Create distribution
 dist: build
 	mkdir -p $(DIST_DIR)
-	cd NoiseModelling/wps_scripts && $(GRADLE) assembleDist
-	cd NoiseModelling/wps_scripts/build/distributions && unzip -o scriptrunner.zip
-	cp -r NoiseModelling/wps_scripts/build/distributions/scriptrunner/* $(DIST_DIR)
+	cd NoiseModelling/$(WPS_SCRIPTS) && $(GRADLE) assembleDist
+	cd build/distributions && unzip -o scriptrunner.zip
+	cp -r scriptrunner/* ../../../../$(DIST_DIR)
+	rm -r NoiseModelling/wps_scripts/build
 
 # Check Java version
 check-java:
