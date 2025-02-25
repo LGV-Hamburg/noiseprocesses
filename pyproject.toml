@@ -24,7 +24,11 @@ classifiers = [
     "Topic :: Utilities",
     "Typing :: Typed",
 ]
-dependencies = ["fastprocesses @ git+https://github.com/StefanSchuhart/fastProcesses#v0.4.0"]
+dependencies = [
+    "fastprocesses @ git+https://github.com/StefanSchuhart/fastProcesses#v0.4.0",
+    "cython (>=3.0.12,<4.0.0)",
+    "pyjnius (>=1.6.1,<2.0.0)"
+]
 
 [project.urls]
 Homepage = "https://bitbucket.org/geowerkstatt-hamburg/noiseProcesses"
