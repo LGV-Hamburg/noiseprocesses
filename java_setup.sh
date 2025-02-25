@@ -29,5 +29,8 @@ if [ -z "$JAVA_HOME" ]; then
     echo "export PATH=\$JAVA_HOME/bin:\$PATH" >> ~/.bashrc
 fi
 
-# Make the script executable after creating it:
-chmod +x setup.sh
+# install jniues depdenencies
+sudo apt-get install -y \
+    python3-dev \
+    build-essential \
+    openjdk-11-jdk
