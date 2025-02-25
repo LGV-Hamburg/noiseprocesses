@@ -6,10 +6,21 @@
     "compounds": [
         {
             "name": "api+worker",
-            "configurations": ["Api", "Worker"]
+            "configurations": [
+                "Api",
+                "Worker"
+            ]
         }
     ],
     "configurations": [
+        {
+            "name": "Py: Current File",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${file}",
+            "console": "integratedTerminal",
+            "justMyCode": false
+        },
         {
             "name": "Api",
             "type": "debugpy",
@@ -18,13 +29,17 @@
             "args": [
                 "examples.run_example:app",
                 "--reload",
-                "--host", "0.0.0.0",
-                "--port", "8000"
+                "--host",
+                "0.0.0.0",
+                "--port",
+                "8000"
             ],
             "jinja": true,
             "envFile": "${workspaceFolder}/.env",
             "justMyCode": false,
-            "autoReload": {"enable": true}
+            "autoReload": {
+                "enable": true
+            }
         },
         {
             "name": "Worker",
@@ -45,7 +60,9 @@
             "justMyCode": false,
             "preLaunchTask": "start-redis-container",
             "postDebugTask": "stop-redis-container",
-            "autoReload": {"enable": true}
+            "autoReload": {
+                "enable": true
+            }
         }
     ]
 }
