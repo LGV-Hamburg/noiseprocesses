@@ -1,0 +1,29 @@
+{
+    "type": "FeatureCollection",
+    "features": [
+      {
+        "type": "Feature",
+        "properties": {
+          "height": 12.5,
+          "building_id": "B001",
+          "building_type": "residential"
+        },
+        "geometry": {
+          "type": "Polygon",
+          "coordinates": [[[10,10], [10,20], [20,20], [20,10], [10,10]]]
+        }
+      },
+      {
+        "type": "Feature",
+        "properties": {
+          "height": 25.0,
+          "building_id": "B002",
+          "building_type": "commercial"
+        },
+        "geometry": {
+          "type": "Polygon",
+          "coordinates": [[[30,30], [30,40], [40,40], [40,30], [30,30]]]
+        }
+      }
+    ]
+  }
