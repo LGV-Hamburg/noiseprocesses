@@ -1,5 +1,5 @@
 from pathlib import Path
-from sqlalchemy import ClauseElement, create_engine, text
+from sqlalchemy import ClauseElement, Column, MetaData, String, Table, create_engine, func, select, text
 from typing import Optional, Dict, Any
 from contextlib import contextmanager
 from .java_bridge import JavaBridge
@@ -11,27 +11,71 @@ class NoiseDatabase:
         self.db_file = db_file
         self.java_bridge = JavaBridge.get_instance()
         self.connection = self._init_java_connection()
+        self.metadata = MetaData()
     
     def _init_java_connection(self):
-        """Initialize Java/H2GIS connection for spatial functions."""
-        from jnius import autoclass
-        
-        DriverManager = autoclass('java.sql.DriverManager')
-        H2GISFunctions = autoclass('org.h2gis.functions.factory.H2GISFunctions')
-        Properties = autoclass('java.util.Properties')
+        """Initialize Java/H2GIS connection for spatial functions."""  
         
         db_path = Path(self.db_file).absolute()
         jdbc_url = f"jdbc:h2:{db_path};AUTO_SERVER=TRUE"
         
-        props = Properties()
+        props = self.java_bridge.Properties()
         props.setProperty("user", "sa")
         props.setProperty("password", "")
         
         # Create and initialize H2GIS connection
-        conn = DriverManager.getConnection(jdbc_url, props)
-        H2GISFunctions.load(conn)
-        return self.java_bridge.ConnectionWrapper(conn)
+        conn = self.java_bridge.DriverManager.getConnection(jdbc_url, props)
+        wrapped_conn = self.java_bridge.ConnectionWrapper(conn)
+        
+        # Important: Initialize H2GIS spatial functions AND metadata tables
+        self.java_bridge.H2GISFunctions.load(conn)
+
+        # Use SQL to ensure complete H2GIS initialization
+        wrapped_conn.createStatement().execute("""
+            CREATE ALIAS IF NOT EXISTS H2GIS_SPATIAL FOR "org.h2gis.functions.factory.H2GISFunctions.load";
+            CALL H2GIS_SPATIAL();
+        """)
+
+        return wrapped_conn
     
+    def check_pk_column(self, table_name: str) -> tuple[bool, bool]:
+        """Check if table has PK column and if it's a primary key.
+        
+        Args:
+            table_name (str): Name of the table to check
+            
+        Returns:
+            tuple[bool, bool]: (has_pk_column, has_pk_constraint)
+        """
+        statement = self.connection.createStatement()
+        try:
+            # Check for PK column existence
+            result = statement.executeQuery(f"SELECT * FROM {table_name}")
+            meta = result.getMetaData()
+            pk_field_index = self.java_bridge.JDBCUtilities.getFieldIndex(meta, "PK")
+            
+            # Check for primary key constraint
+            table_location = self.java_bridge.TableLocation.parse(table_name)
+            pk_index = self.java_bridge.JDBCUtilities.getIntegerPrimaryKey(
+                self.connection, 
+                table_location
+            )
+            
+            return pk_field_index > 0, pk_index > 0
+            
+        finally:
+            statement.close()
+
+    def add_primary_key(self, table_name: str) -> None:
+        """Add primary key to table using SQLAlchemy."""
+        statements = [
+            text(f"ALTER TABLE {table_name} ALTER COLUMN PK INT NOT NULL"),
+            text(f"ALTER TABLE {table_name} ADD PRIMARY KEY (PK)")
+        ]
+        for stmt in statements:
+            self.execute(stmt)
+
+
     def fetch_one(self) -> tuple:
         """Fetch one row from the last executed query."""
         statement = self.connection.createStatement()
@@ -99,29 +143,72 @@ class NoiseDatabase:
             CALL SHPREAD('{file_path}', '{table_name}');
         """)
     
-    def import_geojson(self, file_path: str, table_name: str):
-        """Import GeoJSON file into database.
+    def import_geojson(self, file_path: str, table_name: str, srid: int = 4326) -> None:
+        """Import GeoJSON file into database with proper spatial indexing and SRID handling.
         
         Args:
             file_path (str): Path to the GeoJSON file
             table_name (str): Name of the table to create
+            srid (int, optional): Spatial reference identifier. Defaults to 4326 (WGS84).
         """
-        from jnius import autoclass
         
-        # Get required Java classes
-        GeoJsonDriverFunction = autoclass('org.h2gis.functions.io.geojson.GeoJsonDriverFunction')
-        EmptyProgressVisitor = autoclass('org.h2gis.api.EmptyProgressVisitor')
-        File = autoclass('java.io.File')
+        # Get required Java classes through JavaBridge
+        EmptyProgressVisitor = self.java_bridge.EmptyProgressVisitor
+        TableLocation = self.java_bridge.TableLocation
+        
+        
+        # Convert table name to uppercase to match Groovy behavior
+        table_name = table_name.upper()
         
         # Drop table if exists
-        self.execute(f"DROP TABLE IF EXISTS {table_name}")
+        self.drop_table(table_name)
         
         # Create Java File object from path
-        file_obj = File(str(Path(file_path).absolute()))
+        file_obj = self.java_bridge.File(str(Path(file_path).absolute()))
         
-        # Import GeoJSON
-        driver = GeoJsonDriverFunction()
+        # Import GeoJSON using H2GIS driver
+        driver = self.java_bridge.GeoJsonDriverFunction()
+
+        # # Ensure spatial metadata tables exist
+        self.execute("CREATE ALIAS IF NOT EXISTS H2GIS_SPATIAL FOR \"org.h2gis.functions.factory.H2GISFunctions.load\";")
+        self.execute("CALL H2GIS_SPATIAL();")
+
         driver.importFile(self.connection, table_name, file_obj, EmptyProgressVisitor())
+        
+        table_location = TableLocation.parse(table_name, self.java_bridge.DBUtils.getDBType(self.connection))
+        # Get spatial field names
+        spatial_fields = [
+            str(field) for field in self.java_bridge.GeometryTableUtilities.getGeometryColumnNames(
+                self.connection, 
+                table_location
+            )
+        ]
+        if not spatial_fields:
+            # logger.warn("The table " + tableName + " does not contain a geometry field.")
+            print("Warning")
+            return
+        
+        # Create spatial index
+        self.execute(
+            f"CREATE SPATIAL INDEX IF NOT EXISTS {table_name}_INDEX ON {table_name}(the_geom)"
+        )
+        
+        # Check and set SRID
+        table_srid = self.java_bridge.GeometryTableUtilities.getSRID(
+            self.connection, TableLocation.parse(table_name)
+        )
+        
+        if table_srid == 0 and spatial_fields:
+            # Update SRID if not set
+            self.execute(
+                f"SELECT UpdateGeometrySRID('{table_name}', '{spatial_fields[0]}', {srid})"
+            )
+        
+        # Check for PK column and set primary key if needed
+        has_pk_column, has_pk_constraint = self.check_pk_column(table_name)
+        
+        if has_pk_column and not has_pk_constraint:
+            self.add_primary_key(table_name)
 
     def cleanup(self):
         """Close database connection."""
