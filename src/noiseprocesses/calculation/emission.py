@@ -2,7 +2,7 @@ from abc import ABC, abstractmethod
 from typing import Dict, Optional, List
 from dataclasses import dataclass
 from sqlalchemy import Table, Column, MetaData
-from ..core.database import NoiseDatabase
+from noiseprocesses.core.database import NoiseDatabase
 
 @dataclass
 class EmissionConfig:
