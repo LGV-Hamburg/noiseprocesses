@@ -1,11 +1,24 @@
 {
     "type": "FeatureCollection",
+    "crs": { "type": "name", "properties": { "name": "urn:ogc:def:crs:EPSG::2154" } },
     "features": [
         {
             "type": "Feature",
             "properties": {
                 "PK": "R001",
-                "name": "Main Street"
+                "name": "Main Street",
+                "LV_D": 500.0,
+                "MV_D": 50.0,
+                "HGV_D": 20.0,
+                "WAV_D": 10.0,
+                "WBV_D": 5.0,
+                "LV_SPD_D": 50.0,
+                "MV_SPD_D": 45.0,
+                "HGV_SPD_D": 40.0,
+                "WAV_SPD_D": 45.0,
+                "WBV_SPD_D": 50.0,
+                "PVMT": "NL08",
+                "TEMP_D": 20.0
             },
             "geometry": {
                 "type": "LineString",
@@ -19,7 +32,19 @@
             "type": "Feature",
             "properties": {
                 "PK": "R002",
-                "name": "Side Street"
+                "name": "Side Street",
+                "LV_D": 200.0,
+                "MV_D": 10.0,
+                "HGV_D": 5.0,
+                "WAV_D": 10.0,
+                "WBV_D": 5.0,
+                "LV_SPD_D": 50.0,
+                "MV_SPD_D": 45.0,
+                "HGV_SPD_D": 40.0,
+                "WAV_SPD_D": 45.0,
+                "WBV_SPD_D": 50.0,
+                "PVMT": "NL08",
+                "TEMP_D": 20.0
             },
             "geometry": {
                 "type": "LineString",
