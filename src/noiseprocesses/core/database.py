@@ -1,41 +1,36 @@
 from pathlib import Path
+from sqlalchemy import ClauseElement, create_engine, text
 from typing import Optional, Dict, Any
 from contextlib import contextmanager
 from .java_bridge import JavaBridge
 
 class NoiseDatabase:
     """Manages H2GIS database connections and operations for NoiseModelling."""
-    
+
     def __init__(self, db_file: str = "noise_calc"):
         self.db_file = db_file
-        self.connection = None
         self.java_bridge = JavaBridge.get_instance()
-        self._init_db()
+        self.connection = self._init_java_connection()
     
-    def _init_db(self):
-        """Initialize H2GIS database connection using JNI."""
+    def _init_java_connection(self):
+        """Initialize Java/H2GIS connection for spatial functions."""
         from jnius import autoclass
         
-        # Get required Java classes
         DriverManager = autoclass('java.sql.DriverManager')
         H2GISFunctions = autoclass('org.h2gis.functions.factory.H2GISFunctions')
         Properties = autoclass('java.util.Properties')
         
-        # Setup connection properties  
         db_path = Path(self.db_file).absolute()
         jdbc_url = f"jdbc:h2:{db_path};AUTO_SERVER=TRUE"
+        
         props = Properties()
-        props.setProperty("user", "sa") 
+        props.setProperty("user", "sa")
         props.setProperty("password", "")
-
-        # Create connection
-        self.connection = DriverManager.getConnection(jdbc_url, props)
-
-        # Initialize H2GIS spatial functions
-        H2GISFunctions.load(self.connection)
-
-        # Wrap connection with H2GIS utilities
-        self.connection = self.java_bridge.ConnectionWrapper(self.connection)
+        
+        # Create and initialize H2GIS connection
+        conn = DriverManager.getConnection(jdbc_url, props)
+        H2GISFunctions.load(conn)
+        return self.java_bridge.ConnectionWrapper(conn)
     
     def fetch_one(self) -> tuple:
         """Fetch one row from the last executed query."""
@@ -52,13 +47,17 @@ class NoiseDatabase:
         finally:
             statement.close()
 
-    def execute(self, sql: str, is_query: bool = False) -> None:
+    def execute(self, sql: str | ClauseElement, is_query: bool = False) -> None:
         """Execute SQL statement.
         
         Args:
-            sql (str): SQL statement to execute
-            is_query (bool): True if the SQL statement is a query, False otherwise
+            sql: SQL statement (string or SQLAlchemy clause)
+            is_query: True if the SQL statement is a query
         """
+        # Convert SQLAlchemy statement to string if needed
+        if isinstance(sql, ClauseElement):
+            sql = str(sql.compile(compile_kwargs={"literal_binds": True}))
+        
         self._last_query = sql
         statement = self.connection.createStatement()
         try:
