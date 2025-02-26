@@ -1,0 +1,33 @@
+{
+    "type": "FeatureCollection",
+    "features": [
+        {
+            "type": "Feature",
+            "properties": {
+                "PK": "R001",
+                "name": "Main Street"
+            },
+            "geometry": {
+                "type": "LineString",
+                "coordinates": [
+                    [10.0, 10.0],
+                    [100.0, 10.0]
+                ]
+            }
+        },
+        {
+            "type": "Feature",
+            "properties": {
+                "PK": "R002",
+                "name": "Side Street"
+            },
+            "geometry": {
+                "type": "LineString",
+                "coordinates": [
+                    [10.0, 20.0],
+                    [100.0, 20.0]
+                ]
+            }
+        }
+    ]
+}
