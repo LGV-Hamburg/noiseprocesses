@@ -5,11 +5,11 @@ from sqlalchemy import Table, Column, MetaData, DDL, text
 from sqlalchemy.types import Double, String
 from noiseprocesses.core.database import NoiseDatabase
 from noiseprocesses.models.traffic_flow import TrafficFlow
-from noiseprocesses.calculation.emission import EmissionProcessor, EmissionConfig
+from noiseprocesses.calculation.emission import EmissionProcessor, EmissionConfig, EmissionSource
 
 
 @dataclass
-class RoadCalculationConfig:
+class RoadCalculationConfig(EmissionConfig):
     """Configuration for road noise calculations."""
     coefficient_version: int = 2  # CNOSSOS-EU version
     temperature: float = 20.0     # Default temperature in °C
@@ -19,7 +19,7 @@ class RoadCalculationConfig:
     wall_absorption: float = 0.1  # Wall absorption coefficient
     max_angle: float = 180.0     # Maximum angle between source and receiver
 
-class RoadNoiseCalculator:
+class RoadNoiseCalculator(EmissionSource):
     """Handles both emission and propagation calculations for road noise."""
     
     def __init__(self, database: NoiseDatabase, 
