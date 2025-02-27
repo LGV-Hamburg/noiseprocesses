@@ -9,8 +9,6 @@ from ..core.database import NoiseDatabase
 class EmissionConfig:
     """Base configuration for noise emission calculations."""
     coefficient_version: int = 2
-    default_temp: float = 20.0
-    
     FREQUENCY_BANDS = [63, 125, 250, 500, 1000, 2000, 4000, 8000]
     TIME_PERIODS = ['D', 'E', 'N']
 
@@ -27,24 +25,30 @@ class EmissionSource(ABC):
     
     def _init_lden_config(self) -> Any:
         """Initialize LDEN configuration."""
-        lden_config = self.database.java_bridge.LDENConfig(
-            self.database.java_bridge.LDENConfig_INPUT_MODE.INPUT_MODE_TRAFFIC_FLOW
-        )
+        # Get required Java classes
+        LDENConfig = self.database.java_bridge.LDENConfig
+        LDENConfig_INPUT_MODE = self.database.java_bridge.LDENConfig_INPUT_MODE
+        LDENConfig_TIME_PERIOD = self.database.java_bridge.LDENConfig_TIME_PERIOD
+        PropagationProcessPathData = self.database.java_bridge.PropagationProcessPathData
+        
+        # Initialize config with traffic flow mode
+        lden_config = LDENConfig(LDENConfig_INPUT_MODE.INPUT_MODE_TRAFFIC_FLOW)
         lden_config.setCoefficientVersion(self.config.coefficient_version)
         
         # Configure periods without propagation
-        PropagationProcessPathData = self.database.java_bridge.PropagationProcessPathData
-        for period in ['DAY', 'EVENING', 'NIGHT']:
+        period_map = {
+            'DAY': LDENConfig_TIME_PERIOD.DAY,
+            'EVENING': LDENConfig_TIME_PERIOD.EVENING,
+            'NIGHT': LDENConfig_TIME_PERIOD.NIGHT
+        }
+        
+        for java_period in period_map.values():
             lden_config.setPropagationProcessPathData(
-                getattr(self.database.java_bridge.LDENConfig_TIME_PERIOD, period),
+                java_period,
                 PropagationProcessPathData(False)
             )
+        
         return lden_config
-    
-    @abstractmethod
-    def setup_source_table(self, geometry_file: str, **kwargs) -> str:
-        """Setup source geometries and properties table."""
-        pass
     
     @abstractmethod
     def calculate_emissions(self, source_table: str) -> str:
