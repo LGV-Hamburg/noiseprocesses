@@ -130,6 +130,23 @@ class NoiseDatabase:
                 statement.execute(sql)
         finally:
             statement.close()
+    
+    def execute_batch(self, sql: str, values: list[tuple]) -> None:
+        """Execute batch insert with prepared statement.
+        
+        Args:
+            sql (str): SQL statement with parameter placeholders
+            values (list[tuple]): List of value tuples to insert
+        """
+        statement = self.connection.prepareStatement(sql)
+        try:
+            for row in values:
+                for i, value in enumerate(row):
+                    statement.setObject(i + 1, value)
+                statement.addBatch()
+            statement.executeBatch()
+        finally:
+            statement.close()
 
     def query(self, sql: str) -> list[tuple]:
         """Execute SQL query and return all results.
