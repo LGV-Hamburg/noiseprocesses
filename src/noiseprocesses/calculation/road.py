@@ -1,16 +1,17 @@
+import logging
 from dataclasses import dataclass
-from typing import Optional
+from typing import Optional, Dict, Any, Tuple
 
 from sqlalchemy import Column, MetaData, Table
 from sqlalchemy.types import Double, Integer, String
 
 from noiseprocesses.calculation.emission import (
     EmissionConfig,
-    EmissionProcessor,
     EmissionSource,
 )
 from noiseprocesses.core.database import NoiseDatabase
 
+logger = logging.getLogger(__name__)
 
 @dataclass
 class RoadCalculationConfig(EmissionConfig):
@@ -18,140 +19,83 @@ class RoadCalculationConfig(EmissionConfig):
     coefficient_version: int = 2
     default_temp: float = 20.0
     default_pavement: str = "NL08"
-    max_distance: float = 1000    # Maximum propagation distance
-    max_reflection_order: int = 1 # Maximum number of reflections
-    wall_absorption: float = 0.1  # Wall absorption coefficient
-    max_angle: float = 180.0     # Maximum angle between source and receiver
+    default_junction_dist: float = 100.0
+    default_junction_type: int = 2
+    default_way: int = 3
 
 class RoadNoiseCalculator(EmissionSource):
-    """Handles road noise emission calculations."""
+    """Handles road noise emission calculations following CNOSSOS-EU."""
     
-    def __init__(self, database: NoiseDatabase, 
-                 config: Optional[RoadCalculationConfig] = None):
-        super().__init__(database, config)
-        self.processor = EmissionProcessor(database)
-        self._init_tables()
-    
-    def _init_tables(self) -> None:
-        """Initialize SQL table definitions matching CNOSSOS format."""
-        self.roads = Table(
-            'ROADS', self.metadata,
-            Column('PK', Integer, primary_key=True),
-            Column('THE_GEOM', String, nullable=False),
-            # Vehicle counts - Day/Evening/Night periods
-            *[Column(f"{vtype}_{period}", Double, server_default='0.0')
-              for vtype in ['LV', 'MV', 'HGV', 'WAV', 'WBV']
-              for period in ['D', 'E', 'N']],
-            # Vehicle speeds
-            *[Column(f"{vtype}_SPD_{period}", Double, server_default='0.0')
-              for vtype in ['LV', 'MV', 'HGV', 'WAV', 'WBV']
-              for period in ['D', 'E', 'N']],
-            # Road properties
-            Column('PVMT', String, server_default="'NL08'"),
-            *[Column(f"TEMP_{period}", Double, server_default='20.0')
-              for period in ['D', 'E', 'N']],
-            Column('TS_STUD', Double, server_default='0.0'),
-            Column('PM_STUD', Double, server_default='0.0'),
-            Column('JUNC_DIST', Double),
-            Column('JUNC_TYPE', Integer),
-            Column('SLOPE', Double),
-            Column('WAY', Integer, server_default='3')
-        )
-
-        self.emissions = Table(
-            'LW_ROADS', self.metadata,
-            Column('PK', Integer, primary_key=True),
-            Column('THE_GEOM', String, nullable=False),
-            *[Column(f"LW{period}{freq}", Double)
-              for period in ['D', 'E', 'N']
-              for freq in [63, 125, 250, 500, 1000, 2000, 4000, 8000]]
-        )
-
-    def setup_calculation(self, roads_input: str) -> str:
-        """Setup road table for calculation from input source."""
-        # Import road geometries with their properties
-        self.database.import_data(roads_input, "ROADS")
+    def calculate_emissions(self, roads_table: str = "ROADS_TRAFFIC") -> str:
+        """Calculate road noise emissions following CNOSSOS-EU method.
         
-        # Ensure all required columns exist with default values
-        self._ensure_required_columns()
+        Args:
+            roads_table (str): Name of the table containing road data
+            
+        Returns:
+            str: Name of the created emission table
+        """
+        logger.info("Starting emission calculations for %s", roads_table)
         
-        return "ROADS"
-
-    def _ensure_required_columns(self) -> None:
-        """Ensure all required columns exist with proper defaults."""
-        for column in self.roads.columns:
-            if column.name not in ['PK', 'THE_GEOM']:
-                self.database.add_column_if_not_exists(
-                    'ROADS', 
-                    column.name, 
-                    column.type,
-                    column.server_default
+        # Create emission table with proper structure
+        self._create_emission_table("LW_ROADS")
+        
+        # Get total number of roads
+        road_count = self.database.query(f"SELECT COUNT(*) FROM {roads_table}")[0][0]
+        logger.info("Processing %d road segments", road_count)
+        
+        # Prepare insert statement
+        insert_sql = """
+            INSERT INTO LW_ROADS (pk, the_geom,
+                LWD63, LWD125, LWD250, LWD500, LWD1000, LWD2000, LWD4000, LWD8000,
+                LWE63, LWE125, LWE250, LWE500, LWE1000, LWE2000, LWE4000, LWE8000,
+                LWN63, LWN125, LWN250, LWN500, LWN1000, LWN2000, LWN4000, LWN8000)
+            VALUES (?, ?, 
+                ?, ?, ?, ?, ?, ?, ?, ?,
+                ?, ?, ?, ?, ?, ?, ?, ?,
+                ?, ?, ?, ?, ?, ?, ?, ?)
+        """
+        
+        # Process roads in batches
+        batch_size = 100
+        for offset in range(0, road_count, batch_size):
+            roads = self.database.query(f"""
+                SELECT * FROM {roads_table} 
+                ORDER BY PK
+                LIMIT {batch_size} OFFSET {offset}
+            """)
+            
+            batch_values = []
+            for road in roads:
+                # Calculate emissions using CNOSSOS
+                lden_data = self.database.java_bridge.LDENPropagationProcessData(
+                    None, self.lden_config
                 )
-
-    def calculate_emissions(self, roads_table: str = "ROADS") -> str:
-        """Calculate road noise emissions."""
-        # Initialize LDEN configuration
-        lden_config = self._init_lden_config()
+                emissions = lden_data.computeLw(road)
+                
+                # Convert power to dB for each period
+                power_utils = self.database.java_bridge.PowerUtils
+                day_db = power_utils.wToDba(emissions[0])
+                evening_db = power_utils.wToDba(emissions[1])
+                night_db = power_utils.wToDba(emissions[2])
+                
+                # Prepare values for insert
+                values = [
+                    road['PK'], road['THE_GEOM'],
+                    *day_db, *evening_db, *night_db
+                ]
+                batch_values.append(values)
+            
+            # Execute batch insert
+            self.database.execute_batch(insert_sql, batch_values)
         
-        # Create emission table
-        self._create_emission_table()
+        # Update geometry Z value for visualization
+        self.database.execute(
+            "UPDATE LW_ROADS SET THE_GEOM = ST_UPDATEZ(THE_GEOM, 0.05)"
+        )
         
-        # Calculate emissions for each road segment
-        self._process_emissions(roads_table, lden_config)
+        # Add primary key constraint
+        self.database.add_primary_key("LW_ROADS")
         
-        # Update Z coordinates and ensure primary key
-        self.database.execute("""
-            UPDATE LW_ROADS SET THE_GEOM = ST_UPDATEZ(THE_GEOM, 0.05);
-            ALTER TABLE LW_ROADS ALTER COLUMN PK INT NOT NULL;
-            ALTER TABLE LW_ROADS ADD PRIMARY KEY (PK);
-        """)
-        
+        logger.info("Emission calculation completed")
         return "LW_ROADS"
-
-    def _create_emission_table(self) -> None:
-        """Create the emission results table."""
-        columns = [f"{col.name} {col.type.compile()}" 
-                  for col in self.emissions.columns]
-        self.database.execute(f"""
-            DROP TABLE IF EXISTS LW_ROADS;
-            CREATE TABLE LW_ROADS (
-                {','.join(columns)}
-            )
-        """)
-    
-    def _process_emissions(self, roads_table: str, 
-                          lden_config: 'LDENConfig') -> None:
-        """Process emissions for all road segments."""
-        # Get road records
-        results = self.database.query(f"SELECT * FROM {roads_table}")
-        
-        # Initialize emission processor
-        emission_processor = self.database.java_bridge.LDENPropagationProcessData(
-            None, lden_config
-        )
-        
-        # Process each road
-        for road in results:
-            emissions = emission_processor.computeLw(road)
-            self._insert_emission_results(road['PK'], road['THE_GEOM'], emissions)
-    
-    def _insert_emission_results(self, pk: str, geom: str, 
-                               emissions: list) -> None:
-        """Insert emission calculation results into database."""
-        day, evening, night = emissions
-        self.database.execute(f"""
-            INSERT INTO LW_ROADS (PK, THE_GEOM, 
-                {', '.join(self._get_emission_columns())})
-            VALUES (
-                '{pk}', '{geom}',
-                {', '.join(str(val) for val in day + evening + night)}
-            )
-        """)
-    
-    def _init_lden_config(self) -> 'LDENConfig':
-        """Initialize LDEN configuration."""
-        lden_config = self.database.java_bridge.LDENConfig(
-            self.database.java_bridge.LDENConfig_INPUT_MODE.INPUT_MODE_TRAFFIC_FLOW
-        )
-        lden_config.setCoefficientVersion(self.config.coefficient_version)
-        return lden_config
