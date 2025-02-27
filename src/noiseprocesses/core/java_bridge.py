@@ -59,3 +59,6 @@ class JavaBridge:
         self.GeometryTableUtilities = autoclass('org.h2gis.utilities.GeometryTableUtilities')
 
         self.JDBCUtilities = autoclass('org.h2gis.utilities.JDBCUtilities')
+
+        # Add spatial result set classes
+        self.SpatialResultSet = autoclass('org.h2gis.utilities.SpatialResultSet')
