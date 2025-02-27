@@ -40,5 +40,7 @@
         "timeseries",
         "venv"
     ],
+    "java.compile.nullAnalysis.mode": "automatic",
+    "makefile.configureOnOpen": false,
    
 }
