@@ -37,7 +37,26 @@ class NoiseDatabase:
         """)
 
         return wrapped_conn
-    
+    def _extract_srid(self, crs: str | None) -> int:
+        """Extract SRID from CRS string.
+        
+        Args:
+            crs (str | None): CRS string in URL or EPSG code format
+                Examples:
+                    - "http://www.opengis.net/def/crs/EPSG/0/3857"
+                    - 3857
+        
+        Returns:
+            int: SRID value, defaults to 4326 if crs is None
+        """
+        if crs is None:
+            return 4326
+            
+        if isinstance(crs, str):
+            if 'opengis.net/def/crs/EPSG' in crs:
+                return int(crs.split('/')[-1])
+        return int(crs)
+
     def check_pk_column(self, table_name: str) -> tuple[bool, bool]:
         """Check if table has PK column and if it's a primary key.
         
@@ -143,7 +162,7 @@ class NoiseDatabase:
             CALL SHPREAD('{file_path}', '{table_name}');
         """)
     
-    def import_geojson(self, file_path: str, table_name: str, srid: int = 4326) -> None:
+    def import_geojson(self, file_path: str, table_name: str, crs: str | int = 4326) -> None:
         """Import GeoJSON file into database with proper spatial indexing and SRID handling.
         
         Args:
@@ -197,8 +216,10 @@ class NoiseDatabase:
         table_srid = self.java_bridge.GeometryTableUtilities.getSRID(
             self.connection, TableLocation.parse(table_name)
         )
+
+        srid = self._extract_srid(crs)
         
-        if table_srid == 0 and spatial_fields:
+        if table_srid == 0 and spatial_fields and srid:
             # Update SRID if not set
             self.execute(
                 f"SELECT UpdateGeometrySRID('{table_name}', '{spatial_fields[0]}', {srid})"
