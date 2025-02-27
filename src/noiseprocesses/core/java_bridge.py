@@ -1,5 +1,6 @@
 from pathlib import Path
 import jnius_config
+from jnius import autoclass
 import os
 from typing import Optional
 
@@ -32,7 +33,6 @@ class JavaBridge:
     
     def _init_classes(self):
         """Initialize commonly used Java classes."""
-        from jnius import autoclass
         
         # Core classes
         self.File = autoclass('java.io.File')
