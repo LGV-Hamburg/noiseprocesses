@@ -22,6 +22,12 @@ class NoiseDatabase:
         props = self.java_bridge.Properties()
         props.setProperty("user", "sa")
         props.setProperty("password", "")
+
+        # H2 database optimization settings
+        props.setProperty("CACHE_SIZE", "65536")  # 64MB cache
+        props.setProperty("LOCK_MODE", "0")       # Table-level locking
+        props.setProperty("UNDO_LOG", "0")        # Disable undo log for batch operations
+        props.setProperty("LOCK_TIMEOUT", "20000") # 20 second lock timeout
         
         # Create and initialize H2GIS connection
         conn = self.java_bridge.DriverManager.getConnection(jdbc_url, props)
