@@ -1,8 +1,7 @@
 import logging
 from pathlib import Path
-from noiseprocesses.calculation.road import RoadNoiseCalculator, RoadCalculationConfig
+from noiseprocesses.calculation.road import RoadNoiseCalculator
 from noiseprocesses.core.database import NoiseDatabase
-from noiseprocesses.models.traffic_flow import TrafficFlow
 
 # Configure logging
 logging.basicConfig(
