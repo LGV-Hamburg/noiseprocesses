@@ -3,14 +3,8 @@ from dataclasses import dataclass
 from typing import Dict, Optional, List, Any, Tuple
 from sqlalchemy import Table, Column, MetaData, Text
 from sqlalchemy.types import Double, Integer, String
-from ..core.database import NoiseDatabase
-
-@dataclass
-class EmissionConfig:
-    """Base configuration for noise emission calculations."""
-    coefficient_version: int = 2
-    FREQUENCY_BANDS = [63, 125, 250, 500, 1000, 2000, 4000, 8000]
-    TIME_PERIODS = ['D', 'E', 'N']
+from noiseprocesses.core.database import NoiseDatabase
+from noiseprocesses.models.emission_config import RoadEmissionConfig as EmissionConfig
 
 class EmissionSource(ABC):
     """Base class for noise emission sources."""
@@ -65,8 +59,8 @@ class EmissionSource(ABC):
             Column('THE_GEOM', String),  # H2GIS GEOMETRY type maps to String
             *[
                 Column(f'LW{period}{freq}', Double)
-                for period in self.config.TIME_PERIODS
-                for freq in self.config.FREQUENCY_BANDS
+                for period in self.config.time_periods
+                for freq in self.config.frequency_bands
             ]
         )
         
