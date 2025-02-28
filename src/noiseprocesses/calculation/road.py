@@ -31,15 +31,19 @@ class RoadNoiseCalculator(EmissionSource):
         table_name = "LW_ROADS"
         self._create_emission_table(table_name)
         
+        # Configure processing sizes
+        batch_size = 100
+        chunk_size = 5000  # Process larger chunks for better memory management
+        
         # Get total number of roads
         road_count = self.database.query(f"SELECT COUNT(*) FROM {roads_table}")[0][0]
         logger.info("Processing %d road segments", road_count)
         
         # Generate column names for insert statement
         emission_columns = [
-            f'LW{period}{freq}'
-            for period in self.config.TIME_PERIODS
-            for freq in self.config.FREQUENCY_BANDS
+            f'LW{period.value}{freq}'
+            for period in self.config.time_periods
+            for freq in self.config.frequency_bands
         ]
         
         # Create insert statement dynamically
@@ -50,50 +54,65 @@ class RoadNoiseCalculator(EmissionSource):
 
         # Get Java classes
         SpatialResultSet = self.database.java_bridge.SpatialResultSet
-        # SpatialResultSetWrapper = self.database.java_bridge.SpatialResultSetWrapper
         
-        # Process roads in batches
-        batch_size = 100
-        for offset in range(0, road_count, batch_size):
-            # Use statement to get SpatialResultSet
-            statement = self.database.connection.createStatement()
+        # Process roads in chunks
+        for chunk_offset in range(0, road_count, chunk_size):
+            chunk_limit = min(chunk_size, road_count - chunk_offset)
+            
+            # Disable auto-commit for chunk processing
+            old_autocommit = self.database.connection.getAutoCommit()
+            self.database.connection.setAutoCommit(False)
+            
             try:
-                result = statement.executeQuery(f"""
-                    SELECT * FROM {roads_table} 
-                    ORDER BY PK
-                    LIMIT {batch_size} OFFSET {offset}
-                """)
+                # Process roads in batches within chunk
+                for batch_offset in range(0, chunk_limit, batch_size):
+                    statement = self.database.connection.createStatement()
+                    try:
+                        result = statement.executeQuery(f"""
+                            SELECT * FROM {roads_table} 
+                            ORDER BY PK
+                            LIMIT {batch_size} 
+                            OFFSET {chunk_offset + batch_offset}
+                        """)
 
-                # Cast ResultSet to SpatialResultSet
-                spatial_result = result.unwrap(SpatialResultSet)
+                        # Cast ResultSet to SpatialResultSet
+                        spatial_result = result.unwrap(SpatialResultSet)
+                        
+                        batch_values = []
+                        while result.next():
+                            # Calculate emissions using CNOSSOS
+                            lden_data = self.database.java_bridge.LDENPropagationProcessData(
+                                None, self.lden_config
+                            )
+                            emissions = lden_data.computeLw(spatial_result)
+                            
+                            # Convert power to dB
+                            power_utils = self.database.java_bridge.PowerUtils
+                            day_db = power_utils.wToDba(emissions[0])
+                            evening_db = power_utils.wToDba(emissions[1])
+                            night_db = power_utils.wToDba(emissions[2])
+                            
+                            # Prepare values for insert
+                            values = [
+                                spatial_result.getInt("PK"),
+                                spatial_result.getObject("THE_GEOM"),
+                                *day_db, *evening_db, *night_db
+                            ]
+                            batch_values.append(values)
+                        
+                        # Execute batch insert
+                        self.database.execute_batch(insert_sql, batch_values)
+                        
+                    finally:
+                        statement.close()
                 
-                batch_values = []
-                while result.next():
-                    # Calculate emissions using CNOSSOS with SpatialResultSet
-                    lden_data = self.database.java_bridge.LDENPropagationProcessData(
-                        None, self.lden_config
-                    )
-                    emissions = lden_data.computeLw(spatial_result)
+                # Commit chunk and clear cache
+                self.database.connection.commit()
+                if chunk_offset % (chunk_size * 5) == 0:
+                    self.database.execute("CHECKPOINT SYNC")
                     
-                    # Convert power to dB for each period
-                    power_utils = self.database.java_bridge.PowerUtils
-                    day_db = power_utils.wToDba(emissions[0])
-                    evening_db = power_utils.wToDba(emissions[1])
-                    night_db = power_utils.wToDba(emissions[2])
-                    
-                    # Prepare values for insert
-                    values = [
-                        spatial_result.getInt("PK"),
-                        spatial_result.getObject("THE_GEOM"),
-                        *day_db, *evening_db, *night_db
-                    ]
-                    batch_values.append(values)
-                    
-                # Execute batch insert
-                self.database.execute_batch(insert_sql, batch_values)
-                
             finally:
-                statement.close()
+                self.database.connection.setAutoCommit(old_autocommit)
         
         # Update geometry Z value for visualization
         self.database.execute(

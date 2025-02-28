@@ -58,7 +58,7 @@ class EmissionSource(ABC):
             Column('PK', Integer),
             Column('THE_GEOM', String),  # H2GIS GEOMETRY type maps to String
             *[
-                Column(f'LW{period}{freq}', Double)
+                Column(f'LW{period.value}{freq}', Double)
                 for period in self.config.time_periods
                 for freq in self.config.frequency_bands
             ]
