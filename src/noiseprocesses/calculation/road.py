@@ -16,7 +16,7 @@ logger = logging.getLogger(__name__)
 class RoadNoiseCalculator(EmissionSource):
     """Handles road noise emission calculations following CNOSSOS-EU."""
     
-    def calculate_emissions(self, roads_table: str = "ROADS_TRAFFIC") -> str:
+    def calculate_emissions(self, roads_table_traeffic: str = "ROADS_TRAFFIC") -> str:
         """Calculate road noise emissions following CNOSSOS-EU method.
         
         Args:
@@ -25,18 +25,18 @@ class RoadNoiseCalculator(EmissionSource):
         Returns:
             str: Name of the created emission table
         """
-        logger.info("Starting emission calculations for %s", roads_table)
+        logger.info("Starting emission calculations for %s", roads_table_traeffic)
         
         # Create emission table with proper structure
-        table_name = "LW_ROADS"
-        self._create_emission_table(table_name)
+        roads_table_emissions = "LW_ROADS"
+        self._create_emission_table(roads_table_emissions)
         
         # Configure processing sizes
         batch_size = 100
         chunk_size = 5000  # Process larger chunks for better memory management
         
         # Get total number of roads
-        road_count = self.database.query(f"SELECT COUNT(*) FROM {roads_table}")[0][0]
+        road_count = self.database.query(f"SELECT COUNT(*) FROM {roads_table_traeffic}")[0][0]
         logger.info("Processing %d road segments", road_count)
         
         # Generate column names for insert statement
@@ -48,7 +48,7 @@ class RoadNoiseCalculator(EmissionSource):
         
         # Create insert statement dynamically
         insert_sql = f"""
-            INSERT INTO {table_name} (pk, the_geom, {', '.join(emission_columns)})
+            INSERT INTO {roads_table_emissions} (pk, the_geom, {', '.join(emission_columns)})
             VALUES ({', '.join(['?'] * (len(emission_columns) + 2))})
         """
 
@@ -69,7 +69,7 @@ class RoadNoiseCalculator(EmissionSource):
                     statement = self.database.connection.createStatement()
                     try:
                         result = statement.executeQuery(f"""
-                            SELECT * FROM {roads_table} 
+                            SELECT * FROM {roads_table_traeffic} 
                             ORDER BY PK
                             LIMIT {batch_size} 
                             OFFSET {chunk_offset + batch_offset}
@@ -121,6 +121,11 @@ class RoadNoiseCalculator(EmissionSource):
         
         # Add primary key constraint
         self.database.add_primary_key("LW_ROADS")
+
+        # After all inserts are complete and before queries
+        if road_count > 10000:  # Only optimize for large datasets
+            self.database.create_spatial_index(roads_table_emissions)
+            self.database.optimize_table(roads_table_emissions)
         
         logger.info("Emission calculation completed")
         return "LW_ROADS"
