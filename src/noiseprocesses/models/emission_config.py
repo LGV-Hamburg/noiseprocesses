@@ -34,7 +34,7 @@ class RoadEmissionConfig(NoiseModellingConfig):
     """Configuration for road noise emission calculations"""
     model_config = ConfigDict(frozen=True)
     
-    road_table: str = Field(..., description="Road network table name with traffic data")
+    road_table: str = Field("ROADS_TRAFFIC", description="Road network table name with traffic data")
     frequency_bands: List[int] = Field(
         default=FrequencyBands.OCTAVE.value,
         description="Octave bands used for road noise calculation"
