@@ -1,6 +1,8 @@
-from noiseprocesses.core.java_bridge import JavaBridge
-from noiseprocesses.core.database import NoiseDatabase
 from pathlib import Path
+
+from noiseprocesses.core.database import NoiseDatabase
+from noiseprocesses.core.java_bridge import JavaBridge
+
 
 def test_database():
     try:
@@ -78,7 +80,7 @@ def test_database():
                     ))
 
         print("\nAll tests completed successfully!")
-        db.cleanup()
+        db.disconnect()
         
     except Exception as e:
         print(f"Error in database test: {e}")
