@@ -1,9 +1,12 @@
+import os
+from logging import getLogger
 from pathlib import Path
 
 from sqlalchemy import ClauseElement, MetaData, text
 
 from noiseprocesses.core.java_bridge import JavaBridge
 
+logger = getLogger(__name__)
 
 class NoiseDatabase:
     """Manages H2GIS database connections and operations for NoiseModelling."""
@@ -227,12 +230,6 @@ class NoiseDatabase:
         # Import GeoJSON using H2GIS driver
         driver = self.java_bridge.GeoJsonDriverFunction()
 
-        # # Ensure spatial metadata tables exist
-        self.execute(
-            'CREATE ALIAS IF NOT EXISTS H2GIS_SPATIAL FOR "org.h2gis.functions.factory.H2GISFunctions.load";'
-        )
-        self.execute("CALL H2GIS_SPATIAL();")
-
         driver.importFile(self.connection, table_name, file_obj, EmptyProgressVisitor())
 
         table_location = TableLocation.parse(
@@ -272,7 +269,202 @@ class NoiseDatabase:
         if has_pk_column and not has_pk_constraint:
             self.add_primary_key(table_name)
 
-    def cleanup(self):
+    def import_raster(
+            self, file_path, output_table="DEM",
+            srid=4326, fence=None, downscale=1
+        ):
+            """
+            Import a raster file into H2GIS database.
+            
+            Args:
+                file_path: Path to the raster file
+                output_table: Name of the output table
+                srid: Default SRID to use if not specified in the file
+                fence: WKT string of a polygon to limit the import area
+                downscale: Factor to downscale the raster (1 = no downscale)
+                
+            Returns:
+                String with information about the import
+            """
+            # Validate file existence
+            if not os.path.exists(file_path):
+                raise FileNotFoundError(f"File not found: {file_path}")
+                
+            # Create statement
+            stmt = self.connection.createStatement()
+            
+            # Drop table if exists
+            stmt.execute(f"DROP TABLE IF EXISTS {output_table}")
+            
+            # Get file extension and choose appropriate driver
+            ext = os.path.splitext(file_path)[1].lower()[1:]
+            
+            if ext == "asc":
+                return self._import_asc(
+                    file_path, output_table, srid, fence, downscale, stmt
+                )
+            elif ext in ["tif", "tiff"]:
+                return self._import_geotiff(
+                    file_path, output_table, srid, fence, downscale, stmt
+                )
+            else:
+                raise ValueError(f"Unsupported file extension: {ext}")
+        
+    def _import_asc(self, file_path, output_table, srid, fence, downscale, stmt):
+        """
+        Import an ASC file using AscReaderDriver
+        """
+        logger.info(f"Importing ASC file: {file_path}")
+        
+        # Create ASC driver
+        asc_driver = self.java_bridge.AscReaderDriver()
+        asc_driver.setAs3DPoint(True)
+        asc_driver.setExtractEnvelope()
+        
+        # Check for PRJ file to determine SRID
+        file_prefix = os.path.splitext(file_path)[0]
+        prj_file = f"{file_prefix}.prj"
+        
+        if os.path.exists(prj_file):
+            logger.info(f"Found PRJ file: {prj_file}")
+            try:
+                detected_srid = self.java_bridge.PRJUtil.getSRID(self.java_bridge.File(prj_file))
+                if detected_srid != 0:
+                    srid = detected_srid
+            except Exception as e:
+                logger.warning(f"Error reading PRJ file: {e}. Using default SRID: {srid}")
+        
+        # Apply fence if provided
+        if fence:
+            wkt_reader = self.java_bridge.WKTReader()
+            wkt_writer = self.java_bridge.WKTWriter()
+            
+            fence_geom = wkt_reader.read(fence)
+            logger.info(f"Got fence: {wkt_writer.write(fence_geom)}")
+            
+            # Transform fence to match the DEM coordinate system
+            fence_transform = self.java_bridge.ST_Transform.ST_Transform(
+                self.connection, 
+                self.java_bridge.ST_SetSRID.setSRID(fence_geom, 4326), 
+                srid
+            )
+            
+            asc_driver.setExtractEnvelope(fence_transform.getEnvelopeInternal())
+            logger.info(f"Fence coordinate transformed: {wkt_writer.write(fence_transform)}")
+        
+        # Apply downscaling if requested
+        if downscale > 1:
+            asc_driver.setDownScale(downscale)
+        
+        # Import the ASC file
+        progress_visitor = self.java_bridge.RootProgressVisitor(1, True, 1)
+        asc_driver.read(
+            self.connection, 
+            self.java_bridge.File(file_path), 
+            progress_visitor, 
+            output_table, 
+            srid
+        )
+        
+        # Create spatial index
+        logger.info(f"Creating spatial index on {output_table}")
+        stmt.execute(f"CREATE SPATIAL INDEX ON {output_table}(the_geom)")
+        
+        return f"Table {output_table} has been created with SRID {srid}"
+    
+    def _import_geotiff(self, file_path, output_table, srid, fence, downscale, stmt):
+        """
+        Import a GeoTIFF file using ST_READRASTER or GeoTiffDriverFunction
+        """
+        logger.info(f"Importing GeoTIFF file: {file_path}")
+        
+        # For GeoTIFF, we'll use ST_READRASTER SQL function as it handles GeoTIFF metadata properly
+        # But we'll implement additional options similar to the ASC driver
+        
+        # Create the initial table from the GeoTIFF
+        if fence:
+            # If fence is provided, we need to create a temporary table first
+            # Then filter with the fence in a second step
+            temp_table = f"{output_table}_temp"
+            
+            # Read the GeoTIFF into a temporary table
+            stmt.execute(f"""
+                CREATE TABLE {temp_table} AS 
+                SELECT * FROM ST_ReadRaster('{file_path}')
+            """)
+            
+            # Transform fence to match the raster SRID
+            wkt_reader = self.java_bridge.WKTReader()
+            fence_geom = wkt_reader.read(fence)
+            
+            # Get the SRID of the raster
+            rs = stmt.executeQuery(f"SELECT ST_SRID(rast) FROM {temp_table} LIMIT 1")
+            if rs.next():
+                raster_srid = rs.getInt(1)
+                if raster_srid == 0:
+                    raster_srid = srid
+            else:
+                raster_srid = srid
+            rs.close()
+            
+            # Transform the fence
+            fence_transform = self.java_bridge.ST_Transform.ST_Transform(
+                self.connection, 
+                self.java_bridge.ST_SetSRID.setSRID(fence_geom, 4326), 
+                raster_srid
+            )
+            
+            # Create the final table with the fence
+            fence_wkt = self.java_bridge.WKTWriter().write(fence_transform)
+            stmt.execute(f"""
+                CREATE TABLE {output_table} AS 
+                SELECT ST_Clip(rast, ST_GeomFromText('{fence_wkt}', {raster_srid})) as rast 
+                FROM {temp_table}
+            """)
+            
+            # Drop the temporary table
+            stmt.execute(f"DROP TABLE {temp_table}")
+        else:
+            # Direct import without fence
+            stmt.execute(f"""
+                CREATE TABLE {output_table} AS 
+                SELECT * FROM ST_ReadRaster('{file_path}')
+            """)
+        
+        # Handle downscaling if requested
+        if downscale > 1:
+            # Create a temporary table
+            stmt.execute(f"CREATE TABLE {output_table}_temp AS SELECT * FROM {output_table}")
+            stmt.execute(f"DROP TABLE {output_table}")
+            
+            # Resample the raster with downscaling
+            stmt.execute(f"""
+                CREATE TABLE {output_table} AS 
+                SELECT ST_Resample(rast, {downscale}) as rast 
+                FROM {output_table}_temp
+            """)
+            
+            # Drop temporary table
+            stmt.execute(f"DROP TABLE {output_table}_temp")
+        
+        # If we need point-based DEM rather than raster cells, convert to points
+        stmt.execute(f"""
+            CREATE TABLE {output_table}_points AS 
+            SELECT ST_PixelAsPoints(rast) as the_geom 
+            FROM {output_table}
+        """)
+        
+        # Replace the raster table with the points table
+        stmt.execute(f"DROP TABLE {output_table}")
+        stmt.execute(f"ALTER TABLE {output_table}_points RENAME TO {output_table}")
+        
+        # Create spatial index
+        logger.info(f"Creating spatial index on {output_table}")
+        stmt.execute(f"CREATE SPATIAL INDEX ON {output_table}(the_geom)")
+        
+        return f"Table {output_table} has been created from GeoTIFF"
+
+    def disconnect(self):
         """Close database connection."""
         if self.connection:
             self.connection.close()
@@ -300,7 +492,7 @@ class NoiseDatabase:
 
     def clear_database(self) -> None:
         """Remove the database file completely."""
-        self.cleanup()
+        self.disconnect()
         db_file = Path(self.db_file)
         for ext in [".mv.db", ".trace.db"]:
             file = db_file.with_suffix(ext)
