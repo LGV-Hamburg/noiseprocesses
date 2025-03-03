@@ -91,7 +91,6 @@ class JavaBridge:
         )
 
         from org.h2gis.functions.io.asc import AscReaderDriver # type: ignore
-        from org.h2gis.functions.io.geotiff import GeoTiffDriverFunction # type: ignore
         from org.h2gis.functions.spatial.crs import ST_SetSRID, ST_Transform # type: ignore
         from org.h2gis.functions.io.utility import PRJUtil # type: ignore
         from org.locationtech.jts.io import WKTReader, WKTWriter # type: ignore
@@ -123,7 +122,6 @@ class JavaBridge:
 
         self.DriverManager = DriverManager
         self.AscReaderDriver = AscReaderDriver
-        self.GeoTiffDriverFunction = GeoTiffDriverFunction
         self.ST_SetSRID = ST_SetSRID
         self.ST_Transform = ST_Transform
         self.PRJUtil = PRJUtil
