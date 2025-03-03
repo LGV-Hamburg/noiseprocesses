@@ -303,10 +303,6 @@ class NoiseDatabase:
                 return self._import_asc(
                     file_path, output_table, srid, fence, downscale, stmt
                 )
-            elif ext in ["tif", "tiff"]:
-                return self._import_geotiff(
-                    file_path, output_table, srid, fence, downscale, stmt
-                )
             else:
                 raise ValueError(f"Unsupported file extension: {ext}")
         
@@ -319,7 +315,6 @@ class NoiseDatabase:
         # Create ASC driver
         asc_driver = self.java_bridge.AscReaderDriver()
         asc_driver.setAs3DPoint(True)
-        asc_driver.setExtractEnvelope()
         
         # Check for PRJ file to determine SRID
         file_prefix = os.path.splitext(file_path)[0]
@@ -345,11 +340,13 @@ class NoiseDatabase:
             # Transform fence to match the DEM coordinate system
             fence_transform = self.java_bridge.ST_Transform.ST_Transform(
                 self.connection, 
-                self.java_bridge.ST_SetSRID.setSRID(fence_geom, 4326), 
+                self.java_bridge.ST_SetSRID.setSRID(fence_geom, 4326),
                 srid
             )
             
-            asc_driver.setExtractEnvelope(fence_transform.getEnvelopeInternal())
+            # Get envelope from transformed geometry
+            envelope = fence_transform.getEnvelopeInternal()
+            asc_driver.setExtractEnvelope(envelope)
             logger.info(f"Fence coordinate transformed: {wkt_writer.write(fence_transform)}")
         
         # Apply downscaling if requested
@@ -371,98 +368,6 @@ class NoiseDatabase:
         stmt.execute(f"CREATE SPATIAL INDEX ON {output_table}(the_geom)")
         
         return f"Table {output_table} has been created with SRID {srid}"
-    
-    def _import_geotiff(self, file_path, output_table, srid, fence, downscale, stmt):
-        """
-        Import a GeoTIFF file using ST_READRASTER or GeoTiffDriverFunction
-        """
-        logger.info(f"Importing GeoTIFF file: {file_path}")
-        
-        # For GeoTIFF, we'll use ST_READRASTER SQL function as it handles GeoTIFF metadata properly
-        # But we'll implement additional options similar to the ASC driver
-        
-        # Create the initial table from the GeoTIFF
-        if fence:
-            # If fence is provided, we need to create a temporary table first
-            # Then filter with the fence in a second step
-            temp_table = f"{output_table}_temp"
-            
-            # Read the GeoTIFF into a temporary table
-            stmt.execute(f"""
-                CREATE TABLE {temp_table} AS 
-                SELECT * FROM ST_ReadRaster('{file_path}')
-            """)
-            
-            # Transform fence to match the raster SRID
-            wkt_reader = self.java_bridge.WKTReader()
-            fence_geom = wkt_reader.read(fence)
-            
-            # Get the SRID of the raster
-            rs = stmt.executeQuery(f"SELECT ST_SRID(rast) FROM {temp_table} LIMIT 1")
-            if rs.next():
-                raster_srid = rs.getInt(1)
-                if raster_srid == 0:
-                    raster_srid = srid
-            else:
-                raster_srid = srid
-            rs.close()
-            
-            # Transform the fence
-            fence_transform = self.java_bridge.ST_Transform.ST_Transform(
-                self.connection, 
-                self.java_bridge.ST_SetSRID.setSRID(fence_geom, 4326), 
-                raster_srid
-            )
-            
-            # Create the final table with the fence
-            fence_wkt = self.java_bridge.WKTWriter().write(fence_transform)
-            stmt.execute(f"""
-                CREATE TABLE {output_table} AS 
-                SELECT ST_Clip(rast, ST_GeomFromText('{fence_wkt}', {raster_srid})) as rast 
-                FROM {temp_table}
-            """)
-            
-            # Drop the temporary table
-            stmt.execute(f"DROP TABLE {temp_table}")
-        else:
-            # Direct import without fence
-            stmt.execute(f"""
-                CREATE TABLE {output_table} AS 
-                SELECT * FROM ST_ReadRaster('{file_path}')
-            """)
-        
-        # Handle downscaling if requested
-        if downscale > 1:
-            # Create a temporary table
-            stmt.execute(f"CREATE TABLE {output_table}_temp AS SELECT * FROM {output_table}")
-            stmt.execute(f"DROP TABLE {output_table}")
-            
-            # Resample the raster with downscaling
-            stmt.execute(f"""
-                CREATE TABLE {output_table} AS 
-                SELECT ST_Resample(rast, {downscale}) as rast 
-                FROM {output_table}_temp
-            """)
-            
-            # Drop temporary table
-            stmt.execute(f"DROP TABLE {output_table}_temp")
-        
-        # If we need point-based DEM rather than raster cells, convert to points
-        stmt.execute(f"""
-            CREATE TABLE {output_table}_points AS 
-            SELECT ST_PixelAsPoints(rast) as the_geom 
-            FROM {output_table}
-        """)
-        
-        # Replace the raster table with the points table
-        stmt.execute(f"DROP TABLE {output_table}")
-        stmt.execute(f"ALTER TABLE {output_table}_points RENAME TO {output_table}")
-        
-        # Create spatial index
-        logger.info(f"Creating spatial index on {output_table}")
-        stmt.execute(f"CREATE SPATIAL INDEX ON {output_table}(the_geom)")
-        
-        return f"Table {output_table} has been created from GeoTIFF"
 
     def disconnect(self):
         """Close database connection."""
@@ -490,11 +395,13 @@ class NoiseDatabase:
         for (table_name,) in tables:
             self.execute(f'DROP TABLE IF EXISTS "{table_name}" CASCADE')
 
-    def clear_database(self) -> None:
+    def clear_database(self, path: str | None = None) -> None:
         """Remove the database file completely."""
         self.disconnect()
-        db_file = Path(self.db_file)
+        db_file = path or self.db_file
+        db_path = Path(db_file)
+
         for ext in [".mv.db", ".trace.db"]:
-            file = db_file.with_suffix(ext)
+            file = db_path.with_suffix(ext)
             if file.exists():
                 file.unlink()
