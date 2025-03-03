@@ -1,8 +1,4 @@
-from typing import Dict, Optional
 from pydantic import BaseModel, Field, model_validator
-from ..core.java_bridge import JavaBridge
-from ..core.database import NoiseDatabase
-from pathlib import Path
 
 class TrafficFlow(BaseModel):
     """Traffic flow parameters for a road segment following CNOSSOS-EU."""

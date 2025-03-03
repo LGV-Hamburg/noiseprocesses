@@ -1,5 +1,4 @@
 import logging
-from pathlib import Path
 from noiseprocesses.calculation.road import RoadNoiseCalculator
 from noiseprocesses.core.database import NoiseDatabase
 
@@ -10,9 +9,9 @@ logging.basicConfig(
 )
 
 def test_road_emission():
+    db = NoiseDatabase()
     try:
         # Import roads and calculate emissions
-        db = NoiseDatabase()
         db.import_geojson("examples/roads.geojson", "ROADS_TRAFFIC", crs=2154)
         calculator = RoadNoiseCalculator(db)
         emissions_table = calculator.calculate_emissions("ROADS_TRAFFIC")
