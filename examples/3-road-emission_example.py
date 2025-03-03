@@ -1,4 +1,5 @@
 import logging
+
 from noiseprocesses.calculation.road import RoadNoiseCalculator
 from noiseprocesses.core.database import NoiseDatabase
 
@@ -52,7 +53,7 @@ def test_road_emission():
         logging.error("Error in road emission calculation", exc_info=True)
     finally:
         if 'database' in locals():
-            db.cleanup()
+            db.disconnect()
 
 if __name__ == "__main__":
     test_road_emission()
