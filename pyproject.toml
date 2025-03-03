@@ -27,9 +27,12 @@ classifiers = [
 dependencies = [
     "fastprocesses @ git+https://github.com/StefanSchuhart/fastProcesses#v0.4.0",
     "cython (>=3.0.12,<4.0.0)",
-    "pyjnius (>=1.6.1,<2.0.0)",
     "jaydebeapi (>=1.2.3,<2.0.0)",
-    "sqlalchemy (>=2.0.38,<3.0.0)"
+    "sqlalchemy (>=2.0.38,<3.0.0)",
+    "pydantic (>=2.10.6,<3.0.0)",
+    "jpype1 (>=1.5.2,<2.0.0)",
+    "numpy (>=2.2.3,<3.0.0)",
+    "geojson-pydantic (>=1.2.0,<2.0.0)"
 ]
 
 [project.urls]
@@ -81,7 +84,7 @@ authors = ["Stefan Schuhart <stefan.schuhart@gv.hamburg.de>"]
 readme = "README.md"
 
 [tool.poetry.dependencies]
-python = ">=3.10,<4.0"
+python = ">=3.12,<4.0"
 
 [tool.poetry.group.dev.dependencies]
 # formatting, quality, tests
@@ -96,6 +99,7 @@ pytest-sugar = ">=0.9.4,<1"
 pytest-xdist = ">=2.2.0,<3"
 types-toml = ">=0.10.1,<1"
 pre-commit = ">=3.4.0,<4"
+packaging = "^24.2"
 
 [tool.poetry.group.docs]
 optional = true
