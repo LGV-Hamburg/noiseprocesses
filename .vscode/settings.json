@@ -4,6 +4,15 @@
     //-------------------------------------------------------
     "files.autoSave": "afterDelay",
     "files.autoSaveDelay":1000,
+    "files.exclude": {
+        "**/.git": true,
+        "**/.svn": true,
+        "**/.hg": true,
+        "**/CVS": true,
+        "**/.DS_Store": true,
+        "**/Thumbs.db": true,
+        "NoiseModelling/*": true
+    },
 
     //-------------------------------------------------------
     // Python settings
@@ -42,5 +51,6 @@
     ],
     "java.compile.nullAnalysis.mode": "automatic",
     "makefile.configureOnOpen": false,
+    "python.analysis.typeCheckingMode": "standard",
    
 }
