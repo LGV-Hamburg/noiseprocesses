@@ -89,6 +89,13 @@ class JavaBridge:
         from org.noise_planet.noisemodelling.pathfinder.utils import ( # type: ignore
             PowerUtils
         )
+
+        from org.h2gis.functions.io.asc import AscReaderDriver # type: ignore
+        from org.h2gis.functions.io.geotiff import GeoTiffDriverFunction # type: ignore
+        from org.h2gis.functions.spatial.crs import ST_SetSRID, ST_Transform # type: ignore
+        from org.h2gis.functions.io.utility import PRJUtil # type: ignore
+        from org.locationtech.jts.io import WKTReader, WKTWriter # type: ignore
+        from org.noise_planet.noisemodelling.pathfinder import RootProgressVisitor # type: ignore
         
         # Store classes as instance attributes
         self.File = File
@@ -113,3 +120,13 @@ class JavaBridge:
         self.GeometryTableUtilities = GeometryTableUtilities
         self.JDBCUtilities = JDBCUtilities
         self.SpatialResultSet = SpatialResultSet
+
+        self.DriverManager = DriverManager
+        self.AscReaderDriver = AscReaderDriver
+        self.GeoTiffDriverFunction = GeoTiffDriverFunction
+        self.ST_SetSRID = ST_SetSRID
+        self.ST_Transform = ST_Transform
+        self.PRJUtil = PRJUtil
+        self.WKTReader = WKTReader
+        self.WKTWriter = WKTWriter
+        self.RootProgressVisitor = RootProgressVisitor
