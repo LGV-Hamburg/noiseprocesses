@@ -62,6 +62,23 @@ class NoiseDatabase:
             if 'opengis.net/def/crs/EPSG' in crs:
                 return int(crs.split('/')[-1])
         return int(crs)
+    def create_spatial_index(self, table_name) -> None:
+        """Create spatial index for a table."""
+        self.execute(f"""
+            CREATE SPATIAL INDEX IF NOT EXISTS {table_name}_INDEX
+            ON {table_name}(THE_GEOM);
+        """)
+
+    def optimize_table(self, table_name: str) -> None:
+        """Optimize table with proper indexes and clustering."""
+        # Create spatial index if geometry exists
+        self.execute(f"""
+            -- Cluster table by spatial index
+            CLUSTER {table_name} USING {table_name}_GEOM_IDX;
+
+            -- Analyze table for query optimization
+            ANALYZE {table_name};
+        """)
 
     def check_pk_column(self, table_name: str) -> tuple[bool, bool]:
         """Check if table has PK column and if it's a primary key.
@@ -231,9 +248,7 @@ class NoiseDatabase:
             return
         
         # Create spatial index
-        self.execute(
-            f"CREATE SPATIAL INDEX IF NOT EXISTS {table_name}_INDEX ON {table_name}(the_geom)"
-        )
+        self.create_spatial_index(table_name)
         
         # Check and set SRID
         table_srid = self.java_bridge.GeometryTableUtilities.getSRID(
