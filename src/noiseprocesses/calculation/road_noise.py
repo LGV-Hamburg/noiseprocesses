@@ -1,5 +1,5 @@
 from noiseprocesses.protocols import (
-    EmissionCalculator, PropagationCalculator
+    EmissionCalculator, PropagationCalculator, GridGenerator
 )
 from noiseprocesses.core.database import NoiseDatabase
 
@@ -10,10 +10,12 @@ class RoadNoiseModellingCalculator:
         self,
         emission_calculator: EmissionCalculator,
         propagation_calculator: PropagationCalculator,
+        grid_generator: GridGenerator,
         database_name: str
     ):
         self.emission_calculator = emission_calculator
         self.propagation_calculator = propagation_calculator
+        self.grid_generator = grid_generator
         self.database = NoiseDatabase(database_name)
 
     def calculate_noise_levels(
