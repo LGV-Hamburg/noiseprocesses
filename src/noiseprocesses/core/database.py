@@ -11,17 +11,24 @@ logger = getLogger(__name__)
 class NoiseDatabase:
     """Manages H2GIS database connections and operations for NoiseModelling."""
 
-    def __init__(self, db_file: str):
+    def __init__(self, db_file: str, in_memory: bool = False):
         self.db_file = db_file
+        self.in_memory = in_memory
         self.java_bridge = JavaBridge.get_instance()
         self.connection = self._init_java_connection()
         self.metadata = MetaData()
+
+        # Initialize H2GIS spatial extension
+        self._init_spatial_extension()
 
     def _init_java_connection(self):
         """Initialize Java/H2GIS connection for spatial functions."""
 
         db_path = Path(self.db_file).absolute()
+
         jdbc_url = f"jdbc:h2:{db_path};AUTO_SERVER=TRUE"
+        if self.in_memory:
+            jdbc_url = f"jdbc:h2:mem:{db_path};DB_CLOSE_DELAY=-1" # DB_CLOSE_DELAY=-1" creates a potential memory leak!
 
         props = self.java_bridge.Properties()
         props.setProperty("user", "sa")
@@ -32,22 +39,25 @@ class NoiseDatabase:
         props.setProperty("LOCK_MODE", "0")  # Table-level locking
         props.setProperty("UNDO_LOG", "0")  # Disable undo log for batch operations
         props.setProperty("LOCK_TIMEOUT", "20000")  # 20 second lock timeout
+        props.setProperty("MVCC", "TRUE")  # Better concurrency
+        props.setProperty("DB_CLOSE_DELAY", "-1")  # Keep database open
+        props.setProperty("WR", "0")  # Write changes immediately
 
         # Create and initialize H2GIS connection
         conn = self.java_bridge.DriverManager.getConnection(jdbc_url, props)
         wrapped_conn = self.java_bridge.ConnectionWrapper(conn)
 
-        # Important: Initialize H2GIS spatial functions AND metadata tables
-        self.java_bridge.H2GISFunctions.load(conn)
-
-        # Use SQL to ensure complete H2GIS initialization
-        wrapped_conn.createStatement().execute("""
-            CREATE ALIAS IF NOT EXISTS H2GIS_SPATIAL 
-            FOR "org.h2gis.functions.factory.H2GISFunctions.load";
-            CALL H2GIS_SPATIAL();
-        """)
-
         return wrapped_conn
+
+    def _init_spatial_extension(self):
+
+        # Important: Initialize H2GIS spatial functions
+        self.java_bridge.H2GISFunctions.load(self.connection)
+        # or use this directly
+        # self.execute(
+        #     'CREATE ALIAS IF NOT EXISTS H2GIS_SPATIAL FOR "org.h2gis.functions.factory.H2GISFunctions.load";'
+        # )
+        # self.execute("CALL H2GIS_SPATIAL();")
 
     def _extract_srid(self, crs: str | int | None) -> int:
         """Extract SRID from CRS string.
@@ -214,12 +224,15 @@ class NoiseDatabase:
             srid (int, optional): Spatial reference identifier. Defaults to 4326 (WGS84).
         """
 
-        # Get required Java classes through JavaBridge
-        EmptyProgressVisitor = self.java_bridge.EmptyProgressVisitor
-        TableLocation = self.java_bridge.TableLocation
+        # in case H2GIS spatial extension isnt loaded
+        self._init_spatial_extension()
 
         # Convert table name to uppercase to match Groovy behavior
         table_name = table_name.upper()
+
+        # Get required Java classes through JavaBridge
+        EmptyProgressVisitor = self.java_bridge.EmptyProgressVisitor
+        TableLocation = self.java_bridge.TableLocation
 
         # Drop table if exists
         self.drop_table(table_name)
