@@ -11,6 +11,8 @@ class RegularGridGenerator:
 
     def __init__(self, database: NoiseDatabase):
         self.database = database
+        self.java_bridge = JavaBridge.get_instance()
+        self.target_srid = 0
 
     def generate_receivers(self, config: RegularGridConfig) -> str:
         """
@@ -24,49 +26,91 @@ class RegularGridGenerator:
         """
         logger.info("Starting regular grid generation")
 
-        TableLocation = self.database.java_bridge.TableLocation
+        self.target_srid = self._get_srid(config)
 
-        # Validate inputs and get SRID
-        srid = self.database.java_bridge.GeometryTableUtilities.getSRID(
-            self.database.connection, TableLocation.parse(config.buildings_table)
-        )
-        fence_geom = self._get_fence_geometry(config, srid)
+        fence_envelop = self._get_fence_envelop(config, self.target_srid)
 
         # Create receivers table
-        self._create_receivers_table(config.output_table, fence_geom, config)
+        self._create_receivers_table(config.output_table, fence_envelop, config)
 
         # Post-process receivers
-        self._process_receivers(config, fence_geom)
+        self._process_receivers(config, fence_envelop)
 
         if config.create_triangles:
-            self._create_triangles(config.output_table, srid)
+            self._create_triangles(config.output_table, self.target_srid)
 
         return config.output_table
 
     def _get_srid(self, config: RegularGridConfig) -> int:
         """Determine SRID from input tables"""
-        srid = config.srid
-        if srid == 0 and config.buildings_table:
-            srid = self.database.get_srid(config.buildings_table)
-        if srid == 0 and config.sources_table:
-            srid = self.database.get_srid(config.sources_table)
-        if srid in (0, 3785, 4326):
-            raise ValueError("Invalid SRID. Please use a metric projection system.")
+
+        srid = 0
+
+        TableLocation = self.database.java_bridge.TableLocation
+
+        if self.target_srid == 0 and config.buildings_table:
+            srid = self.java_bridge.GeometryTableUtilities.getSRID(
+                self.database.connection, TableLocation.parse(config.buildings_table)
+            )
+
+        if self.target_srid == 0 and config.sources_table:
+            srid = self.java_bridge.GeometryTableUtilities.getSRID(
+                self.database.connection, TableLocation.parse(config.sources_table)
+            )
+        
+        if self.target_srid == 0 and config.fence_table:
+            srid = self.java_bridge.GeometryTableUtilities.getSRID(
+                self.database.connection, TableLocation.parse(config.fence_table)
+            )
+
+        self.target_srid = srid
+
+        if self.target_srid in (0, 3785, 4326):
+            raise ValueError(f"Invalid SRID: {srid}. Please use a metric projection system.")
+
         return srid
 
-    def _get_fence_geometry(self, config: RegularGridConfig, srid: int) -> "Geometry":
-        """Get or create fence geometry"""
-        if config.fence_geometry:
-            return self.database.transform_geometry(config.fence_geom, 4326, srid)
-        elif config.fence_table:
-            return self.database.get_envelope(config.fence_table)
-        elif config.buildings_table:
-            return self.database.get_envelope(config.buildings_table)
-        else:
-            raise ValueError("No fence geometry or reference table provided")
+    def _get_fence_strategies(self, config: RegularGridConfig, srid: int) -> dict:
+        """Define fence geometry calculation strategies"""
+        return {
+            # WKT fence has highest priority, transform wkt to target SRID
+            "fence_geometry": self.java_bridge.ST_Transform.ST_Transform(
+                self.database.connection,
+                self.java_bridge.ST_SetSRID.setSRID(config.fence_geometry, 4326),
+                srid
+            ) if config.fence_geometry else None,
+            
+            # Fence table has second priority
+            "fence_table": self.java_bridge.GeometryTableUtilities.getEnvelope(
+                self.database.connection,
+                self.java_bridge.TableLocation.parse(config.fence_table), "THE_GEOM"
+            ) if config.fence_table else None,
+            
+            # Buildings table has lowest priority
+            "buildings": self.java_bridge.GeometryTableUtilities.getEnvelope(
+                self.database.connection,
+                self.java_bridge.TableLocation.parse(config.buildings_table), "THE_GEOM"
+            ) if config.buildings_table.lower() else None
+        }
+
+    def _get_fence_envelop(self, config: RegularGridConfig, srid: int):
+        """Get fence envelope using strategy pattern"""
+        strategies = self._get_fence_strategies(config, srid)
+        
+        for strategy_name, strategy_func in strategies.items():
+            try:
+                if result := strategy_func:
+                    logger.debug(f"Using {strategy_name} strategy for fence geometry")
+                    return result
+            except Exception as e:
+                logger.warning(
+                    f"Strategy {strategy_name} failed: {str(e)}, trying next"
+                )
+        
+        raise ValueError("No valid fence geometry source available")
 
     def _create_receivers_table(
-        self, table_name: str, fence_geom: "Geometry", config: RegularGridConfig
+        self, table_name: str, fence_geom, config: RegularGridConfig
     ) -> None:
         """Create initial receivers grid table"""
         self.database.execute(f"""
@@ -77,7 +121,7 @@ class RegularGridGenerator:
                 ID_ROW INTEGER
             ) AS 
             SELECT 
-                ST_SETSRID(ST_UPDATEZ(THE_GEOM, {config.height}), {config.srid}) AS THE_GEOM,
+                ST_SETSRID(ST_UPDATEZ(THE_GEOM, {config.height}), {self.target_srid}) AS THE_GEOM,
                 ID_COL,
                 ID_ROW 
             FROM ST_MakeGridPoints(
@@ -92,17 +136,19 @@ class RegularGridGenerator:
         self.database.execute(f"CREATE SPATIAL INDEX ON {table_name}(the_geom)")
 
     def _process_receivers(
-        self, config: RegularGridConfig, fence_geom: "Geometry"
+        self,
+        config: RegularGridConfig,
+        fence_envelop
     ) -> None:
         """Apply filters and process receivers"""
         # Delete receivers outside fence
-        if config.fence_geom:
+        if config.fence_geometry:
             self.database.execute(
                 f"""
                 DELETE FROM {config.output_table}
                 WHERE NOT ST_Intersects(THE_GEOM, :geom)
             """,
-                {"geom": fence_geom},
+                {"geom": fence_envelop},
             )
 
         # Delete receivers inside buildings
