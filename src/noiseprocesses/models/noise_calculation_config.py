@@ -3,7 +3,10 @@ from typing import Optional
 
 from pydantic import BaseModel, ConfigDict, Field
 
-from noiseprocesses.models.propagation_config import OptionalTables, RequiredTables
+from noiseprocesses.models.propagation_config import (
+    InputOptionalTables,
+    InputRequiredTables,
+)
 
 
 class AcousticParameters(BaseModel):
@@ -83,8 +86,8 @@ class NoiseCalculationConfig(BaseModel):
     model_config = ConfigDict(frozen=True)
 
     database: str = Field(default="NoiseDatabase", description="Database name")
-    required_tables: RequiredTables = RequiredTables()
-    optional_tables: OptionalTables = OptionalTables()
+    required_tables: InputRequiredTables = InputRequiredTables()
+    optional_tables: InputOptionalTables = InputOptionalTables()
     acoustic_params: AcousticParameters = AcousticParameters()
     propagation_settings: PropagationSettings = PropagationSettings()
     output_controls: OutputControls = OutputControls()
