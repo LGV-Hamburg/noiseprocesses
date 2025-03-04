@@ -1,5 +1,5 @@
 from typing import Protocol
-
+from noiseprocesses.models.grid_config import RegularGridConfig 
 
 class EmissionCalculator(Protocol):
     """Protocol defining emission calculation interface"""
@@ -14,12 +14,17 @@ class EmissionCalculator(Protocol):
 
 class PropagationCalculator(Protocol):
     """Protocol defining propagation calculation interface"""
-    def calculate_propagation(self, emission_table: str, receivers_table: str) -> str:
+    def calculate_propagation(
+            self,
+            emission_table: str,
+            receivers_table: str,
+            buildings_table: str,
+    ) -> str:
         """Calculate propagation and return result table name"""
         ...
 
 class GridGenerator(Protocol):
     """Protocol for grid generation strategies"""
-    def generate_receivers(self, config: GridConfig) -> str:
+    def generate_receivers(self, config: RegularGridConfig) -> str:
         """Generate receivers grid and return table name"""
         ...
