@@ -1,7 +1,7 @@
 from pydantic import BaseModel, ConfigDict, Field
 
 
-class RequiredTables(BaseModel):
+class InputRequiredTables(BaseModel):
     model_config = ConfigDict(frozen=True)
 
     building_table: str = Field(
@@ -18,11 +18,20 @@ class RequiredTables(BaseModel):
     )
 
 
-class OptionalTables(BaseModel):
+class InputOptionalTables(BaseModel):
     model_config = ConfigDict(frozen=True)
 
-    dem_table: str = Field(
-        default="DEM", description="Digital Elevation Model table")
+    dem_table: str = Field(default="DEM", description="Digital Elevation Model table")
     ground_absorption_table: str = Field(
         default="GROUNDS", description="Ground absorption coefficients table"
+    )
+
+class IntermediateTables(BaseModel):
+    model_config = ConfigDict(frozen=True)
+
+    emission_table: str = Field(
+        default="EMISSIONS", description="Table with calculated noise emissions"
+    )
+    propagation_table: str = Field(
+        default="PROPAGATION", description="Table with calculated noise levels"
     )
