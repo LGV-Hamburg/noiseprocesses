@@ -1,6 +1,6 @@
 import logging
 
-from noiseprocesses.calculation.road import RoadEmissionCalculator
+from noiseprocesses.calculation.road_emission import RoadEmissionCalculator
 from noiseprocesses.core.database import NoiseDatabase
 from noiseprocesses.models.noise_calculation_config import NoiseCalculationConfig
 
