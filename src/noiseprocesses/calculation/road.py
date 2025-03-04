@@ -1,12 +1,53 @@
 import logging
+from typing import Any
 
-from noiseprocesses.calculation.emission import EmissionSource
+from sqlalchemy import Column, MetaData, Table
+from sqlalchemy.types import Double, Integer, String
+
+from noiseprocesses.core.database import NoiseDatabase
+from noiseprocesses.models.emission_config import RoadEmissionConfig as EmissionConfig
 
 logger = logging.getLogger(__name__)
 
 
-class RoadNoiseCalculator(EmissionSource):
+class RoadEmissionCalculator:
     """Handles road noise emission calculations following CNOSSOS-EU."""
+
+    def __init__(self, database: NoiseDatabase, config: EmissionConfig | None = None):
+        self.database = database
+        self.emission_config = config or EmissionConfig()
+        self.metadata = MetaData()
+
+        # Initialize NoiseModelling config
+        self.lden_config = self._init_lden_config()
+
+    def _init_lden_config(self) -> Any:
+        """Initialize LDEN configuration."""
+        # Get required Java classes
+        LDENConfig = self.database.java_bridge.LDENConfig
+        LDENConfig_INPUT_MODE = self.database.java_bridge.LDENConfig_INPUT_MODE
+        LDENConfig_TIME_PERIOD = self.database.java_bridge.LDENConfig_TIME_PERIOD
+        PropagationProcessPathData = (
+            self.database.java_bridge.PropagationProcessPathData
+        )
+
+        # Initialize config with traffic flow mode
+        lden_config = LDENConfig(LDENConfig_INPUT_MODE.INPUT_MODE_TRAFFIC_FLOW)
+        lden_config.setCoefficientVersion(self.emission_config.coefficient_version)
+
+        # Configure periods without propagation
+        period_map = {
+            "DAY": LDENConfig_TIME_PERIOD.DAY,
+            "EVENING": LDENConfig_TIME_PERIOD.EVENING,
+            "NIGHT": LDENConfig_TIME_PERIOD.NIGHT,
+        }
+
+        for java_period in period_map.values():
+            lden_config.setPropagationProcessPathData(
+                java_period, PropagationProcessPathData(False)
+            )
+
+        return lden_config
 
     def calculate_emissions(self, source_table: str = "ROADS_TRAFFIC") -> str:
         """Calculate road noise emissions following CNOSSOS-EU method.
@@ -125,3 +166,31 @@ class RoadNoiseCalculator(EmissionSource):
 
         logger.info("Emission calculation completed")
         return "LW_ROADS"
+
+    def _create_emission_table(self, table_name: str) -> None:
+        """Create standardized emission table using SQLAlchemy."""
+        # Define table structure
+        emission_table = Table(
+            table_name,
+            self.metadata,
+            Column("PK", Integer),
+            Column("THE_GEOM", String),  # H2GIS GEOMETRY type maps to String
+            *[
+                Column(f"LW{period.value}{freq}", Double)
+                for period in self.emission_config.time_periods
+                for freq in self.emission_config.frequency_bands
+            ],
+        )
+
+        # Create table using existing method
+        self._create_table(emission_table)
+
+    def _create_table(self, table: Table) -> None:
+        """Create a database table from SQLAlchemy definition."""
+        columns = [f"{col.name} {col.type.compile()}" for col in table.columns]
+        self.database.execute(f"""
+            DROP TABLE IF EXISTS {table.name};
+            CREATE TABLE {table.name} (
+                {",".join(columns)}
+            )
+        """)

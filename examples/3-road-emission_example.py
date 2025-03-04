@@ -1,7 +1,8 @@
 import logging
 
-from noiseprocesses.calculation.road import RoadNoiseCalculator
+from noiseprocesses.calculation.road import RoadEmissionCalculator
 from noiseprocesses.core.database import NoiseDatabase
+from noiseprocesses.models.noise_calculation_config import NoiseCalculationConfig
 
 # Configure logging
 logging.basicConfig(
@@ -9,12 +10,14 @@ logging.basicConfig(
     format='%(asctime)s - %(levelname)s - %(message)s'
 )
 
+config = NoiseCalculationConfig()
+
 def test_road_emission():
-    db = NoiseDatabase()
+    db = NoiseDatabase(config.database)
     try:
         # Import roads and calculate emissions
         db.import_geojson("examples/roads.geojson", "ROADS_TRAFFIC", crs=2154)
-        calculator = RoadNoiseCalculator(db)
+        calculator = RoadEmissionCalculator(db)
         emissions_table = calculator.calculate_emissions("ROADS_TRAFFIC")
         
         # Show results for all frequency bands

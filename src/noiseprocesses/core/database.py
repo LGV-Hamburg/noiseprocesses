@@ -11,7 +11,7 @@ logger = getLogger(__name__)
 class NoiseDatabase:
     """Manages H2GIS database connections and operations for NoiseModelling."""
 
-    def __init__(self, db_file: str = "noise_calc"):
+    def __init__(self, db_file: str):
         self.db_file = db_file
         self.java_bridge = JavaBridge.get_instance()
         self.connection = self._init_java_connection()

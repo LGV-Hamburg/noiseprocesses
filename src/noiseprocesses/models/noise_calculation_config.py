@@ -82,7 +82,8 @@ class PerformanceSettings(BaseModel):
 class NoiseCalculationConfig(BaseModel):
     model_config = ConfigDict(frozen=True)
 
-    required_tables: RequiredTables
+    database: str = Field(default="NoiseDatabase", description="Database name")
+    required_tables: RequiredTables = RequiredTables()
     optional_tables: OptionalTables = OptionalTables()
     acoustic_params: AcousticParameters = AcousticParameters()
     propagation_settings: PropagationSettings = PropagationSettings()
