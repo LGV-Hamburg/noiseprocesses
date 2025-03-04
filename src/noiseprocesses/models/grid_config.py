@@ -14,7 +14,9 @@ class RegularGridConfig(BaseModel):
     # Required parameters
     buildings_table: str = Field(
         ...,
-        description="Name of the Buildings table containing THE_GEOM (POLYGON/MULTIPOLYGON)"
+        description=(
+            "Name of the Buildings table containing THE_GEOM (POLYGON/MULTIPOLYGON)"
+        )
     )
     
     # Optional parameters with defaults
@@ -37,31 +39,23 @@ class RegularGridConfig(BaseModel):
     
     # Optional parameters
     sources_table: Optional[str] = Field(
-        None,
+        default=None,
         description="Table name containing source geometries to keep receivers 1m away from"
     )
     
     fence_table: Optional[str] = Field(
-        None,
+        default=None,
         description="Table name to extract bounding box for limiting receiver extent"
     )
 
     fence_wkt: Optional[str] = Field(
-        None,
+        default=None,
         description="Well-Known Text (WKT) string for limiting receiver extent"
     )
     
     create_triangles: bool = Field(
         default=False,
         description="Whether to create triangle meshes from receivers"
-    )
-    
-    srid: Optional[int] = Field(
-        None,
-        description=(
-            "SRID for coordinate system "
-            "(derived from input tables if not specified)"
-        )
     )
 
     @computed_field
