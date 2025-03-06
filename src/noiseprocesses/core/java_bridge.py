@@ -64,7 +64,8 @@ class JavaBridge:
         # Using JPype's import style
         from java.io import File  # type: ignore
         from java.sql import DriverManager  # type: ignore
-        from java.util import Properties  # type: ignore
+        from java.util import Properties, HashSet  # type: ignore
+        from java.time import LocalDateTime  # type: ignore
         from org.h2gis.api import EmptyProgressVisitor  # type: ignore
         from org.h2gis.functions.factory import H2GISFunctions  # type: ignore
         from org.h2gis.functions.io.asc import AscReaderDriver  # type: ignore
@@ -86,27 +87,37 @@ class JavaBridge:
         from org.noise_planet.noisemodelling.jdbc import (  # type: ignore
             LDENConfig,
             LDENPropagationProcessData,
-            PointNoiseMap
+            PointNoiseMap,
+            LDENPointNoiseMapFactory
         )
         from org.noise_planet.noisemodelling.pathfinder import ( # type: ignore
             RootProgressVisitor,
         )
         from org.noise_planet.noisemodelling.pathfinder.utils import (  # type: ignore
             PowerUtils,
+            ProgressMetric,
+            ProfilerThread,
+            JVMMemoryMetric,
+            ReceiverStatsMetric,
         )
         from org.noise_planet.noisemodelling.propagation import (  # type: ignore
             PropagationProcessPathData,
+            TriangleNoiseMap
         )
 
         # Store classes as instance attributes
         self.File = File
+        self.HashSet = HashSet
+        self.LocalDateTime = LocalDateTime
         self.DBUtils = DBUtils
         self.LDENConfig = LDENConfig
         self.LDENConfig_INPUT_MODE = LDENConfig.INPUT_MODE
         self.LDENConfig_TIME_PERIOD = LDENConfig.TIME_PERIOD
+        self.LDENPointNoiseMapFactory = LDENPointNoiseMapFactory
         self.LDENPropagationProcessData = LDENPropagationProcessData
         self.PropagationProcessPathData = PropagationProcessPathData
         self.PointNoiseMap = PointNoiseMap
+        self.TriangleNoiseMap = TriangleNoiseMap
 
         self.ConnectionWrapper = ConnectionWrapper
         self.GeoJsonDriverFunction = GeoJsonDriverFunction
@@ -131,3 +142,8 @@ class JavaBridge:
         self.WKTReader = WKTReader
         self.WKTWriter = WKTWriter
         self.RootProgressVisitor = RootProgressVisitor
+
+        self.ProgressMetric = ProgressMetric
+        self.ProfilerThread = ProfilerThread
+        self.JVMMemoryMetric = JVMMemoryMetric
+        self.ReceiverStatsMetric = ReceiverStatsMetric
