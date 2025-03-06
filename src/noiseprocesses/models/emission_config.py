@@ -15,7 +15,7 @@ class TimePeriod(str, Enum):
     EVENING = "E"
     NIGHT = "N"
 
-class NoiseModellingConfig(BaseModel):
+class NoiseCoefficientConfig(BaseModel):
     """Base configuration for NoiseModelling calculations"""
     model_config = ConfigDict(frozen=True)
 
@@ -30,7 +30,7 @@ class NoiseModellingConfig(BaseModel):
         )
     )
 
-class RoadEmissionConfig(NoiseModellingConfig):
+class RoadEmissionConfig(NoiseCoefficientConfig):
     """Configuration for road noise emission calculations"""
     model_config = ConfigDict(frozen=True)
     
