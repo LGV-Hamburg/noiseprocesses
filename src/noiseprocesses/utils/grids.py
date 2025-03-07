@@ -1,10 +1,183 @@
 import logging
 
+from pathlib import Path
+
 from noiseprocesses.core.database import NoiseDatabase
-from noiseprocesses.models.grid_config import RegularGridConfig
+from noiseprocesses.models.grid_config import DelaunayGridConfig, RegularGridConfig
 from noiseprocesses.core.java_bridge import JavaBridge
+
+
 logger = logging.getLogger(__name__)
 
+
+class DelaunayGridGenerator:
+    """Generates a Delaunay triangulation grid of receivers"""
+
+    def __init__(self, database: NoiseDatabase):
+        self.database = database
+        self.java_bridge = JavaBridge.get_instance()
+        self.target_srid = 0
+
+    def generate_receivers(self, config: DelaunayGridConfig) -> str:
+        """
+        Generate Delaunay grid of receivers
+
+        Args:
+            config: Configuration for grid generation
+
+        Returns:
+            str: Name of created receivers table
+        """
+        logger.info("Starting Delaunay grid generation")
+
+        # Get SRID from input tables
+        self.target_srid = self._get_srid(config)
+
+        # Drop existing tables
+        self.database.execute(f"DROP TABLE IF EXISTS {config.output_table}")
+        self.database.execute("DROP TABLE IF EXISTS TRIANGLES")
+
+        # Initialize NoiseModelling triangulation
+        triangle_map = self.java_bridge.TriangleNoiseMap(
+            config.buildings_table,
+            config.sources_table if config.sources_table else ""
+        )
+
+        # Configure triangulation parameters
+        self._configure_triangulation(triangle_map, config)
+
+        # Process grid cells
+        pk = self.java_bridge.AtomicInteger(0)
+        grid_dim = triangle_map.getGridDim()
+        total_cells = grid_dim * grid_dim
+
+        try:
+            # could possibly be parallelized
+            for i in range(grid_dim):
+                for j in range(grid_dim):
+                    logger.info(
+                        f"Computing cell {i * grid_dim + j + 1} of {total_cells}"
+                    )
+                    triangle_map.generateReceivers(
+                        self.database.connection,
+                        i, j,
+                        config.output_table,
+                        "TRIANGLES",
+                        pk
+                    )
+
+        except Exception as e:
+            logger.error(
+                "Error during triangulation. Use error_dump_folder parameter "
+                "to save input geometries for debugging."
+            )
+            if config.error_dump_folder:
+                self._handle_error(config, triangle_map, e)
+            raise
+
+        # Create spatial index
+        logger.info(f"Creating spatial index on {config.output_table}")
+        self.database.execute(
+            f"CREATE SPATIAL INDEX ON {config.output_table}(the_geom)"
+        )
+
+        # Log completion
+        receiver_count = self.database.query_scalar(
+            f"SELECT COUNT(*) FROM {config.output_table}"
+        )
+        logger.info(f"Created {receiver_count} receivers")
+
+        return config.output_table
+
+    def _get_srid(self, config: DelaunayGridConfig) -> int:
+        """Get SRID from input tables"""
+        srid = 0
+        TableLocation = self.java_bridge.TableLocation
+
+        # Try buildings table first
+        if config.buildings_table:
+            srid = self.java_bridge.GeometryTableUtilities.getSRID(
+                self.database.connection,
+                TableLocation.parse(config.buildings_table)
+            )
+
+        # Try sources table if no SRID found
+        if srid == 0 and config.sources_table:
+            srid = self.java_bridge.GeometryTableUtilities.getSRID(
+                self.database.connection,
+                TableLocation.parse(config.sources_table)
+            )
+
+        if srid in (0, 3785, 4326):
+            raise ValueError(
+                f"Invalid SRID: {srid}. Please use a metric projection system."
+            )
+
+        return srid
+
+    def _configure_triangulation(
+            self, triangle_map, config: DelaunayGridConfig
+    ) -> None:
+        """Configure triangulation parameters"""
+        # Set basic parameters
+        triangle_map.setMaximumArea(config.max_area)
+        triangle_map.setRoadWidth(config.road_width)
+        triangle_map.setReceiverHeight(config.height)
+        triangle_map.setIsoSurfaceInBuildings(config.iso_surface_in_buildings)
+        triangle_map.setMaximumPropagationDistance(config.max_cell_dist)
+
+        # Configure fence if provided
+        if config.fence_geometry:
+            fence = self.java_bridge.ST_Transform.transform(
+                self.database.connection,
+                self.java_bridge.ST_SetSRID.setSRID(
+                    str(config.fence_geometry),
+                    4326
+                ),
+                self.target_srid
+            )
+            triangle_map.setMainEnvelope(fence.getEnvelopeInternal())
+
+        # Set debug folder if provided
+        if config.error_dump_folder:
+            triangle_map.setExceptionDumpFolder(str(Path(config.error_dump_folder)))
+
+        triangle_map.initialize(
+            self.database.connection,
+            self.java_bridge.EmptyProgressVisitor()
+        )
+
+    def _process_grid_cell(
+        self, 
+        triangle_map, 
+        config: DelaunayGridConfig,
+        i: int, 
+        j: int, 
+        pk: int
+    ) -> int:
+        """Process a single grid cell"""
+        try:
+            return triangle_map.generateReceivers(
+                self.database.connection,
+                i, j,
+                config.output_table,
+                "TRIANGLES",
+                pk
+            )
+        except Exception as e:
+            logger.error(f"Error processing cell ({i},{j}): {str(e)}")
+            raise
+
+    def _handle_error(
+        self, 
+        config: DelaunayGridConfig,
+        triangle_map,
+        error: Exception
+    ) -> None:
+        """Handle triangulation error with debug information"""
+        if hasattr(triangle_map, "getErrorDumpFolder"):
+            dump_folder = triangle_map.getErrorDumpFolder()
+            logger.info(f"Error debug information dumped to: {dump_folder}")
 
 class RegularGridGenerator:
     """Generates a regular grid of receivers"""
@@ -66,7 +239,8 @@ class RegularGridGenerator:
         self.target_srid = srid
 
         if self.target_srid in (0, 3785, 4326):
-            raise ValueError(f"Invalid SRID: {srid}. Please use a metric projection system.")
+            raise ValueError(
+                f"Invalid SRID: {srid}. Please use a metric projection system.")
 
         return srid
 
