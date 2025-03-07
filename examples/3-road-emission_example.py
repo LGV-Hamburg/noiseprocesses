@@ -13,7 +13,7 @@ logging.basicConfig(
 config = NoiseCalculationConfig()
 
 def test_road_emission():
-    db = NoiseDatabase(config.database)
+    db = NoiseDatabase(config.database_name)
     try:
         # Import roads and calculate emissions
         db.import_geojson("examples/roads.geojson", "ROADS_TRAFFIC", crs=2154)
