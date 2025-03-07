@@ -147,6 +147,28 @@ class NoiseDatabase:
         finally:
             statement.close()
 
+    def query_scalar(self, sql: str):
+        """
+        Execute a query and return a single scalar value.
+        Useful for COUNT(*), MAX(), etc.
+
+        Args:
+            sql: SQL query string
+            params: Optional query parameters
+
+        Returns:
+            Single value from first row/column or None if no results
+        """
+        statement = self.connection.createStatement()
+        statement = self.connection.createStatement()
+        try:
+            result = statement.executeQuery(sql)
+            if result.next():
+                return result.getObject(1)  # Get first column
+            return None
+        finally:
+            statement.close()
+
     def execute(self, sql: str | ClauseElement, is_query: bool = False) -> None:
         """Execute SQL statement.
 
