@@ -65,6 +65,7 @@ class JavaBridge:
         from java.io import File  # type: ignore
         from java.sql import DriverManager  # type: ignore
         from java.util import Properties, HashSet  # type: ignore
+        from java.util.concurrent.atomic import AtomicInteger  # type: ignore
         from java.time import LocalDateTime  # type: ignore
         from org.h2gis.api import EmptyProgressVisitor  # type: ignore
         from org.h2gis.functions.factory import H2GISFunctions  # type: ignore
@@ -88,6 +89,7 @@ class JavaBridge:
             LDENConfig,
             LDENPropagationProcessData,
             PointNoiseMap,
+            TriangleNoiseMap,
             LDENPointNoiseMapFactory
         )
         from org.noise_planet.noisemodelling.pathfinder import ( # type: ignore
@@ -101,11 +103,11 @@ class JavaBridge:
             ReceiverStatsMetric,
         )
         from org.noise_planet.noisemodelling.propagation import (  # type: ignore
-            PropagationProcessPathData,
-            TriangleNoiseMap
+            PropagationProcessPathData
         )
 
         # Store classes as instance attributes
+        self.AtomicInteger = AtomicInteger
         self.File = File
         self.HashSet = HashSet
         self.LocalDateTime = LocalDateTime
