@@ -92,10 +92,19 @@ if results:
             break
 
 
+################
+### Delaunay ###
+################
+
+# import roads
+db.import_geojson("examples/roads.geojson", "ROADS_TRAFFIC", crs=2154)
+
 delaunay_config = DelaunayGridConfig(
     buildings_table="BUILDINGS",
     output_table="RECEIVERS_GRID",
     height=2.75,  # 4 meters receiver height
+    sources_table="ROADS_TRAFFIC",
+    road_width=15
 )
 
 delauny_generator = DelaunayGridGenerator(db)
@@ -113,23 +122,47 @@ for col in columns:
 # Show actual data
 print("\nReceivers data:")
 results = db.query("""
-    SELECT ID_COL, ID_ROW, PK,
-        ST_AsText(THE_GEOM) as geometry
+    SELECT PK, ST_AsText(THE_GEOM) as geometry
     FROM RECEIVERS_GRID
 """)
 
 if results:
     # Print header
-    print("\n{:<15} {:<15} {:<10} {:<30}".format(
-        "ID COL", "ID Row", "PK", "Geometry"
+    print("\n{:<15} {:<30}".format(
+        "PK", "Geometry"
     ))
     print("-" * 70)
     # Print data rows
-    for row in results:
-        print("{:<15} {:<15} {:<10.1f} {:<30}".format(
-            row[0], row[1], float(row[2]), 
-            row[3][:30] + "..." if len(row[3]) > 30 else row[3]
+    for index, row in enumerate(results):
+        print("{:<15} {:<30}".format(
+            row[0], 
+            row[1][:30] + "..." if len(row[1]) > 30 else row[1]
         ))
+        if index == 10:
+            break
+
+print("\nReceivers triangles data:")
+results = db.query("""
+    SELECT PK, ST_AsText(THE_GEOM) as geometry,
+        PK_1, PK_2, PK_3, CELL_ID
+    FROM TRIANGLES
+""")
+
+if results:
+    # Print header
+    print("\n{:<8} {:<35} {:>8} {:<15} {:<15} {:<15}".format(
+        "PK", "Geometry", "PK1", "PK2", "PK3", "CELL_ID"
+    ))
+    print("-" * 70)
+    # Print data rows
+    for index, row in enumerate(results):
+        print("{:<8} {:<35} {:>8} {:<15} {:<15} {:<15}".format(
+            row[0], 
+            row[1][:30] + "..." if len(row[1]) > 30 else row[1],
+            row[2], row[3], row[4], row[5]
+        ))
+        if index == 10:
+            break
 
 # Clean up
 db.disconnect()
