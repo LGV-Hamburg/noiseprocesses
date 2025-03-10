@@ -2,6 +2,7 @@ from contextlib import contextmanager
 import os
 from logging import getLogger
 from pathlib import Path
+import re
 from typing import Any, Generator
 
 from sqlalchemy import ClauseElement, MetaData, text
@@ -47,6 +48,34 @@ class SQLBuilder:
                 {delta}
             )
         """
+
+    @staticmethod
+    def create_table(table_name: str, columns: list[tuple[str, str]]) -> str:
+        """
+        Create safe CREATE TABLE statement.
+        
+        Args:
+            table_name: Table name
+            columns: List of (name, type) tuples
+        """
+        safe_name = SQLBuilder.quote_identifier(table_name)
+        safe_columns = [
+            f"{SQLBuilder.quote_identifier(name)} {type_}"
+            for name, type_ in columns
+        ]
+        return f"CREATE TABLE {safe_name} ({', '.join(safe_columns)})"
+
+    @staticmethod
+    def quote_identifier(identifier: str) -> str:
+        """Safely quote table/column identifiers."""
+        if not identifier:
+            raise ValueError("Empty identifier")
+        return f'"{identifier.replace("\"", "\"\"")}"'
+
+    @staticmethod
+    def validate_identifier(identifier: str) -> bool:
+        """Validate table/column name."""
+        return bool(re.match(r'^[A-Za-z][A-Za-z0-9_]*$', identifier))
 
 class NoiseDatabase:
     """Manages H2GIS database connections and operations for NoiseModelling."""
