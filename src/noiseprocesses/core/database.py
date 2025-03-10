@@ -2,7 +2,7 @@ from contextlib import contextmanager
 import os
 from logging import getLogger
 from pathlib import Path
-from typing import Generator
+from typing import Any, Generator
 
 from sqlalchemy import ClauseElement, MetaData, text
 
@@ -12,13 +12,41 @@ logger = getLogger(__name__)
 
 class SQLBuilder:
     @staticmethod
-    def drop_table(table_name: str) -> tuple[str, dict]:
-        return "DROP TABLE IF EXISTS :table", {"table": table_name}
+    def drop_table(table_name: str) -> str:
+        safe_name = f'"{table_name.replace("\"", "\"\"")}"'
+        return f"DROP TABLE IF EXISTS {safe_name}"
         
     @staticmethod
-    def create_spatial_index(table_name: str) -> tuple[str, dict]:
-        return ("CREATE SPATIAL INDEX ON :table(the_geom)", 
-                {"table": table_name})
+    def create_spatial_index(table_name: str) -> str:
+        safe_name = f'"{table_name.replace("\"", "\"\"")}"'
+        return (
+            f"CREATE SPATIAL INDEX ON {safe_name}(the_geom)"
+        )
+
+    # using CTAS here, named parameters are not supported
+    @staticmethod
+    def create_grid_table(
+        table_name: str,
+        fence_geom: str,
+        height: float,
+        srid: int,
+        delta: float
+    ) -> str:
+        return f"""
+            CREATE TABLE {table_name} AS 
+            SELECT 
+                ST_SETSRID(
+                    ST_UPDATEZ(THE_GEOM, {height}), 
+                    {srid}
+                ) AS THE_GEOM,
+                ID_COL,
+                ID_ROW 
+            FROM ST_MakeGridPoints(
+                ST_GeomFromText('{str(fence_geom)}'),
+                {delta},
+                {delta}
+            )
+        """
 
 class NoiseDatabase:
     """Manages H2GIS database connections and operations for NoiseModelling."""
@@ -220,26 +248,16 @@ class NoiseDatabase:
         finally:
             statement.close()
 
-    def query_scalar(self, sql: str):
-        """
-        Execute a query and return a single scalar value.
-        Useful for COUNT(*), MAX(), etc.
+    def query_scalar(self, sql: str, params: dict | None = None) -> Any:
+        """Get single value with consistent handling."""
+        with self._get_prepared_statement(sql) as stmt:
+            if params:
+                self._bind_parameters(stmt, params)
+            result = stmt.executeQuery()
 
-        Args:
-            sql: SQL query string
-            params: Optional query parameters
-
-        Returns:
-            Single value from first row/column or None if no results
-        """
-        statement = self.connection.createStatement()
-        try:
-            result = statement.executeQuery(sql)
             if result.next():
-                return result.getObject(1)  # Get first column
+                return result.getObject(1)  # Get first column directly
             return None
-        finally:
-            statement.close()
 
     def execute(self, sql: str | ClauseElement, params: dict | None = None) -> None:
         """Execute SQL with consistent parameter handling."""
