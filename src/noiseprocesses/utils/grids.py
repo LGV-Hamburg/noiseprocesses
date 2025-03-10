@@ -2,7 +2,7 @@ import logging
 
 from pathlib import Path
 
-from noiseprocesses.core.database import NoiseDatabase
+from noiseprocesses.core.database import NoiseDatabase, SQLBuilder
 from noiseprocesses.models.grid_config import DelaunayGridConfig, RegularGridConfig
 from noiseprocesses.core.java_bridge import JavaBridge
 
@@ -34,7 +34,9 @@ class DelaunayGridGenerator:
         self.target_srid = self._get_srid(config)
 
         # Drop existing tables
-        self.database.execute(f"DROP TABLE IF EXISTS {config.output_table}")
+        self.database.execute(
+            SQLBuilder.drop_table(config.output_table)
+        )
         self.database.execute("DROP TABLE IF EXISTS TRIANGLES")
 
         # Initialize NoiseModelling triangulation
@@ -287,24 +289,18 @@ class RegularGridGenerator:
         self, table_name: str, fence_geom, config: RegularGridConfig
     ) -> None:
         """Create initial receivers grid table"""
+        self.database.execute(SQLBuilder.drop_table(table_name))
+        self.database.execute(SQLBuilder.create_grid_table(
+            table_name,
+            fence_geom,
+            config.height,
+            self.target_srid,
+            config.delta
+        ))
         self.database.execute(f"""
-            DROP TABLE IF EXISTS {table_name};
-            CREATE TABLE {table_name} (
-                THE_GEOM GEOMETRY,
-                ID_COL INTEGER,
-                ID_ROW INTEGER
-            ) AS 
-            SELECT 
-                ST_SETSRID(ST_UPDATEZ(THE_GEOM, {config.height}), {self.target_srid}) AS THE_GEOM,
-                ID_COL,
-                ID_ROW 
-            FROM ST_MakeGridPoints(
-                ST_GeomFromText('{fence_geom}'),
-                {config.delta},
-                {config.delta}
-            );
             ALTER TABLE {table_name} ADD COLUMN PK SERIAL PRIMARY KEY;
-        """)
+        """
+        )
 
         # Create spatial index
         self.database.execute(f"CREATE SPATIAL INDEX ON {table_name}(the_geom)")
@@ -321,7 +317,7 @@ class RegularGridGenerator:
                 f"""
                 DELETE FROM {config.output_table}
                 WHERE NOT ST_Intersects(THE_GEOM, :geom)
-            """,
+                """,
                 {"geom": fence_envelop},
             )
 
@@ -353,8 +349,8 @@ class RegularGridGenerator:
 
     def _create_triangles(self, receivers_table: str, srid: int) -> None:
         """Create triangles from receivers grid"""
+        self.database.execute(SQLBuilder.drop_table("TRIANGLES"))
         self.database.execute(f"""
-            DROP TABLE IF EXISTS TRIANGLES;
             CREATE TABLE TRIANGLES(
                 pk serial NOT NULL,
                 the_geom geometry(POLYGON Z, {srid}),
