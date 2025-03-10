@@ -1,6 +1,8 @@
+from contextlib import contextmanager
 import os
 from logging import getLogger
 from pathlib import Path
+from typing import Generator
 
 from sqlalchemy import ClauseElement, MetaData, text
 
@@ -8,12 +10,23 @@ from noiseprocesses.core.java_bridge import JavaBridge
 
 logger = getLogger(__name__)
 
+class SQLBuilder:
+    @staticmethod
+    def drop_table(table_name: str) -> tuple[str, dict]:
+        return "DROP TABLE IF EXISTS :table", {"table": table_name}
+        
+    @staticmethod
+    def create_spatial_index(table_name: str) -> tuple[str, dict]:
+        return ("CREATE SPATIAL INDEX ON :table(the_geom)", 
+                {"table": table_name})
+
 class NoiseDatabase:
     """Manages H2GIS database connections and operations for NoiseModelling."""
 
     def __init__(self, db_file: str, in_memory: bool = False):
         self.db_file = db_file
         self.in_memory = in_memory
+        self._last_query = None  # Add this line to track last query
         self.java_bridge = JavaBridge.get_instance()
         self.connection = self._init_java_connection()
         self.metadata = MetaData()
@@ -58,6 +71,66 @@ class NoiseDatabase:
         #     'CREATE ALIAS IF NOT EXISTS H2GIS_SPATIAL FOR "org.h2gis.functions.factory.H2GISFunctions.load";'
         # )
         # self.execute("CALL H2GIS_SPATIAL();")
+
+    @contextmanager
+    def _get_prepared_statement(self, sql: str):
+        """Context manager for prepared statements."""
+        stmt = self.connection.prepareStatement(sql)
+        try:
+            yield stmt
+        finally:
+            stmt.close()
+
+    @contextmanager
+    def transaction(self) -> Generator[None, None, None]:
+        """Transaction context manager using JDBC."""
+        auto_commit = self.connection.getAutoCommit()
+        self.connection.setAutoCommit(False)
+        try:
+            yield
+            self.connection.commit()
+        except:
+            self.connection.rollback()
+            raise
+        finally:
+            self.connection.setAutoCommit(auto_commit)
+
+    def _bind_parameters(self, stmt, params: dict) -> None:
+        """Bind parameters to prepared statement.
+        
+        Args:
+            stmt: JDBC PreparedStatement
+            params: Dictionary of parameter names and values
+        """
+        if not params:
+            return
+            
+        # Convert named parameters to positional
+        sql = stmt.toString()
+        param_order = []
+        
+        # Extract parameter names in order
+        for key in params.keys():
+            param_name = f":{key}"
+            if param_name in sql:
+                param_order.append(key)
+                
+        # Bind parameters in correct order
+        for i, param_name in enumerate(param_order, start=1):
+            value = params[param_name]
+            
+            # Handle different Java types
+            if isinstance(value, (int, bool)):
+                stmt.setInt(i, value)
+            elif isinstance(value, float):
+                stmt.setDouble(i, value)
+            elif value is None:
+                stmt.setNull(i, self.java_bridge.Types.NULL)
+            else:
+                stmt.setObject(i, value)
+                
+        # Store query for fetch_one method
+        self._last_query = sql
 
     def _extract_srid(self, crs: str | int | None) -> int:
         """Extract SRID from CRS string.
@@ -160,7 +233,6 @@ class NoiseDatabase:
             Single value from first row/column or None if no results
         """
         statement = self.connection.createStatement()
-        statement = self.connection.createStatement()
         try:
             result = statement.executeQuery(sql)
             if result.next():
@@ -169,28 +241,22 @@ class NoiseDatabase:
         finally:
             statement.close()
 
-    def execute(self, sql: str | ClauseElement, is_query: bool = False) -> None:
-        """Execute SQL statement.
+    def execute(self, sql: str | ClauseElement, params: dict | None = None) -> None:
+        """Execute SQL with consistent parameter handling."""
+        sql_str = self._get_sql_string(sql)
+        
+        with self._get_prepared_statement(sql_str) as stmt:
+            if params:
+                self._bind_parameters(stmt, params)
+            stmt.execute()
 
-        Args:
-            sql: SQL statement (string or SQLAlchemy clause)
-            is_query: True if the SQL statement is a query
-        """
-        # Convert SQLAlchemy statement to string if needed
+    def _get_sql_string(self, sql: str | ClauseElement) -> str:
+        """Convert any SQL input to string."""
         if isinstance(sql, ClauseElement):
-            sql = str(sql.compile(compile_kwargs={"literal_binds": True}))
+            return str(sql.compile(compile_kwargs={"literal_binds": True}))
+        return sql
 
-        self._last_query = sql
-        statement = self.connection.createStatement()
-        try:
-            if is_query:
-                self._last_result = statement.executeQuery(sql)
-            else:
-                statement.execute(sql)
-        finally:
-            statement.close()
-
-    def execute_batch(self, sql: str, values: list[tuple]) -> None:
+    def execute_batch(self, sql: str, params: list[tuple]) -> None:
         """Execute batch insert with prepared statement.
 
         Args:
@@ -199,7 +265,7 @@ class NoiseDatabase:
         """
         statement = self.connection.prepareStatement(sql)
         try:
-            for row in values:
+            for row in params:
                 for i, value in enumerate(row):
                     statement.setObject(i + 1, value)
                 statement.addBatch()
@@ -207,26 +273,25 @@ class NoiseDatabase:
         finally:
             statement.close()
 
-    def query(self, sql: str) -> list[tuple]:
-        """Execute SQL query and return all results.
+    def _result_set_to_tuples(self, result_set) -> list[tuple]:
+        """Convert JDBC ResultSet to list of tuples."""
+        meta = result_set.getMetaData()
+        col_count = meta.getColumnCount()
+        rows = []
+        while result_set.next():
+            rows.append(tuple(
+                result_set.getObject(i + 1) 
+                for i in range(col_count)
+            ))
+        return rows
 
-        Args:
-            sql (str): SQL query to execute
-
-        Returns:
-            list[tuple]: List of result rows
-        """
-        statement = self.connection.createStatement()
-        try:
-            result = statement.executeQuery(sql)
-            meta = result.getMetaData()
-            col_count = meta.getColumnCount()
-            rows = []
-            while result.next():
-                rows.append(tuple(result.getObject(i + 1) for i in range(col_count)))
-            return rows
-        finally:
-            statement.close()
+    def query(self, sql: str, params: dict | None = None) -> list[tuple]:
+        """Execute query with consistent resource management."""
+        with self._get_prepared_statement(sql) as stmt:
+            if params:
+                self._bind_parameters(stmt, params)
+            result = stmt.executeQuery()
+            return self._result_set_to_tuples(result)
 
     def import_shapefile(self, file_path: str, table_name: str):
         """Import shapefile into database."""
