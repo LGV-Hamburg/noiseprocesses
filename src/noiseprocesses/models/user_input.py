@@ -17,10 +17,10 @@ class PropagationUserInput(BaseModel):
 
     buildings: FeatureCollection
     roads: FeatureCollection
-    dem: AnyUrl
-    ground_absorption: FeatureCollection
-    acoustic_parameters: AcousticParameters | None
-    propagation_settings: PropagationSettings | None
+    dem: AnyUrl | None = None
+    ground_absorption: FeatureCollection | None = None
+    acoustic_parameters: AcousticParameters | None = None
+    propagation_settings: PropagationSettings | None = None
 
 
 if __name__ == "__main__":
