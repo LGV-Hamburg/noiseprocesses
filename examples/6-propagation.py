@@ -24,6 +24,7 @@ grid_config = RegularGridConfig(
     output_table="RECEIVERS",
     delta=10,  # 10-meter grid spacing
     height=2.75,  # 4 meters receiver height
+    create_triangles=False
 )
 
 grid_generator = RegularGridGenerator(db)
