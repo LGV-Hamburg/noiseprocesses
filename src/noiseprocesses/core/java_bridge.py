@@ -63,7 +63,7 @@ class JavaBridge:
         """Initialize commonly used Java classes."""
         # Using JPype's import style
         from java.io import File  # type: ignore
-        from java.sql import DriverManager  # type: ignore
+        from java.sql import DriverManager, Types  # type: ignore
         from java.util import Properties, HashSet  # type: ignore
         from java.util.concurrent.atomic import AtomicInteger  # type: ignore
         from java.time import LocalDateTime  # type: ignore
@@ -120,6 +120,7 @@ class JavaBridge:
         self.PropagationProcessPathData = PropagationProcessPathData
         self.PointNoiseMap = PointNoiseMap
         self.TriangleNoiseMap = TriangleNoiseMap
+        self.Types = Types
 
         self.ConnectionWrapper = ConnectionWrapper
         self.GeoJsonDriverFunction = GeoJsonDriverFunction
