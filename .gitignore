@@ -5,6 +5,8 @@
 # Compiled class file
 *.class
 
+*.groovy
+
 # Log file
 *.log
 
@@ -197,5 +199,9 @@ poetry.toml
 
 # LSP config files
 pyrightconfig.json
+
+# embedded databases
+*.db
+
 
 # End of https://www.toptal.com/developers/gitignore/api/java,python
