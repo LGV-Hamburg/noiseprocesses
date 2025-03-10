@@ -293,30 +293,6 @@ class RoadPropagationCalculator:
         """
         logger.info("Creating result tables with geometry")
         created_tables = []
-        
-        # Get frequency levels for column creation
-        path_data = lden_config.getPropagationProcessPathData(
-            self.java_bridge.LDENConfig.TIME_PERIOD.DAY
-        )
-        freq_columns = [
-            Column(f"HZ{freq}", Float(precision=5, decimal_return_scale=2))
-            for freq in path_data.freq_lvl
-        ]
-
-        # Define base table structure
-        def create_table_struct(name: str) -> Table:
-            return Table(
-                name,
-                MetaData(),
-                Column("IDRECEIVER", Integer, primary_key=True),
-                Column(
-                    "IDSOURCE", Integer, primary_key=True
-                ) if not lden_config.isMergeSources() else None,
-                Column("THE_GEOM", None),  # Geometry type
-                *freq_columns,
-                Column("LAEQ", Float(precision=5, decimal_return_scale=2)),
-                Column("LEQ", Float(precision=5, decimal_return_scale=2))
-            )
 
         # Helper function to create and populate table
         def create_period_table(name: str, source_table: str):
