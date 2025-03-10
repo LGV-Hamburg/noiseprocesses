@@ -129,13 +129,13 @@ class RoadEmissionCalculator:
                             night_db = power_utils.wToDba(emissions[2])
 
                             # Prepare values for insert
-                            values = [
+                            values = tuple([
                                 spatial_result.getInt("PK"),
                                 spatial_result.getObject("THE_GEOM"),
                                 *day_db,
                                 *evening_db,
                                 *night_db,
-                            ]
+                            ])
                             batch_values.append(values)
 
                         # Execute batch insert
