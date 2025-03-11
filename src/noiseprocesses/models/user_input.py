@@ -8,17 +8,23 @@ from noiseprocesses.models.roads_properties import TrafficFlow
 from noiseprocesses.models.building_properties import BuildingProperties
 from noiseprocesses.models.ground_absorption import GroundAbsorption
 
-BuildingsFeatureCollection = FeatureCollection[Feature[Polygon, BuildingProperties]]
-RoadsFeatureCollection = FeatureCollection[Feature[LineString, TrafficFlow]]
-GroundAbsorptionFeatureCollection = FeatureCollection[Feature[Polygon, GroundAbsorption]]
+BuildingsFeatureCollection = FeatureCollection[
+    Feature[Polygon, BuildingProperties]
+]
+RoadsFeatureCollection = FeatureCollection[
+    Feature[LineString, TrafficFlow]
+]
+GroundAbsorptionFeatureCollection = FeatureCollection[
+    Feature[Polygon, GroundAbsorption]
+]
 
 class PropagationUserInput(BaseModel):
     model_config = ConfigDict(frozen=True)
 
-    buildings: FeatureCollection
-    roads: FeatureCollection
+    buildings: BuildingsFeatureCollection
+    roads: RoadsFeatureCollection
     dem: AnyUrl | None = None
-    ground_absorption: FeatureCollection | None = None
+    ground_absorption: GroundAbsorptionFeatureCollection | None = None
     acoustic_parameters: AcousticParameters | None = None
     propagation_settings: PropagationSettings | None = None
 
