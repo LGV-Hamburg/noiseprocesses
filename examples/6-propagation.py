@@ -7,7 +7,10 @@ from noiseprocesses.utils.grids import RegularGridGenerator
 
 config = NoiseCalculationConfig()
 
-db = NoiseDatabase(config.database_name, in_memory=True)
+db = NoiseDatabase(
+    config.database.name,
+    in_memory=True
+)
 
 print(config)
 
