@@ -1,4 +1,4 @@
-from geojson_pydantic import Feature, LineString, Polygon
+from geojson_pydantic import Feature, LineString, MultiLineString, Polygon
 from pydantic import AnyUrl, BaseModel, ConfigDict
 from geojson_pydantic.features import FeatureCollection
 from noiseprocesses.models.noise_calculation_config import (
@@ -12,7 +12,7 @@ BuildingsFeatureCollection = FeatureCollection[
     Feature[Polygon, BuildingProperties]
 ]
 RoadsFeatureCollection = FeatureCollection[
-    Feature[LineString, TrafficFlow]
+    Feature[LineString | MultiLineString, TrafficFlow]
 ]
 GroundAbsorptionFeatureCollection = FeatureCollection[
     Feature[Polygon, GroundAbsorption]
