@@ -50,6 +50,7 @@ class GridConfig(BaseModel):
     # Common optional parameters with defaults
     height: float = Field(
         default=4.0,
+        alias="calculation_height",
         gt=0,
         description="Height of receivers in meters"
     )
