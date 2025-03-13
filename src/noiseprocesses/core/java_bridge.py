@@ -62,7 +62,7 @@ class JavaBridge:
     def _init_classes(self):
         """Initialize commonly used Java classes."""
         # Using JPype's import style
-        from java.io import File  # type: ignore
+        from java.io import File, StringReader  # type: ignore
         from java.sql import DriverManager, Types  # type: ignore
         from java.util import Properties, HashSet  # type: ignore
         from java.util.concurrent.atomic import AtomicInteger  # type: ignore
@@ -85,7 +85,9 @@ class JavaBridge:
         from org.h2gis.utilities.dbtypes import DBUtils  # type: ignore
         from org.h2gis.utilities.wrapper import ConnectionWrapper  # type: ignore
         from org.locationtech.jts.io import WKTReader, WKTWriter  # type: ignore
+
         from org.noise_planet.noisemodelling.jdbc import (  # type: ignore
+            BezierContouring,
             LDENConfig,
             LDENPropagationProcessData,
             PointNoiseMap,
@@ -108,6 +110,7 @@ class JavaBridge:
 
         # Store classes as instance attributes
         self.AtomicInteger = AtomicInteger
+        self.BezierContouring = BezierContouring
         self.File = File
         self.HashSet = HashSet
         self.LocalDateTime = LocalDateTime
@@ -119,6 +122,7 @@ class JavaBridge:
         self.LDENPropagationProcessData = LDENPropagationProcessData
         self.PropagationProcessPathData = PropagationProcessPathData
         self.PointNoiseMap = PointNoiseMap
+        self.StringReader = StringReader
         self.TriangleNoiseMap = TriangleNoiseMap
         self.Types = Types
 
