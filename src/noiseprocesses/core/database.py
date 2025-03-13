@@ -1,9 +1,11 @@
 from contextlib import contextmanager
+import json
 import os
 from logging import getLogger
 from pathlib import Path
 import re
-from typing import Any, Generator
+import tempfile
+from typing import Any, Dict, Generator
 
 from sqlalchemy import ClauseElement, MetaData, text
 
@@ -348,41 +350,74 @@ class NoiseDatabase:
         """)
 
     def import_geojson(
-        self, file_path: str, table_name: str, crs: str | int = 4326
+        self,
+        source: str | Dict[str, Any],
+        table_name: str,
+        crs: str | int = 4326
     ) -> None:
-        """Import GeoJSON file into database with proper spatial indexing and SRID handling.
+        """Import GeoJSON into database with proper spatial indexing and SRID handling.
 
         Args:
-            file_path (str): Path to the GeoJSON file
-            table_name (str): Name of the table to create
-            srid (int, optional): Spatial reference identifier. Defaults to 4326 (WGS84).
+            source: Path to GeoJSON file or GeoJSON dictionary
+            table_name: Name of the table to create
+            crs: Spatial reference identifier, defaults to 4326 (WGS84)
         """
-
-        # in case H2GIS spatial extension isnt loaded
+        # Initialize H2GIS if needed
         self._init_spatial_extension()
 
-        # Convert table name to uppercase to match Groovy behavior
+        # Convert table name to uppercase
         table_name = table_name.upper()
 
-        # Get required Java classes through JavaBridge
-        EmptyProgressVisitor = self.java_bridge.EmptyProgressVisitor
-        TableLocation = self.java_bridge.TableLocation
-
-        # Drop table if exists
+        # Drop existing table
         self.drop_table(table_name)
 
-        # Create Java File object from path
-        file_obj = self.java_bridge.File(str(Path(file_path).absolute()))
-
-        # Import GeoJSON using H2GIS driver
+        # Get Java bridge classes
+        EmptyProgressVisitor = self.java_bridge.EmptyProgressVisitor
         driver = self.java_bridge.GeoJsonDriverFunction()
 
-        driver.importFile(self.connection, table_name, file_obj, EmptyProgressVisitor())
+        # Handle different input types
+        if isinstance(source, str) and os.path.exists(source):
+            # File path input
+            file_obj = self.java_bridge.File(str(Path(source).absolute()))
+            driver.importFile(
+                self.connection, table_name, file_obj, EmptyProgressVisitor()
+            )
+        else:
+            # Dictionary input or string path that doesn't exist (assume it's GeoJSON content)
+            if isinstance(source, dict):
+                json_str = json.dumps(source)
+            else:  # Assume it's already a JSON string
+                json_str = source
+                
+            # Create a temporary file
+            with tempfile.NamedTemporaryFile(suffix='.geojson', delete=False) as temp_file:
+                temp_file.write(json_str.encode('utf-8'))
+                temp_path = temp_file.name
+                logger.debug(f"Created temporary file: {temp_path}")
+                
+            try:
+                # Import from temp file
+                file_obj = self.java_bridge.File(temp_path)
+                driver.importFile(
+                    self.connection, table_name, file_obj, EmptyProgressVisitor()
+                )
+            finally:
+                # Clean up temp file
+                if os.path.exists(temp_path):
+                    os.unlink(temp_path)
 
+        # Process imported table
+        self._process_imported_table(table_name, crs)
+
+    def _process_imported_table(self, table_name: str, crs: str | int) -> None:
+        """Process an imported table with indexing and SRID handling."""
+        TableLocation = self.java_bridge.TableLocation
         table_location = TableLocation.parse(
-            table_name, self.java_bridge.DBUtils.getDBType(self.connection)
+            table_name,
+            self.java_bridge.DBUtils.getDBType(self.connection)
         )
-        # Get spatial field names
+
+        # Get spatial fields
         spatial_fields = [
             str(field)
             for field in self.java_bridge.GeometryTableUtilities.getGeometryColumnNames(
@@ -390,29 +425,26 @@ class NoiseDatabase:
             )
         ]
         if not spatial_fields:
-            # logger.warn("The table " + tableName + " does not contain a geometry field.")
-            print("Warning")
+            print("Warning: Table does not contain geometry field")
             return
 
         # Create spatial index
         self.create_spatial_index(table_name)
 
-        # Check and set SRID
+        # Handle SRID
         table_srid = self.java_bridge.GeometryTableUtilities.getSRID(
-            self.connection, TableLocation.parse(table_name)
+            self.connection,
+            TableLocation.parse(table_name)
         )
-
         srid = self._extract_srid(crs)
 
         if table_srid == 0 and spatial_fields and srid:
-            # Update SRID if not set
             self.execute(
                 f"SELECT UpdateGeometrySRID('{table_name}', '{spatial_fields[0]}', {srid})"
             )
 
-        # Check for PK column and set primary key if needed
+        # Handle primary key
         has_pk_column, has_pk_constraint = self.check_pk_column(table_name)
-
         if has_pk_column and not has_pk_constraint:
             self.add_primary_key(table_name)
 
