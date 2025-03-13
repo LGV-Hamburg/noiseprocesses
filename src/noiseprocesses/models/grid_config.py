@@ -1,14 +1,38 @@
 from enum import Enum
-from typing import Optional
+from typing import Literal, Optional
 from pydantic import BaseModel, Field, computed_field
 
 from shapely.geometry import base
 from shapely import wkt
 
-class GridType(str, Enum):
+class GridType(Enum):
     """Grid generation type"""
-    REGULAR = "regular"
-    DELAUNAY = "delaunay"
+    REGULAR = "regular".upper()
+    DELAUNAY = "delaunay".upper()
+    BUILDINGS = "buildings".upper()
+
+class GridSettingsUser(BaseModel):
+    grid_type: GridType = GridType.DELAUNAY
+    calculation_height: float = Field(
+        default=4.0,
+        gt=0,
+        description="Height of receivers in meters"
+    )
+    max_area: float = Field(
+        default=2500.0,
+        gt=0,
+        description="Maximum triangle area (m²)"
+    )
+    max_cell_dist: float = Field(
+        default=600.0,
+        gt=0,
+        description="Maximum cell size for domain splitting (meters)"
+    )
+    road_width: float = Field(
+        default=2.0,
+        gt=0,
+        description="Buffer around roads (meters)"
+    )
 
 class GridConfig(BaseModel):
     """Base configuration for grid generation"""
@@ -53,11 +77,6 @@ class GridConfig(BaseModel):
     create_triangles: bool = Field(
         default=True,
         description="Whether to create triangle meshes"
-    )
-
-    grid_type: GridType = Field(
-        default=GridType.REGULAR,
-        description="Type of grid to generate"
     )
 
     @computed_field
