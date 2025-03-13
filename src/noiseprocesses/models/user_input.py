@@ -1,6 +1,8 @@
 from geojson_pydantic import Feature, LineString, MultiLineString, Polygon
 from pydantic import AnyUrl, BaseModel, ConfigDict
 from geojson_pydantic.features import FeatureCollection
+from noiseprocesses.models.grid_config import GridSettingsUser
+from noiseprocesses.models.isosurface_config import IsoSurfaceUserSettings
 from noiseprocesses.models.noise_calculation_config import (
     AcousticParameters, PropagationSettings
 )
@@ -27,6 +29,8 @@ class PropagationUserInput(BaseModel):
     ground_absorption: GroundAbsorptionFeatureCollection | None = None
     acoustic_parameters: AcousticParameters | None = None
     propagation_settings: PropagationSettings | None = None
+    receiver_grid_settings: GridSettingsUser | None = None
+    iosurface_settings: IsoSurfaceUserSettings | None = None
 
 
 if __name__ == "__main__":
@@ -76,3 +80,12 @@ if __name__ == "__main__":
 
     buildings = BuildingsFeatureCollection(**buildings_geojson)
     pass
+
+if __name__ == "__main__":
+
+    import json
+    schema = PropagationUserInput.model_json_schema()
+
+    with open("schema.json", "w") as file:
+        json.dump(schema, file, indent=4)
+    
