@@ -3,6 +3,7 @@ from typing import Optional
 
 import jpype
 import jpype.imports
+from jpype.types import JFloat
 
 
 class JavaBridge:
@@ -64,7 +65,7 @@ class JavaBridge:
         # Using JPype's import style
         from java.io import File, StringReader  # type: ignore
         from java.sql import DriverManager, Types  # type: ignore
-        from java.util import Properties, HashSet  # type: ignore
+        from java.util import Properties, HashSet, ArrayList  # type: ignore
         from java.util.concurrent.atomic import AtomicInteger  # type: ignore
         from java.time import LocalDateTime  # type: ignore
         from org.h2gis.api import EmptyProgressVisitor  # type: ignore
@@ -110,6 +111,8 @@ class JavaBridge:
 
         # Store classes as instance attributes
         self.AtomicInteger = AtomicInteger
+        self.ArrayList = ArrayList
+        self.JFloat = JFloat
         self.BezierContouring = BezierContouring
         self.File = File
         self.HashSet = HashSet
