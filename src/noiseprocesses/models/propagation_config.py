@@ -1,3 +1,5 @@
+from enum import Enum
+
 from pydantic import BaseModel, ConfigDict, Field
 
 
@@ -30,6 +32,7 @@ class InputOptionalTables(BaseModel):
         description="Ground absorption coefficients table"
     )
 
+
 class IntermediateTables(BaseModel):
     model_config = ConfigDict(frozen=True)
 
@@ -39,3 +42,12 @@ class IntermediateTables(BaseModel):
     propagation_table: str = Field(
         default="PROPAGATION", description="Table with calculated noise levels"
     )
+
+
+class OutputTablesNames(Enum):
+    model_config = ConfigDict(frozen=True)
+
+    l_den = "LDEN_GEOM"
+    l_day = "LDAY_GEOM"
+    l_evening = "LEVENING_GEOM"
+    l_night = "LNIGHT_GEOM"
