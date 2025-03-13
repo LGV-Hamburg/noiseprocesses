@@ -1,7 +1,8 @@
 from pathlib import Path
+
 from noiseprocesses.core.database import NoiseDatabase
-from noiseprocesses.models.grid_config import RegularGridConfig, DelaunayGridConfig
-from noiseprocesses.utils.grids import RegularGridGenerator, DelaunayGridGenerator
+from noiseprocesses.models.grid_config import DelaunayGridConfig, RegularGridConfig
+from noiseprocesses.utils.grids import DelaunayGridGenerator, RegularGridGenerator
 
 # Initialize database connection
 db = NoiseDatabase(
@@ -14,14 +15,16 @@ basic_config = RegularGridConfig(
     output_table="RECEIVERS_GRID",
     delta=10,  # 10-meter grid spacing
     height=2.75,  # 4 meters receiver height
-    create_triangles=False
+    create_triangles=True,
 )
 
-buildings_path = Path("dist/resources/org/noise_planet/noisemodelling/wps/buildings.shp")
+buildings_path = Path(
+    "dist/resources/org/noise_planet/noisemodelling/wps/buildings.shp"
+)
 if buildings_path.exists():
     print("\n6. Testing GeoJSON import...")
     db.import_shapefile(str(buildings_path), "buildings")
-    
+
     # Show table structure
     columns = db.query(f"SHOW COLUMNS FROM {basic_config.buildings_table}")
     print("\nTable structure:")
@@ -29,7 +32,7 @@ if buildings_path.exists():
     print("-" * 50)
     for col in columns:
         print("{:<20} {:<20} {:<10}".format(col[0], col[1], col[2]))
-    
+
     # Show actual data
     print("\nImported buildings data:")
     results = db.query(
@@ -41,16 +44,15 @@ if buildings_path.exists():
     )
     if results:
         # Print header
-        print("\n{:<15} {:<10} {:<30}".format(
-            "Building ID", "Height", "Geometry"
-        ))
+        print("\n{:<15} {:<10} {:<30}".format("Building ID", "Height", "Geometry"))
         print("-" * 70)
         # Print data rows
         for index, row in enumerate(results):
-            print("{:<15} {:<10} {:<30}".format(
-                row[0], row[1],
-                row[2][:30] + "..." if len(row[2]) > 30 else row[2]
-            ))
+            print(
+                "{:<15} {:<10} {:<30}".format(
+                    row[0], row[1], row[2][:30] + "..." if len(row[2]) > 30 else row[2]
+                )
+            )
             if index == 10:
                 break
 
@@ -78,16 +80,18 @@ results = db.query("""
 
 if results:
     # Print header
-    print("\n{:>6} {:<6} {:>6} {:<30}".format(
-        "ID COL", "ID Row", "PK", "Geometry"
-    ))
+    print("\n{:>6} {:<6} {:>6} {:<30}".format("ID COL", "ID Row", "PK", "Geometry"))
     print("-" * 70)
     # Print data rows
     for index, row in enumerate(results):
-        print("{:>6} {:>6} {:>6} {:<30}".format(
-            row[0], row[1], row[2], 
-            row[3][:30] + "..." if len(row[3]) > 30 else row[3]
-        ))
+        print(
+            "{:>6} {:>6} {:>6} {:<30}".format(
+                row[0],
+                row[1],
+                row[2],
+                row[3][:30] + "..." if len(row[3]) > 30 else row[3],
+            )
+        )
         if index == 10:
             break
 
@@ -104,7 +108,7 @@ delaunay_config = DelaunayGridConfig(
     output_table="RECEIVERS_GRID",
     height=2.75,  # 4 meters receiver height
     sources_table="ROADS_TRAFFIC",
-    road_width=15
+    road_width=15,
 )
 
 delauny_generator = DelaunayGridGenerator(db)
@@ -128,16 +132,15 @@ results = db.query("""
 
 if results:
     # Print header
-    print("\n{:<15} {:<30}".format(
-        "PK", "Geometry"
-    ))
+    print("\n{:<15} {:<30}".format("PK", "Geometry"))
     print("-" * 70)
     # Print data rows
     for index, row in enumerate(results):
-        print("{:<15} {:<30}".format(
-            row[0], 
-            row[1][:30] + "..." if len(row[1]) > 30 else row[1]
-        ))
+        print(
+            "{:<15} {:<30}".format(
+                row[0], row[1][:30] + "..." if len(row[1]) > 30 else row[1]
+            )
+        )
         if index == 10:
             break
 
@@ -150,17 +153,24 @@ results = db.query("""
 
 if results:
     # Print header
-    print("\n{:<8} {:<35} {:>8} {:<15} {:<15} {:<15}".format(
-        "PK", "Geometry", "PK1", "PK2", "PK3", "CELL_ID"
-    ))
+    print(
+        "\n{:<8} {:<35} {:>8} {:<15} {:<15} {:<15}".format(
+            "PK", "Geometry", "PK1", "PK2", "PK3", "CELL_ID"
+        )
+    )
     print("-" * 70)
     # Print data rows
     for index, row in enumerate(results):
-        print("{:<8} {:<35} {:>8} {:<15} {:<15} {:<15}".format(
-            row[0], 
-            row[1][:30] + "..." if len(row[1]) > 30 else row[1],
-            row[2], row[3], row[4], row[5]
-        ))
+        print(
+            "{:<8} {:<35} {:>8} {:<15} {:<15} {:<15}".format(
+                row[0],
+                row[1][:30] + "..." if len(row[1]) > 30 else row[1],
+                row[2],
+                row[3],
+                row[4],
+                row[5],
+            )
+        )
         if index == 10:
             break
 
