@@ -1,5 +1,5 @@
 from enum import IntEnum
-from typing import Optional
+from typing import Optional, Self
 from pydantic import BaseModel, Field, model_validator
 
 # PK </b>* : an identifier. It shall be a primary key (INTEGER, PRIMARY KEY)</li>' +
@@ -28,277 +28,15 @@ class JunctionType(IntEnum):
     TRAFFIC_LIGHT = 1
     ROUNDABOUT = 2
 
-class TrafficFlow(BaseModel):
-    """User-friendly traffic flow parameters for a road segment.
-    
-    Required fields:
-    - At least one vehicle count (light or heavy)
-    - Speed for each provided vehicle count
-    
-    Optional fields:
-    - Medium vehicles
-    - Motorcycles (light and heavy)
-    - All associated speeds
-    """
-    
-    # Day period (6-18h)
-    light_vehicles_day: float = Field(
-        default=0.0,
-        description="Light vehicles per hour (6-18h)",
-        ge=0.0,
-    )
-    medium_vehicles_day: float | None = Field(
-        default=None,
-        description="Medium heavy vehicles, delivery vans > 3.5t, buses per hour (6-18h)",
-        ge=0.0,
-    )
-    heavy_vehicles_day: float = Field(
-        default=0.0,
-        description="Heavy duty vehicles, buses with 3+ axles per hour (6-18h)",
-        ge=0.0,
-    )
-    light_motorcycles_day: Optional[float] = Field(
-        default=None,
-        description="Mopeds, tricycles, quads ≤ 50cc per hour (6-18h)",
-        ge=0.0,
-    )
-    heavy_motorcycles_day: Optional[float] = Field(
-        default=None,
-        description="Motorcycles, tricycles, quads > 50cc per hour (6-18h)",
-        ge=0.0,
-    )
-
-    # Evening period (18-22h)
-    light_vehicles_evening: float = Field(
-        default=0.0,
-        description="Light vehicles per hour (18-22h)",
-        ge=0.0,
-    )
-    medium_vehicles_evening: float | None = Field(
-        default=None,
-        description="Medium heavy vehicles per hour (18-22h)",
-        ge=0.0,
-    )
-    heavy_vehicles_evening: float = Field(
-        default=0.0,
-        description="Heavy duty vehicles per hour (18-22h)",
-        ge=0.0,
-    )
-    light_motorcycles_evening: Optional[float] = Field(
-        default=None,
-        description="Mopeds ≤ 50cc per hour (18-22h)",
-        ge=0.0,
-
-    )
-    heavy_motorcycles_evening: Optional[float] = Field(
-        default=None,
-        description="Motorcycles > 50cc per hour (18-22h)",
-        ge=0.0,
-    )
-
-    # Night period (22-6h)
-    light_vehicles_night: float = Field(
-        default=0.0,
-        description="Light vehicles per hour (22-6h)",
-        ge=0.0,
-    )
-    medium_vehicles_night: float | None = Field(
-        default=None,
-        description="Medium heavy vehicles per hour (22-6h)",
-        ge=0.0,
-    )
-    heavy_vehicles_night: float = Field(
-        default=0.0,
-        description="Heavy duty vehicles per hour (22-6h)",
-        ge=0.0,
-    )
-    light_motorcycles_night: Optional[float] = Field(
-        default=None,
-        description="Mopeds ≤ 50cc per hour (22-6h)",
-        ge=0.0,
-    )
-    heavy_motorcycles_night: Optional[float] = Field(
-        default=None,
-        description="Motorcycles > 50cc per hour (22-6h)",
-        ge=0.0,
-    )
-
-    # Speeds
-    light_speed_day: float | None = Field(
-        default=None,
-        description="Light vehicle speed in km/h (6-18h)",
-        ge=0.0,
-        le=200.0,
-    )
-    light_speed_evening: float | None = Field(
-        default=None,
-        description="Light vehicle speed in km/h (18-22h)",
-        ge=0.0,
-        le=200.0,
-    )
-    light_speed_night: float | None = Field(
-        default=None,
-        description="Light vehicle speed in km/h (22-6h)",
-        ge=0.0,
-        le=200.0,
-    )
-
-    medium_speed_day: float | None = Field(  # Add missing speed fields
-        default=None,
-        description="Medium vehicle speed in km/h (6-18h)",
-        ge=0.0,
-        le=200.0,
-    )
-    medium_speed_evening: float | None = Field(
-        default=None,
-        description="Medium vehicle speed in km/h (18-22h)",
-        ge=0.0,
-        le=200.0,
-    )
-    medium_speed_night: float | None = Field(
-        default=None,
-        description="Medium vehicle speed in km/h (22-6h)",
-        ge=0.0,
-        le=200.0,
-    )
-    heavy_speed_day: float | None = Field(
-        default=None,
-        description="Heavy vehicle speed in km/h (6-18h)",
-        ge=0.0,
-        le=200.0,
-    )
-    heavy_speed_evening: float | None = Field(
-        default=None,
-        description="Heavy vehicle speed in km/h (18-22h)",
-        ge=0.0,
-        le=200.0,
-    )
-    heavy_speed_night: float | None = Field(
-        default=None,
-        description="Heavy vehicle speed in km/h (22-6h)",
-        ge=0.0,
-        le=200.0,
-    )
-
-    light_moto_speed_day: float | None = Field(  # Rename from wav_spd to light_moto_speed
-        default=None,
-        description="Moped speed in km/h (6-18h)",
-        ge=0.0,
-        le=200.0,
-    )
-    light_moto_speed_evening: float | None = Field(
-        default=None,
-        description="Moped speed in km/h (18-22h)",
-        ge=0.0,
-        le=200.0,
-    )
-    light_moto_speed_night: float | None = Field(
-        default=None,
-        description="Moped speed in km/h (22-6h)",
-        ge=0.0,
-        le=200.0,
-    )
-
-    heavy_moto_speed_day: float | None = Field(  # Rename from wbv_spd to heavy_moto_speed
-        default=None,
-        description="Motorcycle speed in km/h (6-18h)",
-        ge=0.0,
-        le=200.0,
-    )
-    heavy_moto_speed_evening: float | None = Field(
-        default=None,
-        description="Motorcycle speed in km/h (18-22h)",
-        ge=0.0,
-        le=200.0,
-    )
-    heavy_moto_speed_night: float | None = Field(
-        default=None,
-        description="Motorcycle speed in km/h (22-6h)",
-        ge=0.0,
-        le=200.0,
-    )
-    # Road properties
-    pavement: str = Field(
-        default="NL08",
-        description="CNOSSOS road surface type (e.g. NL08)",
-        pattern=r"^[A-Z]{2}\d{2}$",
-    )
-    
-    temperature_day: float = Field(
-        default=20.0,
-        description="Average temperature in °C (6-18h)",
-    )
-    temperature_evening: float = Field(
-        default=20.0,
-        description="Average temperature in °C (18-22h)",
-    )
-    temperature_night: float = Field(
-        default=20.0,
-        description="Average temperature in °C (22-6h)",
-    )
-    
-    studded_tires_months: Optional[float] = Field(
-        default=None,
-        description="Months per year with studded tires (0-12)",
-        ge=0.0,
-        le=12.0
-    )
-    studded_tires_ratio: Optional[float] = Field(
-        default=None,
-        description="Ratio of vehicles with studded tires (0-1)",
-        ge=0.0,
-        le=1.0,
-    )
-    
-    junction_distance: Optional[float] = Field(
-        default=None,
-        description="Distance to junction in meters",
-        ge=0.0,
-    )
-    junction_type: JunctionType = Field(
-        default=JunctionType.NONE,
-        description="Type of junction (0=none, 1=traffic light, 2=roundabout)",
-    )
-    slope: Optional[float] = Field(
-        default=None,
-        description="Road slope in percent",
-    )
-
-    class Config:
-        """Pydantic model configuration."""
-        populate_by_name = True  # Allow both alias and field names
-        alias_generator = None   # Use explicit aliases only
-
-    @model_validator(mode='after')
-    def check_vehicles_and_speeds(self) -> 'TrafficFlow':
-        """Validate required combinations of vehicles and speeds."""
-        for period in ['day', 'evening', 'night']:
-            # Check if at least one vehicle type is present
-            has_light = getattr(self, f'light_vehicles_{period}') is not None
-            has_heavy = getattr(self, f'heavy_vehicles_{period}') is not None
-            
-            if not has_light and not has_heavy:
-                continue  # Skip period if no vehicles
-                
-            if has_light and getattr(self, f'light_speed_{period}') is None:
-                raise ValueError(f"Light vehicle speed required for {period}")
-                
-            if has_heavy and getattr(self, f'heavy_speed_{period}') is None:
-                raise ValueError(f"Heavy vehicle speed required for {period}")
-                
-            # Optional vehicles need speed if present
-            if getattr(self, f'medium_vehicles_{period}'):
-                if getattr(self, f'medium_speed_{period}') is None:
-                    raise ValueError(f"Medium vehicle speed required for {period}")
-                    
-            # Similar checks for motorcycles...
-            
-        return self
-
-
 class CnossosTrafficFlow(BaseModel):
     """Internal traffic flow parameters matching NoiseModelling field names."""
     
+    @classmethod
+    def from_user_model(cls, user_model: 'TrafficFlow') -> Self:
+        """Convert from user model to internal model."""
+        # Pydantic v2 model_dump() with by_alias=True converts to internal field names
+        return cls(**user_model.model_dump())
+
     # Vehicle counts - default None to match database behavior
     LV_D: float | None = Field(
         default=None,
@@ -565,3 +303,276 @@ class CnossosTrafficFlow(BaseModel):
     class Config:
         """Pydantic model configuration."""
         populate_by_name = True
+
+class TrafficFlow(BaseModel):
+    """User-friendly traffic flow parameters for a road segment.
+    
+    Required fields:
+    - At least one vehicle count (light or heavy)
+    - Speed for each provided vehicle count
+    
+    Optional fields:
+    - Medium vehicles
+    - Motorcycles (light and heavy)
+    - All associated speeds
+    """
+
+
+    class Config:
+        """Pydantic model configuration."""
+        populate_by_name = True  # Allow both alias and field names
+        alias_generator = None   # Use explicit aliases only
+
+    def to_internal(self) -> CnossosTrafficFlow:
+        """Convert to internal model."""
+        return CnossosTrafficFlow.from_user_model(self)
+
+    @model_validator(mode='after')
+    def check_vehicles_and_speeds(self) -> 'TrafficFlow':
+        """Validate required combinations of vehicles and speeds."""
+        for period in ['day', 'evening', 'night']:
+            # Check if at least one vehicle type is present
+            has_light = getattr(self, f'light_vehicles_{period}') is not None
+            has_heavy = getattr(self, f'heavy_vehicles_{period}') is not None
+            
+            if not has_light and not has_heavy:
+                continue  # Skip period if no vehicles
+                
+            if has_light and getattr(self, f'light_speed_{period}') is None:
+                raise ValueError(f"Light vehicle speed required for {period}")
+                
+            if has_heavy and getattr(self, f'heavy_speed_{period}') is None:
+                raise ValueError(f"Heavy vehicle speed required for {period}")
+                
+            # Optional vehicles need speed if present
+            if getattr(self, f'medium_vehicles_{period}'):
+                if getattr(self, f'medium_speed_{period}') is None:
+                    raise ValueError(f"Medium vehicle speed required for {period}")
+                    
+            # Similar checks for motorcycles...
+            
+        return self
+
+    # Day period (6-18h)
+    light_vehicles_day: float = Field(
+        default=0.0,
+        description="Light vehicles per hour (6-18h)",
+        ge=0.0,
+    )
+    medium_vehicles_day: float | None = Field(
+        default=None,
+        description="Medium heavy vehicles, delivery vans > 3.5t, buses per hour (6-18h)",
+        ge=0.0,
+    )
+    heavy_vehicles_day: float = Field(
+        default=0.0,
+        description="Heavy duty vehicles, buses with 3+ axles per hour (6-18h)",
+        ge=0.0,
+    )
+    light_motorcycles_day: Optional[float] = Field(
+        default=None,
+        description="Mopeds, tricycles, quads ≤ 50cc per hour (6-18h)",
+        ge=0.0,
+    )
+    heavy_motorcycles_day: Optional[float] = Field(
+        default=None,
+        description="Motorcycles, tricycles, quads > 50cc per hour (6-18h)",
+        ge=0.0,
+    )
+
+    # Evening period (18-22h)
+    light_vehicles_evening: float = Field(
+        default=0.0,
+        description="Light vehicles per hour (18-22h)",
+        ge=0.0,
+    )
+    medium_vehicles_evening: float | None = Field(
+        default=None,
+        description="Medium heavy vehicles per hour (18-22h)",
+        ge=0.0,
+    )
+    heavy_vehicles_evening: float = Field(
+        default=0.0,
+        description="Heavy duty vehicles per hour (18-22h)",
+        ge=0.0,
+    )
+    light_motorcycles_evening: Optional[float] = Field(
+        default=None,
+        description="Mopeds ≤ 50cc per hour (18-22h)",
+        ge=0.0,
+
+    )
+    heavy_motorcycles_evening: Optional[float] = Field(
+        default=None,
+        description="Motorcycles > 50cc per hour (18-22h)",
+        ge=0.0,
+    )
+
+    # Night period (22-6h)
+    light_vehicles_night: float = Field(
+        default=0.0,
+        description="Light vehicles per hour (22-6h)",
+        ge=0.0,
+    )
+    medium_vehicles_night: float | None = Field(
+        default=None,
+        description="Medium heavy vehicles per hour (22-6h)",
+        ge=0.0,
+    )
+    heavy_vehicles_night: float = Field(
+        default=0.0,
+        description="Heavy duty vehicles per hour (22-6h)",
+        ge=0.0,
+    )
+    light_motorcycles_night: Optional[float] = Field(
+        default=None,
+        description="Mopeds ≤ 50cc per hour (22-6h)",
+        ge=0.0,
+    )
+    heavy_motorcycles_night: Optional[float] = Field(
+        default=None,
+        description="Motorcycles > 50cc per hour (22-6h)",
+        ge=0.0,
+    )
+
+    # Speeds
+    light_speed_day: float | None = Field(
+        default=None,
+        description="Light vehicle speed in km/h (6-18h)",
+        ge=0.0,
+        le=200.0,
+    )
+    light_speed_evening: float | None = Field(
+        default=None,
+        description="Light vehicle speed in km/h (18-22h)",
+        ge=0.0,
+        le=200.0,
+    )
+    light_speed_night: float | None = Field(
+        default=None,
+        description="Light vehicle speed in km/h (22-6h)",
+        ge=0.0,
+        le=200.0,
+    )
+
+    medium_speed_day: float | None = Field(  # Add missing speed fields
+        default=None,
+        description="Medium vehicle speed in km/h (6-18h)",
+        ge=0.0,
+        le=200.0,
+    )
+    medium_speed_evening: float | None = Field(
+        default=None,
+        description="Medium vehicle speed in km/h (18-22h)",
+        ge=0.0,
+        le=200.0,
+    )
+    medium_speed_night: float | None = Field(
+        default=None,
+        description="Medium vehicle speed in km/h (22-6h)",
+        ge=0.0,
+        le=200.0,
+    )
+    heavy_speed_day: float | None = Field(
+        default=None,
+        description="Heavy vehicle speed in km/h (6-18h)",
+        ge=0.0,
+        le=200.0,
+    )
+    heavy_speed_evening: float | None = Field(
+        default=None,
+        description="Heavy vehicle speed in km/h (18-22h)",
+        ge=0.0,
+        le=200.0,
+    )
+    heavy_speed_night: float | None = Field(
+        default=None,
+        description="Heavy vehicle speed in km/h (22-6h)",
+        ge=0.0,
+        le=200.0,
+    )
+
+    light_moto_speed_day: float | None = Field(  # Rename from wav_spd to light_moto_speed
+        default=None,
+        description="Moped speed in km/h (6-18h)",
+        ge=0.0,
+        le=200.0,
+    )
+    light_moto_speed_evening: float | None = Field(
+        default=None,
+        description="Moped speed in km/h (18-22h)",
+        ge=0.0,
+        le=200.0,
+    )
+    light_moto_speed_night: float | None = Field(
+        default=None,
+        description="Moped speed in km/h (22-6h)",
+        ge=0.0,
+        le=200.0,
+    )
+
+    heavy_moto_speed_day: float | None = Field(  # Rename from wbv_spd to heavy_moto_speed
+        default=None,
+        description="Motorcycle speed in km/h (6-18h)",
+        ge=0.0,
+        le=200.0,
+    )
+    heavy_moto_speed_evening: float | None = Field(
+        default=None,
+        description="Motorcycle speed in km/h (18-22h)",
+        ge=0.0,
+        le=200.0,
+    )
+    heavy_moto_speed_night: float | None = Field(
+        default=None,
+        description="Motorcycle speed in km/h (22-6h)",
+        ge=0.0,
+        le=200.0,
+    )
+    # Road properties
+    pavement: str = Field(
+        default="NL08",
+        description="CNOSSOS road surface type (e.g. NL08)",
+        pattern=r"^[A-Z]{2}\d{2}$",
+    )
+    
+    temperature_day: float = Field(
+        default=20.0,
+        description="Average temperature in °C (6-18h)",
+    )
+    temperature_evening: float = Field(
+        default=20.0,
+        description="Average temperature in °C (18-22h)",
+    )
+    temperature_night: float = Field(
+        default=20.0,
+        description="Average temperature in °C (22-6h)",
+    )
+    
+    studded_tires_months: Optional[float] = Field(
+        default=None,
+        description="Months per year with studded tires (0-12)",
+        ge=0.0,
+        le=12.0
+    )
+    studded_tires_ratio: Optional[float] = Field(
+        default=None,
+        description="Ratio of vehicles with studded tires (0-1)",
+        ge=0.0,
+        le=1.0,
+    )
+    
+    junction_distance: Optional[float] = Field(
+        default=None,
+        description="Distance to junction in meters",
+        ge=0.0,
+    )
+    junction_type: JunctionType = Field(
+        default=JunctionType.NONE,
+        description="Type of junction (0=none, 1=traffic light, 2=roundabout)",
+    )
+    slope: Optional[float] = Field(
+        default=None,
+        description="Road slope in percent",
+    )
+
