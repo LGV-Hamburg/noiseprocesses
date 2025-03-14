@@ -33,22 +33,12 @@ class InputOptionalTables(BaseModel):
     )
 
 
-class OutputTables(BaseModel):
+class LoudnessOutputTables(BaseModel):
     model_config = ConfigDict(frozen=True)
 
-    emission_table: str = Field(
-        default="EMISSIONS",
-        description=(
-            "Table with calculated noise emissions from source data like roads"
-        )
-    )
-    propagation_table: str = Field(
-        default="PROPAGATION",
-        description="Table with calculated noise levels"
-    )
     loudness_day_result_table: str = Field(
         default="LDAY_RESULT",
-        description="Table with calculated loudness day levels"
+        description="Table with calculated loudness day levels",
     )
     loudness_evening_result_table: str = Field(
         default="LEVENING_RESULT",
