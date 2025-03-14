@@ -284,7 +284,7 @@ class RoadPropagationCalculator:
         """Create final result tables with geometry.
         
         Args:
-            lden_config: LDEN configuration from NoiseModelling
+            lden_config: LDEN configuration from NoiseModelling java class
             receivers_table: Name of receivers table
             receivers_geom_field: Name of geometry field in receivers table
             
