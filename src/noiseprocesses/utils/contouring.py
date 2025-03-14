@@ -61,3 +61,5 @@ class IsoSurfaceBezier:
         bezier.createTable(self.database.connection)
 
         logger.info(f"Contouring table {bezier.getOutputTable()} created.")
+
+        return bezier.getOutputTable()
