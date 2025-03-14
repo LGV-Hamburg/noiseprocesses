@@ -1,10 +1,10 @@
-from contextlib import contextmanager
 import json
 import os
-from logging import getLogger
-from pathlib import Path
 import re
 import tempfile
+from contextlib import contextmanager
+from logging import getLogger
+from pathlib import Path
 from typing import Any, Dict, Generator
 
 from sqlalchemy import ClauseElement, MetaData, text
@@ -13,27 +13,22 @@ from noiseprocesses.core.java_bridge import JavaBridge
 
 logger = getLogger(__name__)
 
+
 class SQLBuilder:
     @staticmethod
     def drop_table(table_name: str) -> str:
-        safe_name = f'"{table_name.replace("\"", "\"\"")}"'
+        safe_name = f'"{table_name.replace('"', '""')}"'
         return f"DROP TABLE IF EXISTS {safe_name}"
-        
+
     @staticmethod
     def create_spatial_index(table_name: str) -> str:
-        safe_name = f'"{table_name.replace("\"", "\"\"")}"'
-        return (
-            f"CREATE SPATIAL INDEX ON {safe_name}(the_geom)"
-        )
+        safe_name = f'"{table_name.replace('"', '""')}"'
+        return f"CREATE SPATIAL INDEX ON {safe_name}(the_geom)"
 
     # using CTAS here, named parameters are not supported
     @staticmethod
     def create_grid_table(
-        table_name: str,
-        fence_geom: str,
-        height: float,
-        srid: int,
-        delta: float
+        table_name: str, fence_geom: str, height: float, srid: int, delta: float
     ) -> str:
         return f"""
             CREATE TABLE {table_name} AS 
@@ -55,15 +50,14 @@ class SQLBuilder:
     def create_table(table_name: str, columns: list[tuple[str, str]]) -> str:
         """
         Create safe CREATE TABLE statement.
-        
+
         Args:
             table_name: Table name
             columns: List of (name, type) tuples
         """
         safe_name = SQLBuilder.quote_identifier(table_name)
         safe_columns = [
-            f"{SQLBuilder.quote_identifier(name)} {type_}"
-            for name, type_ in columns
+            f"{SQLBuilder.quote_identifier(name)} {type_}" for name, type_ in columns
         ]
         return f"CREATE TABLE {safe_name} ({', '.join(safe_columns)})"
 
@@ -72,12 +66,13 @@ class SQLBuilder:
         """Safely quote table/column identifiers."""
         if not identifier:
             raise ValueError("Empty identifier")
-        return f'"{identifier.replace("\"", "\"\"")}"'
+        return f'"{identifier.replace('"', '""')}"'
 
     @staticmethod
     def validate_identifier(identifier: str) -> bool:
         """Validate table/column name."""
-        return bool(re.match(r'^[A-Za-z][A-Za-z0-9_]*$', identifier))
+        return bool(re.match(r"^[A-Za-z][A-Za-z0-9_]*$", identifier))
+
 
 class NoiseDatabase:
     """Manages H2GIS database connections and operations for NoiseModelling."""
@@ -100,7 +95,7 @@ class NoiseDatabase:
 
         jdbc_url = f"jdbc:h2:{db_path};AUTO_SERVER=TRUE"
         if self.in_memory:
-            jdbc_url = f"jdbc:h2:mem:{db_path};DB_CLOSE_DELAY=-1" # DB_CLOSE_DELAY=-1" creates a potential memory leak!
+            jdbc_url = f"jdbc:h2:mem:{db_path};DB_CLOSE_DELAY=-1"  # DB_CLOSE_DELAY=-1" creates a potential memory leak!
 
         props = self.java_bridge.Properties()
         props.setProperty("user", "sa")
@@ -122,7 +117,6 @@ class NoiseDatabase:
         return wrapped_conn
 
     def _init_spatial_extension(self):
-
         # Important: Initialize H2GIS spatial functions
         self.java_bridge.H2GISFunctions.load(self.connection)
         # or use this directly
@@ -156,28 +150,28 @@ class NoiseDatabase:
 
     def _bind_parameters(self, stmt, params: dict) -> None:
         """Bind parameters to prepared statement.
-        
+
         Args:
             stmt: JDBC PreparedStatement
             params: Dictionary of parameter names and values
         """
         if not params:
             return
-            
+
         # Convert named parameters to positional
         sql = stmt.toString()
         param_order = []
-        
+
         # Extract parameter names in order
         for key in params.keys():
             param_name = f":{key}"
             if param_name in sql:
                 param_order.append(key)
-                
+
         # Bind parameters in correct order
         for i, param_name in enumerate(param_order, start=1):
             value = params[param_name]
-            
+
             # Handle different Java types
             if isinstance(value, (int, bool)):
                 stmt.setInt(i, value)
@@ -187,7 +181,7 @@ class NoiseDatabase:
                 stmt.setNull(i, self.java_bridge.Types.NULL)
             else:
                 stmt.setObject(i, value)
-                
+
         # Store query for fetch_one method
         self._last_query = sql
 
@@ -293,7 +287,7 @@ class NoiseDatabase:
     def execute(self, sql: str | ClauseElement, params: dict | None = None) -> None:
         """Execute SQL with consistent parameter handling."""
         sql_str = self._get_sql_string(sql)
-        
+
         with self._get_prepared_statement(sql_str) as stmt:
             if params:
                 self._bind_parameters(stmt, params)
@@ -328,10 +322,7 @@ class NoiseDatabase:
         col_count = meta.getColumnCount()
         rows = []
         while result_set.next():
-            rows.append(tuple(
-                result_set.getObject(i + 1) 
-                for i in range(col_count)
-            ))
+            rows.append(tuple(result_set.getObject(i + 1) for i in range(col_count)))
         return rows
 
     def query(self, sql: str, params: dict | None = None) -> list[tuple]:
@@ -350,10 +341,7 @@ class NoiseDatabase:
         """)
 
     def import_geojson(
-        self,
-        source: str | Dict[str, Any],
-        table_name: str,
-        crs: str | int = 4326
+        self, source: str | Dict[str, Any], table_name: str, crs: str | int = 4326
     ) -> None:
         """Import GeoJSON into database with proper spatial indexing and SRID handling.
 
@@ -383,18 +371,21 @@ class NoiseDatabase:
                 self.connection, table_name, file_obj, EmptyProgressVisitor()
             )
         else:
-            # Dictionary input or string path that doesn't exist (assume it's GeoJSON content)
+            # Dictionary input or string path that doesn't exist
+            # (assume it's GeoJSON content)
             if isinstance(source, dict):
                 json_str = json.dumps(source)
             else:  # Assume it's already a JSON string
                 json_str = source
-                
+
             # Create a temporary file
-            with tempfile.NamedTemporaryFile(suffix='.geojson', delete=False) as temp_file:
-                temp_file.write(json_str.encode('utf-8'))
+            with tempfile.NamedTemporaryFile(
+                suffix=".geojson", delete=False
+            ) as temp_file:
+                temp_file.write(json_str.encode("utf-8"))
                 temp_path = temp_file.name
                 logger.debug(f"Created temporary file: {temp_path}")
-                
+
             try:
                 # Import from temp file
                 file_obj = self.java_bridge.File(temp_path)
@@ -413,8 +404,7 @@ class NoiseDatabase:
         """Process an imported table with indexing and SRID handling."""
         TableLocation = self.java_bridge.TableLocation
         table_location = TableLocation.parse(
-            table_name,
-            self.java_bridge.DBUtils.getDBType(self.connection)
+            table_name, self.java_bridge.DBUtils.getDBType(self.connection)
         )
 
         # Get spatial fields
@@ -433,8 +423,7 @@ class NoiseDatabase:
 
         # Handle SRID
         table_srid = self.java_bridge.GeometryTableUtilities.getSRID(
-            self.connection,
-            TableLocation.parse(table_name)
+            self.connection, TableLocation.parse(table_name)
         )
         srid = self._extract_srid(crs)
 
@@ -449,103 +438,108 @@ class NoiseDatabase:
             self.add_primary_key(table_name)
 
     def import_raster(
-            self, file_path, output_table="DEM",
-            srid=4326, fence=None, downscale=1
-        ):
-            """
-            Import a raster file into H2GIS database.
-            
-            Args:
-                file_path: Path to the raster file
-                output_table: Name of the output table
-                srid: Default SRID to use if not specified in the file
-                fence: WKT string of a polygon to limit the import area
-                downscale: Factor to downscale the raster (1 = no downscale)
-                
-            Returns:
-                String with information about the import
-            """
-            # Validate file existence
-            if not os.path.exists(file_path):
-                raise FileNotFoundError(f"File not found: {file_path}")
-                
-            # Create statement
-            stmt = self.connection.createStatement()
-            
-            # Drop table if exists
-            stmt.execute(f"DROP TABLE IF EXISTS {output_table}")
-            
-            # Get file extension and choose appropriate driver
-            ext = os.path.splitext(file_path)[1].lower()[1:]
-            
-            if ext == "asc":
-                return self._import_asc(
-                    file_path, output_table, srid, fence, downscale, stmt
-                )
-            else:
-                raise ValueError(f"Unsupported file extension: {ext}")
-        
+        self, file_path, output_table="DEM", srid=4326, fence=None, downscale=1
+    ):
+        """
+        Import a raster file into H2GIS database.
+
+        Args:
+            file_path: Path to the raster file
+            output_table: Name of the output table
+            srid: Default SRID to use if not specified in the file
+            fence: WKT string of a polygon to limit the import area
+            downscale: Factor to downscale the raster (1 = no downscale)
+
+        Returns:
+            String with information about the import
+        """
+        # Validate file existence
+        if not os.path.exists(file_path):
+            raise FileNotFoundError(f"File not found: {file_path}")
+
+        # Create statement
+        stmt = self.connection.createStatement()
+
+        # Drop table if exists
+        stmt.execute(f"DROP TABLE IF EXISTS {output_table}")
+
+        # Get file extension and choose appropriate driver
+        ext = os.path.splitext(file_path)[1].lower()[1:]
+
+        if ext == "asc":
+            return self._import_asc(
+                file_path, output_table, srid, fence, downscale, stmt
+            )
+        else:
+            raise ValueError(f"Unsupported file extension: {ext}")
+
     def _import_asc(self, file_path, output_table, srid, fence, downscale, stmt):
         """
         Import an ASC file using AscReaderDriver
         """
         logger.info(f"Importing ASC file: {file_path}")
-        
+
         # Create ASC driver
         asc_driver = self.java_bridge.AscReaderDriver()
         asc_driver.setAs3DPoint(True)
-        
+
         # Check for PRJ file to determine SRID
         file_prefix = os.path.splitext(file_path)[0]
         prj_file = f"{file_prefix}.prj"
-        
+
         if os.path.exists(prj_file):
             logger.info(f"Found PRJ file: {prj_file}")
             try:
-                detected_srid = self.java_bridge.PRJUtil.getSRID(self.java_bridge.File(prj_file))
+                detected_srid = self.java_bridge.PRJUtil.getSRID(
+                    self.java_bridge.File(prj_file)
+                )
                 if detected_srid != 0:
                     srid = detected_srid
             except Exception as e:
-                logger.warning(f"Error reading PRJ file: {e}. Using default SRID: {srid}")
-        
+                logger.warning(
+                    f"Error reading PRJ file: {e}. Using default SRID: {srid}"
+                )
+
         # Apply fence if provided
         if fence:
             wkt_reader = self.java_bridge.WKTReader()
             wkt_writer = self.java_bridge.WKTWriter()
-            
+
             fence_geom = wkt_reader.read(fence)
             logger.info(f"Got fence: {wkt_writer.write(fence_geom)}")
-            
+
             # Transform fence to match the DEM coordinate system
             fence_transform = self.java_bridge.ST_Transform.ST_Transform(
-                self.connection, 
+                self.connection,
                 self.java_bridge.ST_SetSRID.setSRID(fence_geom, 4326),
-                srid
+                srid,
             )
-            
+
             # Get envelope from transformed geometry
             envelope = fence_transform.getEnvelopeInternal()
             asc_driver.setExtractEnvelope(envelope)
-            logger.info(f"Fence coordinate transformed: {wkt_writer.write(fence_transform)}")
-        
+            logger.info(
+                f"Fence coordinate transformed: {wkt_writer.write(fence_transform)}"
+            )
+
         # Apply downscaling if requested
         if downscale > 1:
             asc_driver.setDownScale(downscale)
-        
+
         # Import the ASC file
         progress_visitor = self.java_bridge.RootProgressVisitor(1, True, 1)
         asc_driver.read(
-            self.connection, 
-            self.java_bridge.File(file_path), 
-            progress_visitor, 
-            output_table, 
-            srid
+            self.connection,
+            self.java_bridge.File(file_path),
+            progress_visitor,
+            output_table,
+            srid,
         )
-        
+
         # Create spatial index
         logger.info(f"Creating spatial index on {output_table}")
         stmt.execute(f"CREATE SPATIAL INDEX ON {output_table}(the_geom)")
-        
+
         return f"Table {output_table} has been created with SRID {srid}"
 
     def disconnect(self):
@@ -584,3 +578,27 @@ class NoiseDatabase:
             file = db_path.with_suffix(ext)
             if file.exists():
                 file.unlink()
+
+    def export_data(self, table_to_export: str) -> str:
+        logger.info(f"Exporting {table_to_export} to a temporary GeoJSON file")
+
+        table_to_export = table_to_export.upper()
+        fields = self.java_bridge.JDBCUtilities.getColumnNames(
+            self.connection, table_to_export
+        )
+        if not fields:
+            raise Exception("The table is empty and cannot be exported.")
+
+        # Create a temporary file for the GeoJSON export
+        with tempfile.NamedTemporaryFile(suffix=".geojson", delete=False) as temp_file:
+            export_path = temp_file.name
+
+        export_file = self.java_bridge.File(export_path)
+        progress_visitor = self.java_bridge.EmptyProgressVisitor()
+        driver = self.java_bridge.GeoJsonDriverFunction()
+
+        driver.exportTable(
+            self.connection, table_to_export, export_file, True, progress_visitor
+        )
+
+        return export_path
