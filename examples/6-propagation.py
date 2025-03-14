@@ -1,4 +1,5 @@
 from pathlib import Path
+
 from noiseprocesses.calculation.road_propagation import RoadPropagationCalculator
 from noiseprocesses.core.database import NoiseDatabase
 from noiseprocesses.models.grid_config import DelaunayGridConfig, RegularGridConfig
@@ -8,10 +9,7 @@ from noiseprocesses.utils.grids import DelaunayGridGenerator, RegularGridGenerat
 
 config = NoiseCalculationConfig()
 
-db = NoiseDatabase(
-    config.database.name,
-    in_memory=False
-)
+db = NoiseDatabase(config.database.name, in_memory=False)
 
 print(config)
 
@@ -28,8 +26,8 @@ print("generating receivers grid")
 grid_config = DelaunayGridConfig(
     buildings_table="BUILDINGS",
     output_table="RECEIVERS",
-    height=2.75,  # 4 meters receiver height
-    create_triangles=True
+    calculation_height=2.75,  # 4 meters receiver height
+    create_triangles=True,
 )
 
 grid_generator = DelaunayGridGenerator(db)
@@ -89,8 +87,8 @@ print("-" * 50)
 for col in columns:
     print("{:<20} {:<20} {:<10}".format(col[0], col[1], col[2]))
 
-surface_generator = IsoSurfaceBezier(
-    db
-)
+surface_generator = IsoSurfaceBezier(db)
 
 surface_generator.generate_iso_surface()
+
+db.export_data("CONTOURING_NOISE_MAP")
