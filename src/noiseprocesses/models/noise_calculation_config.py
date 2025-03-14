@@ -56,15 +56,15 @@ class PropagationSettings(BaseModel):
 class OutputControls(BaseModel):
     model_config = ConfigDict(frozen=True)
 
-    skip_lday: bool = Field(default=False, description="Skip day period calculation")
+    skip_lday: bool = Field(default=False, description="Skip day period noise calculation")
     skip_levening: bool = Field(
-        default=False, description="Skip evening period calculation"
+        default=False, description="Skip evening period noise calculation"
     )
     skip_lnight: bool = Field(
-        default=False, description="Skip night period calculation"
+        default=False, description="Skip night period noise calculation"
     )
     skip_lden: bool = Field(
-        default=False, description="Skip day-evening-night calculation"
+        default=False, description="Skip day-evening-night noise calculation"
     )
     export_source_id: bool = Field(
         default=False, description="Export source identifiers"
