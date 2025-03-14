@@ -1,17 +1,7 @@
-from typing import Literal
-
 from pydantic import BaseModel, Field, field_validator
-
-from noiseprocesses.models.propagation_config import OutputTablesNames
 
 
 class IsoSurfaceConfig(BaseModel):
-    noise_level_table: Literal[
-        OutputTablesNames.l_day,
-        OutputTablesNames.l_den,
-        OutputTablesNames.l_evening,
-        OutputTablesNames.l_night,
-    ] = OutputTablesNames.l_den
     iso_classes: list | None = Field(
         default=None,
         description=(
