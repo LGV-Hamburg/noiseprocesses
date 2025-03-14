@@ -33,21 +33,48 @@ class InputOptionalTables(BaseModel):
     )
 
 
-class IntermediateTables(BaseModel):
+class OutputTables(BaseModel):
     model_config = ConfigDict(frozen=True)
 
     emission_table: str = Field(
-        default="EMISSIONS", description="Table with calculated noise emissions"
+        default="EMISSIONS",
+        description=(
+            "Table with calculated noise emissions from source data like roads"
+        )
     )
     propagation_table: str = Field(
-        default="PROPAGATION", description="Table with calculated noise levels"
+        default="PROPAGATION",
+        description="Table with calculated noise levels"
     )
-
-
-class OutputTablesNames(Enum):
-    model_config = ConfigDict(frozen=True)
-
-    l_den = "LDEN_GEOM"
-    l_day = "LDAY_GEOM"
-    l_evening = "LEVENING_GEOM"
-    l_night = "LNIGHT_GEOM"
+    loudness_day_result_table: str = Field(
+        default="LDAY_RESULT",
+        description="Table with calculated loudness day levels"
+    )
+    loudness_evening_result_table: str = Field(
+        default="LEVENING_RESULT",
+        description="Table with calculated loudness evening levels"
+    )
+    loudness_night_result_table: str = Field(
+        default="LNIGHT_RESULT",
+        description="Table with calculated loudness night levels"
+    )
+    loudness_den_result_table: str = Field(
+        default="LDEN_RESULT",
+        description="Table with calculated loudness den levels"
+    )
+    loudness_day_geometry_table: str = Field(
+        default="LDAY_GEOM",
+        description="Table with calculated loudness day geometry"
+    )
+    loudness_evening_geometry_table: str = Field(
+        default="LEVENING_GEOM",
+        description="Table with calculated loudness evening geometry"
+    )
+    loudness_night_geometry_table: str = Field(
+        default="LNIGHT_GEOM",
+        description="Table with calculated loudness night geometry"
+    )
+    loudness_den_geometry_table: str = Field(
+        default="LDEN_GEOM",
+        description="Table with calculated loudness den geometry"
+    )
