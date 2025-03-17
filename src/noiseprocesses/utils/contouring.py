@@ -24,15 +24,22 @@ class IsoSurfaceBezier:
         
         return IsoSurfaceConfig()
 
-    def generate_iso_surface(self):
-        logger.info("Starting isosurface generation.")
+    def generate_iso_surface(self, table_name: str) -> str:
+        """Generate isosurface using Bezier contouring.
+        Args:
+            table_name (str): Name of the table containing noise levels
+        Returns:
+            str: Name of the created isosurface table
+        """
+        logger.info("Generating isosurface for table: %s", table_name) 
+        logger.debug("Using config: %s", self.config.model_dump_json())
 
         srid = 0
         TableLocation = self.java_bridge.TableLocation
 
         srid = self.java_bridge.GeometryTableUtilities.getSRID(
             self.database.connection, TableLocation.parse(
-                self.config.noise_level_table.value
+                table_name
             )
         )
 
@@ -48,7 +55,7 @@ class IsoSurfaceBezier:
         bezier = self.java_bridge.BezierContouring(iso_levels, srid)
 
         bezier.setPointTable(
-            self.config.noise_level_table.value
+            table_name
         )
 
         bezier.setSmoothCoefficient(0.5)

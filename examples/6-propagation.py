@@ -89,6 +89,6 @@ for col in columns:
 
 surface_generator = IsoSurfaceBezier(db)
 
-surface_generator.generate_iso_surface()
+surface_generator.generate_iso_surface("LDEN_GEOM")
 
 db.export_data("CONTOURING_NOISE_MAP")
