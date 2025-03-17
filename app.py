@@ -27,9 +27,10 @@ class TrafficNoiseProcess(BaseProcess):
             noise_calculation_config=NoiseCalculationConfig()
         )
 
-        user_input = NoiseCalculationUserInput.model_validate(
-            exec_body
+        user_input: NoiseCalculationUserInput = NoiseCalculationUserInput.model_validate(
+            exec_body["inputs"]
         )
+        user_input.noise_output_controls = exec_body["outputs"]
         output = calculator.calculate_noise_levels(user_input)
 
         return output
