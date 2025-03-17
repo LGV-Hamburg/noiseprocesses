@@ -1,31 +1,27 @@
 from pathlib import Path
 from typing import Optional
 
+from geojson_pydantic import Feature, LineString, MultiLineString, Polygon
+from geojson_pydantic.features import FeatureCollection
 from pydantic import AnyUrl, BaseModel, ConfigDict, Field
 
+from noiseprocesses.models.building_properties import BuildingProperties
+from noiseprocesses.models.grid_config import GridSettingsUser
+from noiseprocesses.models.ground_absorption import GroundAbsorption
+from noiseprocesses.models.isosurface_config import IsoSurfaceUserSettings
 from noiseprocesses.models.propagation_config import (
     InputOptionalTables,
     InputRequiredTables,
 )
-
-from geojson_pydantic import Feature, LineString, MultiLineString, Polygon
-from geojson_pydantic.features import FeatureCollection
-from noiseprocesses.models.grid_config import GridSettingsUser
-from noiseprocesses.models.isosurface_config import IsoSurfaceUserSettings
 from noiseprocesses.models.roads_properties import TrafficFlow
-from noiseprocesses.models.building_properties import BuildingProperties
-from noiseprocesses.models.ground_absorption import GroundAbsorption
 
-BuildingsFeatureCollection = FeatureCollection[
-    Feature[Polygon, BuildingProperties]
-]
+BuildingsFeatureCollection = FeatureCollection[Feature[Polygon, BuildingProperties]]
 RoadsFeatureCollection = FeatureCollection[
     Feature[LineString | MultiLineString, TrafficFlow]
 ]
 GroundAbsorptionFeatureCollection = FeatureCollection[
     Feature[Polygon, GroundAbsorption]
 ]
-
 
 
 class AcousticParameters(BaseModel):
@@ -75,25 +71,27 @@ class PropagationSettings(BaseModel):
 class NoiseLevelsOutputControls(BaseModel):
     model_config = ConfigDict(frozen=True)
 
-    skip_lday: bool = Field(
-        default=False, description="Skip day period noise calculation"
+    noise_day: bool = Field(
+        default=True, description="Skip day period noise calculation"
     )
-    skip_levening: bool = Field(
-        default=False, description="Skip evening period noise calculation"
+    noise_evening: bool = Field(
+        default=True, description="Skip evening period noise calculation"
     )
-    skip_lnight: bool = Field(
-        default=False, description="Skip night period noise calculation"
+    noise_night: bool = Field(
+        default=True, description="Skip night period noise calculation"
     )
-    skip_lden: bool = Field(
-        default=False, description="Skip day-evening-night noise calculation"
+    noise_den: bool = Field(
+        default=True, description="Skip day-evening-night noise calculation"
     )
+
 
 class AdditionalDataOutputControls(BaseModel):
     export_source_id: bool = Field(
-        default=False, description=(
+        default=False,
+        description=(
             "Keep source identifier in output in order to get "
             "noise contribution of each noise source."
-        )
+        ),
     )
     rays_output_path: Optional[Path] = Field(
         default=None, description="Ray propagation export path"
@@ -121,11 +119,23 @@ class NoiseCalculationConfig(BaseModel):
     database: DatabaseConfig = DatabaseConfig()
     required_input: InputRequiredTables = InputRequiredTables()
     optional_input: InputOptionalTables = InputOptionalTables()
-    acoustic_params: AcousticParameters = AcousticParameters() # internal defaults, user overridable
-    propagation_settings: PropagationSettings = PropagationSettings() # internal defaults, user overridable
-    output_controls: NoiseLevelsOutputControls = NoiseLevelsOutputControls() # internal defaults, user overridable
-    additional_output_controls: AdditionalDataOutputControls = AdditionalDataOutputControls()
+    acoustic_params: AcousticParameters = (
+        AcousticParameters()
+    )  # internal defaults, user overridable
+    propagation_settings: PropagationSettings = (
+        PropagationSettings()
+    )  # internal defaults, user overridable
+    output_controls: NoiseLevelsOutputControls = (
+        NoiseLevelsOutputControls()
+    )  # internal defaults, user overridable
+    additional_output_controls: AdditionalDataOutputControls = (
+        AdditionalDataOutputControls()
+    )
+    receiver_grid_settings: GridSettingsUser = (
+        GridSettingsUser()
+    )  # internal defaults, user overridable
     performance: PerformanceSettings = PerformanceSettings()
+
 
 class NoiseCalculationUserInput(BaseModel):
     model_config = ConfigDict(frozen=True)
@@ -142,10 +152,9 @@ class NoiseCalculationUserInput(BaseModel):
 
 
 if __name__ == "__main__":
-
     import json
+
     schema = NoiseCalculationUserInput.model_json_schema()
 
     with open("schema.json", "w") as file:
         json.dump(schema, file, indent=4)
-    
