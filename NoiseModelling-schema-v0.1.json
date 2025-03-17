@@ -1,0 +1,1673 @@
+{
+    "$defs": {
+        "AcousticParameters": {
+            "properties": {
+                "wall_alpha": {
+                    "default": 0.1,
+                    "description": "Wall absorption coefficient",
+                    "maximum": 1.0,
+                    "minimum": 0.0,
+                    "title": "Wall Alpha",
+                    "type": "number"
+                },
+                "max_source_distance": {
+                    "default": 150.0,
+                    "description": "Maximum source-receiver distance in meters",
+                    "exclusiveMinimum": 0.0,
+                    "title": "Max Source Distance",
+                    "type": "number"
+                },
+                "max_reflection_distance": {
+                    "default": 50.0,
+                    "description": "Maximum reflection distance in meters",
+                    "exclusiveMinimum": 0.0,
+                    "title": "Max Reflection Distance",
+                    "type": "number"
+                },
+                "reflection_order": {
+                    "default": 1,
+                    "description": "Number of reflections to consider",
+                    "minimum": 0,
+                    "title": "Reflection Order",
+                    "type": "integer"
+                },
+                "humidity": {
+                    "default": 70.0,
+                    "description": "Relative humidity percentage",
+                    "maximum": 100.0,
+                    "minimum": 0.0,
+                    "title": "Humidity",
+                    "type": "number"
+                },
+                "temperature": {
+                    "default": 15.0,
+                    "description": "Air temperature in Celsius",
+                    "maximum": 50.0,
+                    "minimum": -20.0,
+                    "title": "Temperature",
+                    "type": "number"
+                }
+            },
+            "title": "AcousticParameters",
+            "type": "object"
+        },
+        "BuildingProperties": {
+            "properties": {
+                "id": {
+                    "anyOf": [
+                        {
+                            "type": "integer"
+                        },
+                        {
+                            "type": "string"
+                        }
+                    ],
+                    "title": "Id"
+                },
+                "building_height": {
+                    "title": "Building Height",
+                    "type": "number"
+                }
+            },
+            "required": [
+                "id",
+                "building_height"
+            ],
+            "title": "BuildingProperties",
+            "type": "object"
+        },
+        "FeatureCollection_Feature_Polygon__BuildingProperties__": {
+            "properties": {
+                "bbox": {
+                    "anyOf": [
+                        {
+                            "maxItems": 4,
+                            "minItems": 4,
+                            "prefixItems": [
+                                {
+                                    "type": "number"
+                                },
+                                {
+                                    "type": "number"
+                                },
+                                {
+                                    "type": "number"
+                                },
+                                {
+                                    "type": "number"
+                                }
+                            ],
+                            "type": "array"
+                        },
+                        {
+                            "maxItems": 6,
+                            "minItems": 6,
+                            "prefixItems": [
+                                {
+                                    "type": "number"
+                                },
+                                {
+                                    "type": "number"
+                                },
+                                {
+                                    "type": "number"
+                                },
+                                {
+                                    "type": "number"
+                                },
+                                {
+                                    "type": "number"
+                                },
+                                {
+                                    "type": "number"
+                                }
+                            ],
+                            "type": "array"
+                        },
+                        {
+                            "type": "null"
+                        }
+                    ],
+                    "default": null,
+                    "title": "Bbox"
+                },
+                "type": {
+                    "const": "FeatureCollection",
+                    "title": "Type",
+                    "type": "string"
+                },
+                "features": {
+                    "items": {
+                        "$ref": "#/$defs/Feature_Polygon_BuildingProperties_"
+                    },
+                    "title": "Features",
+                    "type": "array"
+                }
+            },
+            "required": [
+                "type",
+                "features"
+            ],
+            "title": "FeatureCollection[Feature[Polygon, BuildingProperties]]",
+            "type": "object"
+        },
+        "FeatureCollection_Feature_Polygon__GroundAbsorption__": {
+            "properties": {
+                "bbox": {
+                    "anyOf": [
+                        {
+                            "maxItems": 4,
+                            "minItems": 4,
+                            "prefixItems": [
+                                {
+                                    "type": "number"
+                                },
+                                {
+                                    "type": "number"
+                                },
+                                {
+                                    "type": "number"
+                                },
+                                {
+                                    "type": "number"
+                                }
+                            ],
+                            "type": "array"
+                        },
+                        {
+                            "maxItems": 6,
+                            "minItems": 6,
+                            "prefixItems": [
+                                {
+                                    "type": "number"
+                                },
+                                {
+                                    "type": "number"
+                                },
+                                {
+                                    "type": "number"
+                                },
+                                {
+                                    "type": "number"
+                                },
+                                {
+                                    "type": "number"
+                                },
+                                {
+                                    "type": "number"
+                                }
+                            ],
+                            "type": "array"
+                        },
+                        {
+                            "type": "null"
+                        }
+                    ],
+                    "default": null,
+                    "title": "Bbox"
+                },
+                "type": {
+                    "const": "FeatureCollection",
+                    "title": "Type",
+                    "type": "string"
+                },
+                "features": {
+                    "items": {
+                        "$ref": "#/$defs/Feature_Polygon_GroundAbsorption_"
+                    },
+                    "title": "Features",
+                    "type": "array"
+                }
+            },
+            "required": [
+                "type",
+                "features"
+            ],
+            "title": "FeatureCollection[Feature[Polygon, GroundAbsorption]]",
+            "type": "object"
+        },
+        "FeatureCollection_Feature_Union_LineString__MultiLineString___TrafficFlow__": {
+            "properties": {
+                "bbox": {
+                    "anyOf": [
+                        {
+                            "maxItems": 4,
+                            "minItems": 4,
+                            "prefixItems": [
+                                {
+                                    "type": "number"
+                                },
+                                {
+                                    "type": "number"
+                                },
+                                {
+                                    "type": "number"
+                                },
+                                {
+                                    "type": "number"
+                                }
+                            ],
+                            "type": "array"
+                        },
+                        {
+                            "maxItems": 6,
+                            "minItems": 6,
+                            "prefixItems": [
+                                {
+                                    "type": "number"
+                                },
+                                {
+                                    "type": "number"
+                                },
+                                {
+                                    "type": "number"
+                                },
+                                {
+                                    "type": "number"
+                                },
+                                {
+                                    "type": "number"
+                                },
+                                {
+                                    "type": "number"
+                                }
+                            ],
+                            "type": "array"
+                        },
+                        {
+                            "type": "null"
+                        }
+                    ],
+                    "default": null,
+                    "title": "Bbox"
+                },
+                "type": {
+                    "const": "FeatureCollection",
+                    "title": "Type",
+                    "type": "string"
+                },
+                "features": {
+                    "items": {
+                        "$ref": "#/$defs/Feature_Union_LineString__MultiLineString__TrafficFlow_"
+                    },
+                    "title": "Features",
+                    "type": "array"
+                }
+            },
+            "required": [
+                "type",
+                "features"
+            ],
+            "title": "FeatureCollection[Feature[Union[LineString, MultiLineString], TrafficFlow]]",
+            "type": "object"
+        },
+        "Feature_Polygon_BuildingProperties_": {
+            "properties": {
+                "bbox": {
+                    "anyOf": [
+                        {
+                            "maxItems": 4,
+                            "minItems": 4,
+                            "prefixItems": [
+                                {
+                                    "type": "number"
+                                },
+                                {
+                                    "type": "number"
+                                },
+                                {
+                                    "type": "number"
+                                },
+                                {
+                                    "type": "number"
+                                }
+                            ],
+                            "type": "array"
+                        },
+                        {
+                            "maxItems": 6,
+                            "minItems": 6,
+                            "prefixItems": [
+                                {
+                                    "type": "number"
+                                },
+                                {
+                                    "type": "number"
+                                },
+                                {
+                                    "type": "number"
+                                },
+                                {
+                                    "type": "number"
+                                },
+                                {
+                                    "type": "number"
+                                },
+                                {
+                                    "type": "number"
+                                }
+                            ],
+                            "type": "array"
+                        },
+                        {
+                            "type": "null"
+                        }
+                    ],
+                    "default": null,
+                    "title": "Bbox"
+                },
+                "type": {
+                    "const": "Feature",
+                    "title": "Type",
+                    "type": "string"
+                },
+                "geometry": {
+                    "anyOf": [
+                        {
+                            "$ref": "#/$defs/Polygon"
+                        },
+                        {
+                            "type": "null"
+                        }
+                    ]
+                },
+                "properties": {
+                    "anyOf": [
+                        {
+                            "$ref": "#/$defs/BuildingProperties"
+                        },
+                        {
+                            "type": "null"
+                        }
+                    ]
+                },
+                "id": {
+                    "anyOf": [
+                        {
+                            "type": "integer"
+                        },
+                        {
+                            "type": "string"
+                        },
+                        {
+                            "type": "null"
+                        }
+                    ],
+                    "default": null,
+                    "title": "Id"
+                }
+            },
+            "required": [
+                "type",
+                "geometry",
+                "properties"
+            ],
+            "title": "Feature[Polygon, BuildingProperties]",
+            "type": "object"
+        },
+        "Feature_Polygon_GroundAbsorption_": {
+            "properties": {
+                "bbox": {
+                    "anyOf": [
+                        {
+                            "maxItems": 4,
+                            "minItems": 4,
+                            "prefixItems": [
+                                {
+                                    "type": "number"
+                                },
+                                {
+                                    "type": "number"
+                                },
+                                {
+                                    "type": "number"
+                                },
+                                {
+                                    "type": "number"
+                                }
+                            ],
+                            "type": "array"
+                        },
+                        {
+                            "maxItems": 6,
+                            "minItems": 6,
+                            "prefixItems": [
+                                {
+                                    "type": "number"
+                                },
+                                {
+                                    "type": "number"
+                                },
+                                {
+                                    "type": "number"
+                                },
+                                {
+                                    "type": "number"
+                                },
+                                {
+                                    "type": "number"
+                                },
+                                {
+                                    "type": "number"
+                                }
+                            ],
+                            "type": "array"
+                        },
+                        {
+                            "type": "null"
+                        }
+                    ],
+                    "default": null,
+                    "title": "Bbox"
+                },
+                "type": {
+                    "const": "Feature",
+                    "title": "Type",
+                    "type": "string"
+                },
+                "geometry": {
+                    "anyOf": [
+                        {
+                            "$ref": "#/$defs/Polygon"
+                        },
+                        {
+                            "type": "null"
+                        }
+                    ]
+                },
+                "properties": {
+                    "anyOf": [
+                        {
+                            "$ref": "#/$defs/GroundAbsorption"
+                        },
+                        {
+                            "type": "null"
+                        }
+                    ]
+                },
+                "id": {
+                    "anyOf": [
+                        {
+                            "type": "integer"
+                        },
+                        {
+                            "type": "string"
+                        },
+                        {
+                            "type": "null"
+                        }
+                    ],
+                    "default": null,
+                    "title": "Id"
+                }
+            },
+            "required": [
+                "type",
+                "geometry",
+                "properties"
+            ],
+            "title": "Feature[Polygon, GroundAbsorption]",
+            "type": "object"
+        },
+        "Feature_Union_LineString__MultiLineString__TrafficFlow_": {
+            "properties": {
+                "bbox": {
+                    "anyOf": [
+                        {
+                            "maxItems": 4,
+                            "minItems": 4,
+                            "prefixItems": [
+                                {
+                                    "type": "number"
+                                },
+                                {
+                                    "type": "number"
+                                },
+                                {
+                                    "type": "number"
+                                },
+                                {
+                                    "type": "number"
+                                }
+                            ],
+                            "type": "array"
+                        },
+                        {
+                            "maxItems": 6,
+                            "minItems": 6,
+                            "prefixItems": [
+                                {
+                                    "type": "number"
+                                },
+                                {
+                                    "type": "number"
+                                },
+                                {
+                                    "type": "number"
+                                },
+                                {
+                                    "type": "number"
+                                },
+                                {
+                                    "type": "number"
+                                },
+                                {
+                                    "type": "number"
+                                }
+                            ],
+                            "type": "array"
+                        },
+                        {
+                            "type": "null"
+                        }
+                    ],
+                    "default": null,
+                    "title": "Bbox"
+                },
+                "type": {
+                    "const": "Feature",
+                    "title": "Type",
+                    "type": "string"
+                },
+                "geometry": {
+                    "anyOf": [
+                        {
+                            "$ref": "#/$defs/LineString"
+                        },
+                        {
+                            "$ref": "#/$defs/MultiLineString"
+                        },
+                        {
+                            "type": "null"
+                        }
+                    ],
+                    "title": "Geometry"
+                },
+                "properties": {
+                    "anyOf": [
+                        {
+                            "$ref": "#/$defs/TrafficFlow"
+                        },
+                        {
+                            "type": "null"
+                        }
+                    ]
+                },
+                "id": {
+                    "anyOf": [
+                        {
+                            "type": "integer"
+                        },
+                        {
+                            "type": "string"
+                        },
+                        {
+                            "type": "null"
+                        }
+                    ],
+                    "default": null,
+                    "title": "Id"
+                }
+            },
+            "required": [
+                "type",
+                "geometry",
+                "properties"
+            ],
+            "title": "Feature[Union[LineString, MultiLineString], TrafficFlow]",
+            "type": "object"
+        },
+        "GridSettingsUser": {
+            "properties": {
+                "grid_type": {
+                    "$ref": "#/$defs/GridType",
+                    "default": "DELAUNAY"
+                },
+                "calculation_height": {
+                    "default": 4.0,
+                    "description": "Height of receivers in meters",
+                    "exclusiveMinimum": 0.0,
+                    "title": "Calculation Height",
+                    "type": "number"
+                },
+                "max_area": {
+                    "default": 2500.0,
+                    "description": "Maximum triangle area (m\u00b2)",
+                    "exclusiveMinimum": 0.0,
+                    "title": "Max Area",
+                    "type": "number"
+                },
+                "max_cell_dist": {
+                    "default": 600.0,
+                    "description": "Maximum cell size for domain splitting (meters)",
+                    "exclusiveMinimum": 0.0,
+                    "title": "Max Cell Dist",
+                    "type": "number"
+                },
+                "road_width": {
+                    "default": 2.0,
+                    "description": "Buffer around roads (meters)",
+                    "exclusiveMinimum": 0.0,
+                    "title": "Road Width",
+                    "type": "number"
+                }
+            },
+            "title": "GridSettingsUser",
+            "type": "object"
+        },
+        "GridType": {
+            "description": "Grid generation type",
+            "enum": [
+                "REGULAR",
+                "DELAUNAY",
+                "BUILDINGS"
+            ],
+            "title": "GridType",
+            "type": "string"
+        },
+        "GroundAbsorption": {
+            "properties": {
+                "absorption": {
+                    "default": 0.0,
+                    "description": "Ground absorption coefficient",
+                    "maximum": 1.0,
+                    "minimum": 0.0,
+                    "title": "Absorption",
+                    "type": "number"
+                }
+            },
+            "title": "GroundAbsorption",
+            "type": "object"
+        },
+        "IsoSurfaceUserSettings": {
+            "properties": {
+                "iso_classes": {
+                    "anyOf": [
+                        {
+                            "type": "string"
+                        },
+                        {
+                            "type": "null"
+                        }
+                    ],
+                    "default": null,
+                    "description": "Separation of sound levels for isosurfaces. Default is:\n35.0,40.0,45.0,50.0,55.0,60.0,65.0,70.0,75.0,80.0,200.0",
+                    "title": "Iso Classes"
+                },
+                "smooth_coefficient": {
+                    "default": 0.5,
+                    "description": "This coefficient (Bezier curve coefficient) \nwill smooth the generated isosurfaces. \nIf equal to 0, it disables the smoothing step.",
+                    "maximum": 100.0,
+                    "minimum": 0.0,
+                    "title": "Smooth Coefficient",
+                    "type": "number"
+                }
+            },
+            "title": "IsoSurfaceUserSettings",
+            "type": "object"
+        },
+        "JunctionType": {
+            "description": "CNOSSOS junction types",
+            "enum": [
+                0,
+                1,
+                2
+            ],
+            "title": "JunctionType",
+            "type": "integer"
+        },
+        "LineString": {
+            "description": "LineString Model",
+            "properties": {
+                "bbox": {
+                    "anyOf": [
+                        {
+                            "maxItems": 4,
+                            "minItems": 4,
+                            "prefixItems": [
+                                {
+                                    "type": "number"
+                                },
+                                {
+                                    "type": "number"
+                                },
+                                {
+                                    "type": "number"
+                                },
+                                {
+                                    "type": "number"
+                                }
+                            ],
+                            "type": "array"
+                        },
+                        {
+                            "maxItems": 6,
+                            "minItems": 6,
+                            "prefixItems": [
+                                {
+                                    "type": "number"
+                                },
+                                {
+                                    "type": "number"
+                                },
+                                {
+                                    "type": "number"
+                                },
+                                {
+                                    "type": "number"
+                                },
+                                {
+                                    "type": "number"
+                                },
+                                {
+                                    "type": "number"
+                                }
+                            ],
+                            "type": "array"
+                        },
+                        {
+                            "type": "null"
+                        }
+                    ],
+                    "default": null,
+                    "title": "Bbox"
+                },
+                "type": {
+                    "const": "LineString",
+                    "title": "Type",
+                    "type": "string"
+                },
+                "coordinates": {
+                    "items": {
+                        "anyOf": [
+                            {
+                                "$ref": "#/$defs/Position2D"
+                            },
+                            {
+                                "$ref": "#/$defs/Position3D"
+                            }
+                        ]
+                    },
+                    "minItems": 2,
+                    "title": "Coordinates",
+                    "type": "array"
+                }
+            },
+            "required": [
+                "type",
+                "coordinates"
+            ],
+            "title": "LineString",
+            "type": "object"
+        },
+        "MultiLineString": {
+            "description": "MultiLineString Model",
+            "properties": {
+                "bbox": {
+                    "anyOf": [
+                        {
+                            "maxItems": 4,
+                            "minItems": 4,
+                            "prefixItems": [
+                                {
+                                    "type": "number"
+                                },
+                                {
+                                    "type": "number"
+                                },
+                                {
+                                    "type": "number"
+                                },
+                                {
+                                    "type": "number"
+                                }
+                            ],
+                            "type": "array"
+                        },
+                        {
+                            "maxItems": 6,
+                            "minItems": 6,
+                            "prefixItems": [
+                                {
+                                    "type": "number"
+                                },
+                                {
+                                    "type": "number"
+                                },
+                                {
+                                    "type": "number"
+                                },
+                                {
+                                    "type": "number"
+                                },
+                                {
+                                    "type": "number"
+                                },
+                                {
+                                    "type": "number"
+                                }
+                            ],
+                            "type": "array"
+                        },
+                        {
+                            "type": "null"
+                        }
+                    ],
+                    "default": null,
+                    "title": "Bbox"
+                },
+                "type": {
+                    "const": "MultiLineString",
+                    "title": "Type",
+                    "type": "string"
+                },
+                "coordinates": {
+                    "items": {
+                        "items": {
+                            "anyOf": [
+                                {
+                                    "$ref": "#/$defs/Position2D"
+                                },
+                                {
+                                    "$ref": "#/$defs/Position3D"
+                                }
+                            ]
+                        },
+                        "minItems": 2,
+                        "type": "array"
+                    },
+                    "title": "Coordinates",
+                    "type": "array"
+                }
+            },
+            "required": [
+                "type",
+                "coordinates"
+            ],
+            "title": "MultiLineString",
+            "type": "object"
+        },
+        "NoiseLevelsOutputControls": {
+            "properties": {
+                "noise_day": {
+                    "default": true,
+                    "description": "Skip day period noise calculation",
+                    "title": "Noise Day",
+                    "type": "boolean"
+                },
+                "noise_evening": {
+                    "default": true,
+                    "description": "Skip evening period noise calculation",
+                    "title": "Noise Evening",
+                    "type": "boolean"
+                },
+                "noise_night": {
+                    "default": true,
+                    "description": "Skip night period noise calculation",
+                    "title": "Noise Night",
+                    "type": "boolean"
+                },
+                "noise_den": {
+                    "default": true,
+                    "description": "Skip day-evening-night noise calculation",
+                    "title": "Noise Den",
+                    "type": "boolean"
+                }
+            },
+            "title": "NoiseLevelsOutputControls",
+            "type": "object"
+        },
+        "Polygon": {
+            "description": "Polygon Model",
+            "properties": {
+                "bbox": {
+                    "anyOf": [
+                        {
+                            "maxItems": 4,
+                            "minItems": 4,
+                            "prefixItems": [
+                                {
+                                    "type": "number"
+                                },
+                                {
+                                    "type": "number"
+                                },
+                                {
+                                    "type": "number"
+                                },
+                                {
+                                    "type": "number"
+                                }
+                            ],
+                            "type": "array"
+                        },
+                        {
+                            "maxItems": 6,
+                            "minItems": 6,
+                            "prefixItems": [
+                                {
+                                    "type": "number"
+                                },
+                                {
+                                    "type": "number"
+                                },
+                                {
+                                    "type": "number"
+                                },
+                                {
+                                    "type": "number"
+                                },
+                                {
+                                    "type": "number"
+                                },
+                                {
+                                    "type": "number"
+                                }
+                            ],
+                            "type": "array"
+                        },
+                        {
+                            "type": "null"
+                        }
+                    ],
+                    "default": null,
+                    "title": "Bbox"
+                },
+                "type": {
+                    "const": "Polygon",
+                    "title": "Type",
+                    "type": "string"
+                },
+                "coordinates": {
+                    "items": {
+                        "items": {
+                            "anyOf": [
+                                {
+                                    "$ref": "#/$defs/Position2D"
+                                },
+                                {
+                                    "$ref": "#/$defs/Position3D"
+                                }
+                            ]
+                        },
+                        "minItems": 4,
+                        "type": "array"
+                    },
+                    "title": "Coordinates",
+                    "type": "array"
+                }
+            },
+            "required": [
+                "type",
+                "coordinates"
+            ],
+            "title": "Polygon",
+            "type": "object"
+        },
+        "Position2D": {
+            "maxItems": 2,
+            "minItems": 2,
+            "prefixItems": [
+                {
+                    "title": "Longitude",
+                    "type": "number"
+                },
+                {
+                    "title": "Latitude",
+                    "type": "number"
+                }
+            ],
+            "type": "array"
+        },
+        "Position3D": {
+            "maxItems": 3,
+            "minItems": 3,
+            "prefixItems": [
+                {
+                    "title": "Longitude",
+                    "type": "number"
+                },
+                {
+                    "title": "Latitude",
+                    "type": "number"
+                },
+                {
+                    "title": "Altitude",
+                    "type": "number"
+                }
+            ],
+            "type": "array"
+        },
+        "PropagationSettings": {
+            "properties": {
+                "vertical_diffraction": {
+                    "default": false,
+                    "description": "Enable vertical edge diffraction",
+                    "title": "Vertical Diffraction",
+                    "type": "boolean"
+                },
+                "horizontal_diffraction": {
+                    "default": false,
+                    "description": "Enable horizontal edge diffraction",
+                    "title": "Horizontal Diffraction",
+                    "type": "boolean"
+                },
+                "favorable_day": {
+                    "default": "0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5",
+                    "description": "Day favorable propagation conditions",
+                    "title": "Favorable Day",
+                    "type": "string"
+                },
+                "favorable_evening": {
+                    "anyOf": [
+                        {
+                            "type": "string"
+                        },
+                        {
+                            "type": "null"
+                        }
+                    ],
+                    "default": null,
+                    "description": "Evening favorable propagation conditions",
+                    "title": "Favorable Evening"
+                },
+                "favorable_night": {
+                    "anyOf": [
+                        {
+                            "type": "string"
+                        },
+                        {
+                            "type": "null"
+                        }
+                    ],
+                    "default": null,
+                    "description": "Night favorable propagation conditions",
+                    "title": "Favorable Night"
+                }
+            },
+            "title": "PropagationSettings",
+            "type": "object"
+        },
+        "TrafficFlow": {
+            "description": "User-friendly traffic flow parameters for a road segment.\n\nRequired fields:\n- At least one vehicle count (light or heavy)\n- Speed for each provided vehicle count\n\nOptional fields:\n- Medium vehicles\n- Motorcycles (light and heavy)\n- All associated speeds",
+            "properties": {
+                "light_vehicles_day": {
+                    "default": 0.0,
+                    "description": "Light vehicles per hour (6-18h)",
+                    "minimum": 0.0,
+                    "title": "Light Vehicles Day",
+                    "type": "number"
+                },
+                "medium_vehicles_day": {
+                    "anyOf": [
+                        {
+                            "minimum": 0.0,
+                            "type": "number"
+                        },
+                        {
+                            "type": "null"
+                        }
+                    ],
+                    "default": null,
+                    "description": "Medium heavy vehicles, delivery vans > 3.5t, buses per hour (6-18h)",
+                    "title": "Medium Vehicles Day"
+                },
+                "heavy_vehicles_day": {
+                    "default": 0.0,
+                    "description": "Heavy duty vehicles, buses with 3+ axles per hour (6-18h)",
+                    "minimum": 0.0,
+                    "title": "Heavy Vehicles Day",
+                    "type": "number"
+                },
+                "light_motorcycles_day": {
+                    "anyOf": [
+                        {
+                            "minimum": 0.0,
+                            "type": "number"
+                        },
+                        {
+                            "type": "null"
+                        }
+                    ],
+                    "default": null,
+                    "description": "Mopeds, tricycles, quads \u2264 50cc per hour (6-18h)",
+                    "title": "Light Motorcycles Day"
+                },
+                "heavy_motorcycles_day": {
+                    "anyOf": [
+                        {
+                            "minimum": 0.0,
+                            "type": "number"
+                        },
+                        {
+                            "type": "null"
+                        }
+                    ],
+                    "default": null,
+                    "description": "Motorcycles, tricycles, quads > 50cc per hour (6-18h)",
+                    "title": "Heavy Motorcycles Day"
+                },
+                "light_vehicles_evening": {
+                    "default": 0.0,
+                    "description": "Light vehicles per hour (18-22h)",
+                    "minimum": 0.0,
+                    "title": "Light Vehicles Evening",
+                    "type": "number"
+                },
+                "medium_vehicles_evening": {
+                    "anyOf": [
+                        {
+                            "minimum": 0.0,
+                            "type": "number"
+                        },
+                        {
+                            "type": "null"
+                        }
+                    ],
+                    "default": null,
+                    "description": "Medium heavy vehicles per hour (18-22h)",
+                    "title": "Medium Vehicles Evening"
+                },
+                "heavy_vehicles_evening": {
+                    "default": 0.0,
+                    "description": "Heavy duty vehicles per hour (18-22h)",
+                    "minimum": 0.0,
+                    "title": "Heavy Vehicles Evening",
+                    "type": "number"
+                },
+                "light_motorcycles_evening": {
+                    "anyOf": [
+                        {
+                            "minimum": 0.0,
+                            "type": "number"
+                        },
+                        {
+                            "type": "null"
+                        }
+                    ],
+                    "default": null,
+                    "description": "Mopeds \u2264 50cc per hour (18-22h)",
+                    "title": "Light Motorcycles Evening"
+                },
+                "heavy_motorcycles_evening": {
+                    "anyOf": [
+                        {
+                            "minimum": 0.0,
+                            "type": "number"
+                        },
+                        {
+                            "type": "null"
+                        }
+                    ],
+                    "default": null,
+                    "description": "Motorcycles > 50cc per hour (18-22h)",
+                    "title": "Heavy Motorcycles Evening"
+                },
+                "light_vehicles_night": {
+                    "default": 0.0,
+                    "description": "Light vehicles per hour (22-6h)",
+                    "minimum": 0.0,
+                    "title": "Light Vehicles Night",
+                    "type": "number"
+                },
+                "medium_vehicles_night": {
+                    "anyOf": [
+                        {
+                            "minimum": 0.0,
+                            "type": "number"
+                        },
+                        {
+                            "type": "null"
+                        }
+                    ],
+                    "default": null,
+                    "description": "Medium heavy vehicles per hour (22-6h)",
+                    "title": "Medium Vehicles Night"
+                },
+                "heavy_vehicles_night": {
+                    "default": 0.0,
+                    "description": "Heavy duty vehicles per hour (22-6h)",
+                    "minimum": 0.0,
+                    "title": "Heavy Vehicles Night",
+                    "type": "number"
+                },
+                "light_motorcycles_night": {
+                    "anyOf": [
+                        {
+                            "minimum": 0.0,
+                            "type": "number"
+                        },
+                        {
+                            "type": "null"
+                        }
+                    ],
+                    "default": null,
+                    "description": "Mopeds \u2264 50cc per hour (22-6h)",
+                    "title": "Light Motorcycles Night"
+                },
+                "heavy_motorcycles_night": {
+                    "anyOf": [
+                        {
+                            "minimum": 0.0,
+                            "type": "number"
+                        },
+                        {
+                            "type": "null"
+                        }
+                    ],
+                    "default": null,
+                    "description": "Motorcycles > 50cc per hour (22-6h)",
+                    "title": "Heavy Motorcycles Night"
+                },
+                "light_speed_day": {
+                    "anyOf": [
+                        {
+                            "maximum": 200.0,
+                            "minimum": 0.0,
+                            "type": "number"
+                        },
+                        {
+                            "type": "null"
+                        }
+                    ],
+                    "default": null,
+                    "description": "Light vehicle speed in km/h (6-18h)",
+                    "title": "Light Speed Day"
+                },
+                "light_speed_evening": {
+                    "anyOf": [
+                        {
+                            "maximum": 200.0,
+                            "minimum": 0.0,
+                            "type": "number"
+                        },
+                        {
+                            "type": "null"
+                        }
+                    ],
+                    "default": null,
+                    "description": "Light vehicle speed in km/h (18-22h)",
+                    "title": "Light Speed Evening"
+                },
+                "light_speed_night": {
+                    "anyOf": [
+                        {
+                            "maximum": 200.0,
+                            "minimum": 0.0,
+                            "type": "number"
+                        },
+                        {
+                            "type": "null"
+                        }
+                    ],
+                    "default": null,
+                    "description": "Light vehicle speed in km/h (22-6h)",
+                    "title": "Light Speed Night"
+                },
+                "medium_speed_day": {
+                    "anyOf": [
+                        {
+                            "maximum": 200.0,
+                            "minimum": 0.0,
+                            "type": "number"
+                        },
+                        {
+                            "type": "null"
+                        }
+                    ],
+                    "default": null,
+                    "description": "Medium vehicle speed in km/h (6-18h)",
+                    "title": "Medium Speed Day"
+                },
+                "medium_speed_evening": {
+                    "anyOf": [
+                        {
+                            "maximum": 200.0,
+                            "minimum": 0.0,
+                            "type": "number"
+                        },
+                        {
+                            "type": "null"
+                        }
+                    ],
+                    "default": null,
+                    "description": "Medium vehicle speed in km/h (18-22h)",
+                    "title": "Medium Speed Evening"
+                },
+                "medium_speed_night": {
+                    "anyOf": [
+                        {
+                            "maximum": 200.0,
+                            "minimum": 0.0,
+                            "type": "number"
+                        },
+                        {
+                            "type": "null"
+                        }
+                    ],
+                    "default": null,
+                    "description": "Medium vehicle speed in km/h (22-6h)",
+                    "title": "Medium Speed Night"
+                },
+                "heavy_speed_day": {
+                    "anyOf": [
+                        {
+                            "maximum": 200.0,
+                            "minimum": 0.0,
+                            "type": "number"
+                        },
+                        {
+                            "type": "null"
+                        }
+                    ],
+                    "default": null,
+                    "description": "Heavy vehicle speed in km/h (6-18h)",
+                    "title": "Heavy Speed Day"
+                },
+                "heavy_speed_evening": {
+                    "anyOf": [
+                        {
+                            "maximum": 200.0,
+                            "minimum": 0.0,
+                            "type": "number"
+                        },
+                        {
+                            "type": "null"
+                        }
+                    ],
+                    "default": null,
+                    "description": "Heavy vehicle speed in km/h (18-22h)",
+                    "title": "Heavy Speed Evening"
+                },
+                "heavy_speed_night": {
+                    "anyOf": [
+                        {
+                            "maximum": 200.0,
+                            "minimum": 0.0,
+                            "type": "number"
+                        },
+                        {
+                            "type": "null"
+                        }
+                    ],
+                    "default": null,
+                    "description": "Heavy vehicle speed in km/h (22-6h)",
+                    "title": "Heavy Speed Night"
+                },
+                "light_moto_speed_day": {
+                    "anyOf": [
+                        {
+                            "maximum": 200.0,
+                            "minimum": 0.0,
+                            "type": "number"
+                        },
+                        {
+                            "type": "null"
+                        }
+                    ],
+                    "default": null,
+                    "description": "Moped speed in km/h (6-18h)",
+                    "title": "Light Moto Speed Day"
+                },
+                "light_moto_speed_evening": {
+                    "anyOf": [
+                        {
+                            "maximum": 200.0,
+                            "minimum": 0.0,
+                            "type": "number"
+                        },
+                        {
+                            "type": "null"
+                        }
+                    ],
+                    "default": null,
+                    "description": "Moped speed in km/h (18-22h)",
+                    "title": "Light Moto Speed Evening"
+                },
+                "light_moto_speed_night": {
+                    "anyOf": [
+                        {
+                            "maximum": 200.0,
+                            "minimum": 0.0,
+                            "type": "number"
+                        },
+                        {
+                            "type": "null"
+                        }
+                    ],
+                    "default": null,
+                    "description": "Moped speed in km/h (22-6h)",
+                    "title": "Light Moto Speed Night"
+                },
+                "heavy_moto_speed_day": {
+                    "anyOf": [
+                        {
+                            "maximum": 200.0,
+                            "minimum": 0.0,
+                            "type": "number"
+                        },
+                        {
+                            "type": "null"
+                        }
+                    ],
+                    "default": null,
+                    "description": "Motorcycle speed in km/h (6-18h)",
+                    "title": "Heavy Moto Speed Day"
+                },
+                "heavy_moto_speed_evening": {
+                    "anyOf": [
+                        {
+                            "maximum": 200.0,
+                            "minimum": 0.0,
+                            "type": "number"
+                        },
+                        {
+                            "type": "null"
+                        }
+                    ],
+                    "default": null,
+                    "description": "Motorcycle speed in km/h (18-22h)",
+                    "title": "Heavy Moto Speed Evening"
+                },
+                "heavy_moto_speed_night": {
+                    "anyOf": [
+                        {
+                            "maximum": 200.0,
+                            "minimum": 0.0,
+                            "type": "number"
+                        },
+                        {
+                            "type": "null"
+                        }
+                    ],
+                    "default": null,
+                    "description": "Motorcycle speed in km/h (22-6h)",
+                    "title": "Heavy Moto Speed Night"
+                },
+                "pavement": {
+                    "default": "NL08",
+                    "description": "CNOSSOS road surface type (e.g. NL08)",
+                    "pattern": "^[A-Z]{2}\\d{2}$",
+                    "title": "Pavement",
+                    "type": "string"
+                },
+                "temperature_day": {
+                    "default": 20.0,
+                    "description": "Average temperature in \u00b0C (6-18h)",
+                    "title": "Temperature Day",
+                    "type": "number"
+                },
+                "temperature_evening": {
+                    "default": 20.0,
+                    "description": "Average temperature in \u00b0C (18-22h)",
+                    "title": "Temperature Evening",
+                    "type": "number"
+                },
+                "temperature_night": {
+                    "default": 20.0,
+                    "description": "Average temperature in \u00b0C (22-6h)",
+                    "title": "Temperature Night",
+                    "type": "number"
+                },
+                "studded_tires_months": {
+                    "anyOf": [
+                        {
+                            "maximum": 12.0,
+                            "minimum": 0.0,
+                            "type": "number"
+                        },
+                        {
+                            "type": "null"
+                        }
+                    ],
+                    "default": null,
+                    "description": "Months per year with studded tires (0-12)",
+                    "title": "Studded Tires Months"
+                },
+                "studded_tires_ratio": {
+                    "anyOf": [
+                        {
+                            "maximum": 1.0,
+                            "minimum": 0.0,
+                            "type": "number"
+                        },
+                        {
+                            "type": "null"
+                        }
+                    ],
+                    "default": null,
+                    "description": "Ratio of vehicles with studded tires (0-1)",
+                    "title": "Studded Tires Ratio"
+                },
+                "junction_distance": {
+                    "anyOf": [
+                        {
+                            "minimum": 0.0,
+                            "type": "number"
+                        },
+                        {
+                            "type": "null"
+                        }
+                    ],
+                    "default": null,
+                    "description": "Distance to junction in meters",
+                    "title": "Junction Distance"
+                },
+                "junction_type": {
+                    "$ref": "#/$defs/JunctionType",
+                    "default": 0,
+                    "description": "Type of junction (0=none, 1=traffic light, 2=roundabout)"
+                },
+                "slope": {
+                    "anyOf": [
+                        {
+                            "type": "number"
+                        },
+                        {
+                            "type": "null"
+                        }
+                    ],
+                    "default": null,
+                    "description": "Road slope in percent",
+                    "title": "Slope"
+                }
+            },
+            "title": "TrafficFlow",
+            "type": "object"
+        }
+    },
+    "properties": {
+        "buildings": {
+            "$ref": "#/$defs/FeatureCollection_Feature_Polygon__BuildingProperties__"
+        },
+        "roads": {
+            "$ref": "#/$defs/FeatureCollection_Feature_Union_LineString__MultiLineString___TrafficFlow__"
+        },
+        "dem": {
+            "anyOf": [
+                {
+                    "format": "uri",
+                    "minLength": 1,
+                    "type": "string"
+                },
+                {
+                    "type": "null"
+                }
+            ],
+            "default": null,
+            "title": "Dem"
+        },
+        "ground_absorption": {
+            "anyOf": [
+                {
+                    "$ref": "#/$defs/FeatureCollection_Feature_Polygon__GroundAbsorption__"
+                },
+                {
+                    "type": "null"
+                }
+            ],
+            "default": null
+        },
+        "acoustic_parameters": {
+            "anyOf": [
+                {
+                    "$ref": "#/$defs/AcousticParameters"
+                },
+                {
+                    "type": "null"
+                }
+            ],
+            "default": null
+        },
+        "propagation_settings": {
+            "anyOf": [
+                {
+                    "$ref": "#/$defs/PropagationSettings"
+                },
+                {
+                    "type": "null"
+                }
+            ],
+            "default": null
+        },
+        "receiver_grid_settings": {
+            "anyOf": [
+                {
+                    "$ref": "#/$defs/GridSettingsUser"
+                },
+                {
+                    "type": "null"
+                }
+            ],
+            "default": null
+        },
+        "iosurface_settings": {
+            "anyOf": [
+                {
+                    "$ref": "#/$defs/IsoSurfaceUserSettings"
+                },
+                {
+                    "type": "null"
+                }
+            ],
+            "default": null
+        },
+        "noise_output_controls": {
+            "anyOf": [
+                {
+                    "$ref": "#/$defs/NoiseLevelsOutputControls"
+                },
+                {
+                    "type": "null"
+                }
+            ],
+            "default": null
+        }
+    },
+    "required": [
+        "buildings",
+        "roads"
+    ],
+    "title": "NoiseCalculationUserInput",
+    "type": "object"
+}
