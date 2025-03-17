@@ -1,16 +1,5 @@
+import json
 import logging
-from typing import Any, Dict
-
-from fastprocesses.core.base_process import BaseProcess
-from fastprocesses.core.models import (
-    ProcessDescription,
-    ProcessInput,
-    ProcessJobControlOptions,
-    ProcessOutput,
-    ProcessOutputTransmission,
-    Schema,
-)
-from fastprocesses.processes.process_registry import register_process
 
 from noiseprocesses.calculation.road_propagation import RoadPropagationCalculator
 from noiseprocesses.core.database import NoiseDatabase
@@ -26,13 +15,6 @@ from noiseprocesses.utils.contouring import IsoSurfaceBezier
 from noiseprocesses.utils.grids import DelaunayGridGenerator
 
 logger = logging.getLogger(__name__)
-
-
-@register_process("simple_process")
-class TrafficNoiseProcess(BaseProcess):
-    async def execute(self, inputs: Dict[str, Any]) -> Dict[str, Any]:
-        pass
-
 
 class RoadNoiseModellingCalculator:
     """Main class handling the complete noise calculation process"""
@@ -65,7 +47,7 @@ class RoadNoiseModellingCalculator:
             **kwargs: Additional calculation parameters
 
         Returns:
-            str: Name of final results table
+            dict: Noise Isosurfaces for user selected outputs
         """
         # config setup, take defaults if user did not provide any
         self.config.acoustic_params = (
@@ -136,13 +118,25 @@ class RoadNoiseModellingCalculator:
 
         # create isocontour
         surface_generator = IsoSurfaceBezier(noise_db)
+
+        output: dict[str, dict] = {}
+
         for output_table, output_control in self.config.output_controls:
             if output_control:
 
-                table_name = surface_generator.generate_iso_surface(self.match_oct[output_table])
+                table_name = surface_generator.generate_iso_surface(
+                    self.match_oct[output_table]
+                )
 
                 # export to dict/geojson/FeatureCollection
                 # H2 DB has no support for in-memory data export
-                noise_db.export_data(table_name)
+                surface_file = noise_db.export_data(table_name)
 
-        return {}
+        
+                # read the data...
+                # replace path with actual data
+                with open(surface_file, "r") as stream:
+                    output[output_table] = json.load(stream)
+
+        # ...and return it
+        return output
