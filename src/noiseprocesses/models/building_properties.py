@@ -1,4 +1,5 @@
 from typing import Self
+from geojson_pydantic import Feature, FeatureCollection, Polygon
 from pydantic import BaseModel, Field
 
 
@@ -20,3 +21,7 @@ class BuildingProperties(BaseModel):
     def to_internal(self) -> BuildingPropertiesInternal:
         """Convert to internal model."""
         return BuildingPropertiesInternal.from_user_model(self)
+
+BuildingsFeatureCollection = FeatureCollection[
+    Feature[Polygon, BuildingProperties]
+]

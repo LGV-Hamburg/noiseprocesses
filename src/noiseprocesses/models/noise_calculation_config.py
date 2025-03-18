@@ -1,27 +1,17 @@
 from pathlib import Path
 from typing import Optional
 
-from geojson_pydantic import Feature, LineString, MultiLineString, Polygon
-from geojson_pydantic.features import FeatureCollection
 from pydantic import AnyUrl, BaseModel, ConfigDict, Field
 
-from noiseprocesses.models.building_properties import BuildingProperties
+from noiseprocesses.models.building_properties import BuildingsFeatureCollection
 from noiseprocesses.models.grid_config import GridSettingsUser
-from noiseprocesses.models.ground_absorption import GroundAbsorption
+from noiseprocesses.models.ground_absorption import GroundAbsorptionFeatureCollection
 from noiseprocesses.models.isosurface_config import IsoSurfaceUserSettings
 from noiseprocesses.models.propagation_config import (
     InputOptionalTables,
     InputRequiredTables,
 )
-from noiseprocesses.models.roads_properties import TrafficFlow
-
-BuildingsFeatureCollection = FeatureCollection[Feature[Polygon, BuildingProperties]]
-RoadsFeatureCollection = FeatureCollection[
-    Feature[LineString | MultiLineString, TrafficFlow]
-]
-GroundAbsorptionFeatureCollection = FeatureCollection[
-    Feature[Polygon, GroundAbsorption]
-]
+from noiseprocesses.models.roads_properties import RoadsFeatureCollection
 
 
 class AcousticParameters(BaseModel):

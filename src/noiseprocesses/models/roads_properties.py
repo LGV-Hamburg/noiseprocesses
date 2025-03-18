@@ -1,5 +1,6 @@
 from enum import IntEnum
 from typing import Optional, Self
+from geojson_pydantic import Feature, FeatureCollection, LineString, MultiLineString
 from pydantic import BaseModel, Field, model_validator
 
 # PK </b>* : an identifier. It shall be a primary key (INTEGER, PRIMARY KEY)</li>' +
@@ -576,3 +577,6 @@ class TrafficFlow(BaseModel):
         description="Road slope in percent",
     )
 
+RoadsFeatureCollection = FeatureCollection[
+    Feature[LineString | MultiLineString, TrafficFlow]
+]
