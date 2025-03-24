@@ -3,7 +3,10 @@ import logging
 
 from noiseprocesses.core.database import NoiseDatabase
 from noiseprocesses.core.java_bridge import JavaBridge
-from noiseprocesses.models.noise_calculation_config import NoiseCalculationConfig
+from noiseprocesses.models.noise_calculation_config import (
+    NoiseCalculationConfig,
+    OutputIsoSurfaces,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -39,12 +42,34 @@ class RoadPropagationCalculator:
                 self.java_bridge.LDENConfig.INPUT_MODE.INPUT_MODE_TRAFFIC_FLOW
             )
 
+            # need to convert from dict to boolean values: presence means True
+            output_controls = {
+                OutputIsoSurfaces.noise_day: OutputIsoSurfaces.noise_day
+                in config.output_controls,
+                OutputIsoSurfaces.noise_evening: OutputIsoSurfaces.noise_evening
+                in config.output_controls,
+                OutputIsoSurfaces.noise_night: OutputIsoSurfaces.noise_night
+                in config.output_controls,
+                OutputIsoSurfaces.noise_den: OutputIsoSurfaces.noise_den
+                in config.output_controls,
+            }
+
             # Configure output tables
-            lden_config.setComputeLDay(config.output_controls.noise_day)
-            lden_config.setComputeLEvening(config.output_controls.noise_evening)
-            lden_config.setComputeLNight(config.output_controls.noise_night)
-            lden_config.setComputeLDEN(config.output_controls.noise_den)
-            lden_config.setMergeSources(not config.additional_output_controls.export_source_id)
+            lden_config.setComputeLDay(
+                output_controls.get(OutputIsoSurfaces.noise_day)
+            )
+            lden_config.setComputeLEvening(
+                output_controls.get(OutputIsoSurfaces.noise_evening)
+            )
+            lden_config.setComputeLNight(
+                output_controls.get(OutputIsoSurfaces.noise_night)
+            )
+            lden_config.setComputeLDEN(
+                output_controls.get(OutputIsoSurfaces.noise_den)
+            )
+            lden_config.setMergeSources(
+                not config.additional_output_controls.export_source_id
+            )
 
             # Initialize noise map calculator
             noise_map = self.java_bridge.PointNoiseMap(
