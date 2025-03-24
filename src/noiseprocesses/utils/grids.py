@@ -40,6 +40,7 @@ class DelaunayGridGenerator:
         self.database.execute("DROP TABLE IF EXISTS TRIANGLES")
 
         # Initialize NoiseModelling triangulation
+        logger.info("Initializing triangulation")
         triangle_map = self.java_bridge.TriangleNoiseMap(
             config.buildings_table,
             config.sources_table if config.sources_table else ""
