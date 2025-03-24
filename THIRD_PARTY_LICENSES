@@ -1,0 +1,11 @@
+Dependency | License Type
+---|---
+Cython |	Apache 2.0 
+jaydebeapi |	LGPL 3.0 
+SQLAlchemy |	MIT	| Compatible with GPLv3.
+Pydantic |	MIT
+JPype1 |	Apache 2.0
+NumPy |	BSD 3-Clause
+geojson-pydantic |	MIT
+Shapely |	BSD 3-Clause
+fastprocesses
