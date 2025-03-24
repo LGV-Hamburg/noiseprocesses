@@ -1,7 +1,17 @@
+import logging
+from enum import Enum, StrEnum
 from pathlib import Path
-from typing import Optional
+from typing import Annotated, Optional
 
-from pydantic import AnyUrl, BaseModel, ConfigDict, Field
+from geojson_pydantic import FeatureCollection
+from pydantic import (
+    AnyUrl,
+    BaseModel,
+    ConfigDict,
+    Field,
+    ValidationError,
+    model_validator,
+)
 
 from noiseprocesses.models.building_properties import BuildingsFeatureCollection
 from noiseprocesses.models.grid_config import GridSettingsUser
@@ -11,11 +21,13 @@ from noiseprocesses.models.propagation_config import (
     InputOptionalTables,
     InputRequiredTables,
 )
-from noiseprocesses.models.roads_properties import RoadsFeatureCollection
+from noiseprocesses.models.roads_properties import RoadsFeature, RoadsFeatureCollection
+
+logger = logging.getLogger(__name__)
 
 
 class AcousticParameters(BaseModel):
-    model_config = ConfigDict(frozen=True)
+    model_config = ConfigDict(extra="ignore")
 
     wall_alpha: float = Field(
         default=0.1, ge=0.0, le=1.0, description="Wall absorption coefficient"
@@ -38,7 +50,7 @@ class AcousticParameters(BaseModel):
 
 
 class PropagationSettings(BaseModel):
-    model_config = ConfigDict(frozen=True)
+    model_config = ConfigDict(extra="ignore")
 
     vertical_diffraction: bool = Field(
         default=False, description="Enable vertical edge diffraction"
@@ -58,21 +70,11 @@ class PropagationSettings(BaseModel):
     )
 
 
-class NoiseLevelsOutputControls(BaseModel):
-    model_config = ConfigDict(frozen=True)
-
-    noise_day: bool = Field(
-        default=True, description="Skip day period noise calculation"
-    )
-    noise_evening: bool = Field(
-        default=True, description="Skip evening period noise calculation"
-    )
-    noise_night: bool = Field(
-        default=True, description="Skip night period noise calculation"
-    )
-    noise_den: bool = Field(
-        default=True, description="Skip day-evening-night noise calculation"
-    )
+class OutputIsoSurfaces(StrEnum):
+    noise_day = "noise_day"
+    noise_evening = "noise_evening"
+    noise_night = "noise_night"
+    noise_den = "noise_den"
 
 
 class AdditionalDataOutputControls(BaseModel):
@@ -104,7 +106,7 @@ class DatabaseConfig(BaseModel):
 
 
 class NoiseCalculationConfig(BaseModel):
-    model_config = ConfigDict(frozen=True)
+    model_config = ConfigDict(extra="ignore")
 
     database: DatabaseConfig = DatabaseConfig()
     required_input: InputRequiredTables = InputRequiredTables()
@@ -115,9 +117,9 @@ class NoiseCalculationConfig(BaseModel):
     propagation_settings: PropagationSettings = (
         PropagationSettings()
     )  # internal defaults, user overridable
-    output_controls: NoiseLevelsOutputControls = (
-        NoiseLevelsOutputControls()
-    )  # internal defaults, user overridable
+    output_controls: dict[OutputIsoSurfaces, dict] = {
+        OutputIsoSurfaces.noise_den: {}
+    }  # internal defaults, user overridable
     additional_output_controls: AdditionalDataOutputControls = (
         AdditionalDataOutputControls()
     )
@@ -127,18 +129,54 @@ class NoiseCalculationConfig(BaseModel):
     performance: PerformanceSettings = PerformanceSettings()
 
 
+Crs = Annotated[
+    str | int,
+    Field(
+        description=(
+            "Coordinate reference system (CRS) of the input data in "
+            "the form of: 'http://www.opengis.net/def/crs/EPSG/0/25832', "
+            "or as EPSG integer code."
+        )
+    ),
+]
+
+
 class NoiseCalculationUserInput(BaseModel):
     model_config = ConfigDict(frozen=True)
 
     buildings: BuildingsFeatureCollection
     roads: RoadsFeatureCollection
+    crs: Crs
     dem: AnyUrl | None = None
     ground_absorption: GroundAbsorptionFeatureCollection | None = None
     acoustic_parameters: AcousticParameters | None = None
     propagation_settings: PropagationSettings | None = None
     receiver_grid_settings: GridSettingsUser | None = None
     iosurface_settings: IsoSurfaceUserSettings | None = None
-    noise_output_controls: NoiseLevelsOutputControls | None = None
+
+    @model_validator(mode="before")
+    def validate_and_filter_roads(cls, values):
+        roads = values.get("roads")
+        if roads:
+            valid_features = []
+            for i, feature in enumerate(roads["features"]):
+                try:
+                    # Validate the properties field of each feature
+                    RoadsFeature(**feature)
+                    valid_features.append(feature)
+                except ValidationError as e:
+                    # Log the invalid feature and continue
+                    logger.warning(f"Invalid feature in 'roads' at index {i}: {e}")
+            # Replace the roads FeatureCollection with only valid features
+            values["roads"] = FeatureCollection(
+                features=valid_features, type="FeatureCollection"
+            )
+            logger.info(
+                "Importing %d valid road features from %d road features.",
+                len(valid_features),
+                len(roads["features"]),
+            )
+        return values
 
 
 if __name__ == "__main__":
