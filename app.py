@@ -1,4 +1,5 @@
-from typing import Any, Dict
+import logging
+from typing import Any, Callable, Dict
 
 import uvicorn
 from fastprocesses.api.server import OGCProcessesAPI
@@ -19,28 +20,49 @@ from noiseprocesses.models.noise_calculation_config import (
     NoiseCalculationUserInput,
 )
 
+logger = logging.getLogger(__name__)
+
 
 @register_process("traffic_noise_propagation")
 class TrafficNoiseProcess(BaseProcess):
-    async def execute(self, exec_body: Dict[str, Any]) -> Dict[str, Any]:
+    async def execute(
+        self, exec_body: Dict[str, Any],
+        progress_callback: Callable[[int, str], None] | None = None
+    ) -> Dict[str, Any]:
+        
+        if progress_callback:
+            progress_callback(1, "Processing input")
+
         calculator = RoadNoiseModellingCalculator(
             noise_calculation_config=NoiseCalculationConfig()
         )
+        try:
+            user_input: NoiseCalculationUserInput = (
+                NoiseCalculationUserInput.model_validate(exec_body["inputs"])
+            )
+        except ValueError as value_error:
+            logger.error("Some inputs are not valid: %s", value_error)
+        
+        user_outputs = exec_body["outputs"]
 
-        user_input: NoiseCalculationUserInput = NoiseCalculationUserInput.model_validate(
-            exec_body["inputs"]
+        result = calculator.calculate_noise_levels(
+            user_input, user_outputs
         )
-        user_input.noise_output_controls = exec_body["outputs"]
-        output = calculator.calculate_noise_levels(user_input)
 
-        return output
+        if progress_callback:
+            progress_callback(100, f"Done calculating {user_outputs}!")
+
+        return result
 
     # Define process description as a class variable
     process_description = ProcessDescription(
-        id="TrafficNoisePropagation",
+        id="traffic_noise_propagation",
         title="Traffic Noise Propagation Calculation",
         version="1.0.0",
-        description="A process for calculating traffic noise propagation and creating isosurfaces",
+        description=(
+            "A process for calculating traffic noise "
+            "propagation and creating isosurfaces"
+        ),
         jobControlOptions=[
             ProcessJobControlOptions.ASYNC_EXECUTE,
         ],
@@ -52,7 +74,7 @@ class TrafficNoiseProcess(BaseProcess):
                 schema=Schema(
                     allOf=[
                         {"format": "geojson-feature-collection"},
-                        {"$ref": "https://geojson.org/schema/FeatureCollection.json"}
+                        {"$ref": "https://geojson.org/schema/FeatureCollection.json"},
                     ]
                 ),
                 minOccurs=1,
@@ -64,9 +86,20 @@ class TrafficNoiseProcess(BaseProcess):
                 schema=Schema(
                     allOf=[
                         {"format": "geojson-feature-collection"},
-                        {"$ref": "https://geojson.org/schema/FeatureCollection.json"}
+                        {"$ref": "https://geojson.org/schema/FeatureCollection.json"},
                     ]
                 ),
+                minOccurs=1,
+                maxOccurs=1,
+            ),
+            "crs": ProcessInput(
+                title="Coordinate Reference System",
+                description=(
+                    "Coordinate reference system (CRS) of the input data in "
+                    "the form of: 'http://www.opengis.net/def/crs/EPSG/0/25832', "
+                    "or as EPSG integer code."
+                ),
+                schema=Schema(type="string"),
                 minOccurs=1,
                 maxOccurs=1,
             ),
@@ -83,7 +116,7 @@ class TrafficNoiseProcess(BaseProcess):
                 schema=Schema(
                     allOf=[
                         {"format": "geojson-feature-collection"},
-                        {"$ref": "https://geojson.org/schema/FeatureCollection.json"}
+                        {"$ref": "https://geojson.org/schema/FeatureCollection.json"},
                     ]
                 ),
                 minOccurs=0,
@@ -95,13 +128,43 @@ class TrafficNoiseProcess(BaseProcess):
                 schema=Schema(
                     type="object",
                     properties={
-                        "wall_alpha": {"type": "number", "minimum": 0.0, "maximum": 1.0, "default": 0.1},
-                        "max_source_distance": {"type": "number", "minimum": 0, "default": 150.0},
-                        "max_reflection_distance": {"type": "number", "minimum": 0, "default": 50.0},
-                        "reflection_order": {"type": "integer", "minimum": 0, "default": 1},
-                        "humidity": {"type": "number", "minimum": 0.0, "maximum": 100.0, "default": 70.0},
-                        "temperature": {"type": "number", "minimum": -20.0, "maximum": 50.0, "default": 15.0}
-                    }
+                        "wall_alpha": {
+                            "type": "number",
+                            "minimum": 0.0,
+                            "maximum": 1.0,
+                            "default": 0.1,
+                        },
+                        "max_source_distance": {
+                            "type": "number",
+                            "minimum": 0,
+                            "maximum": 1000.0,
+                            "default": 150.0,
+                        },
+                        "max_reflection_distance": {
+                            "type": "number",
+                            "minimum": 0,
+                            "maximum": 1000.0,
+                            "default": 50.0,
+                        },
+                        "reflection_order": {
+                            "type": "integer",
+                            "minimum": 0,
+                            "maximum": 2,
+                            "default": 1,
+                        },
+                        "humidity": {
+                            "type": "number",
+                            "minimum": 0.0,
+                            "maximum": 100.0,
+                            "default": 70.0,
+                        },
+                        "temperature": {
+                            "type": "number",
+                            "minimum": -20.0,
+                            "maximum": 50.0,
+                            "default": 15.0,
+                        },
+                    },
                 ),
                 minOccurs=0,
                 maxOccurs=1,
@@ -114,10 +177,13 @@ class TrafficNoiseProcess(BaseProcess):
                     properties={
                         "vertical_diffraction": {"type": "boolean", "default": False},
                         "horizontal_diffraction": {"type": "boolean", "default": False},
-                        "favorable_day": {"type": "string", "default": "0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5"},
+                        "favorable_day": {
+                            "type": "string",
+                            "default": "0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5",
+                        },
                         "favorable_evening": {"type": "string", "default": None},
-                        "favorable_night": {"type": "string", "default": None}
-                    }
+                        "favorable_night": {"type": "string", "default": None},
+                    },
                 ),
                 minOccurs=0,
                 maxOccurs=1,
@@ -128,12 +194,24 @@ class TrafficNoiseProcess(BaseProcess):
                 schema=Schema(
                     type="object",
                     properties={
-                        "grid_type": {"type": "string", "enum": ["REGULAR", "DELAUNAY", "BUILDINGS"], "default": "DELAUNAY"},
-                        "calculation_height": {"type": "number", "minimum": 0, "default": 4.0},
+                        "grid_type": {
+                            "type": "string",
+                            "enum": ["REGULAR", "DELAUNAY", "BUILDINGS"],
+                            "default": "DELAUNAY",
+                        },
+                        "calculation_height": {
+                            "type": "number",
+                            "minimum": 0,
+                            "default": 4.0,
+                        },
                         "max_area": {"type": "number", "minimum": 0, "default": 2500.0},
-                        "max_cell_dist": {"type": "number", "minimum": 0, "default": 600.0},
-                        "road_width": {"type": "number", "minimum": 0, "default": 2.0}
-                    }
+                        "max_cell_dist": {
+                            "type": "number",
+                            "minimum": 0,
+                            "default": 600.0,
+                        },
+                        "road_width": {"type": "number", "minimum": 0, "default": 2.0},
+                    },
                 ),
                 minOccurs=0,
                 maxOccurs=1,
@@ -144,9 +222,17 @@ class TrafficNoiseProcess(BaseProcess):
                 schema=Schema(
                     type="object",
                     properties={
-                        "iso_classes": {"type": "string", "default": "35.0,40.0,45.0,50.0,55.0,60.0,65.0,70.0,75.0,80.0,200.0"},
-                        "smooth_coefficient": {"type": "number", "minimum": 0.0, "maximum": 100.0, "default": 0.5}
-                    }
+                        "iso_classes": {
+                            "type": "string",
+                            "default": "35.0,40.0,45.0,50.0,55.0,60.0,65.0,70.0,75.0,80.0,200.0",
+                        },
+                        "smooth_coefficient": {
+                            "type": "number",
+                            "minimum": 0.0,
+                            "maximum": 100.0,
+                            "default": 0.5,
+                        },
+                    },
                 ),
                 minOccurs=0,
                 maxOccurs=1,
@@ -156,7 +242,12 @@ class TrafficNoiseProcess(BaseProcess):
             "noise_day": ProcessOutput(
                 title="Output Text",
                 description="Processed text",
-                schema=Schema(type="string"),
+                schema=Schema(
+                    allOf=[
+                        {"format": "geojson-feature-collection"},
+                        {"$ref": "https://geojson.org/schema/FeatureCollection.json"},
+                    ]
+                ),
             ),
             "noise_evening": ProcessOutput(
                 title="Output Text",
@@ -164,7 +255,7 @@ class TrafficNoiseProcess(BaseProcess):
                 schema=Schema(
                     allOf=[
                         {"format": "geojson-feature-collection"},
-                        {"$ref": "https://geojson.org/schema/FeatureCollection.json"}
+                        {"$ref": "https://geojson.org/schema/FeatureCollection.json"},
                     ]
                 ),
             ),
@@ -174,7 +265,7 @@ class TrafficNoiseProcess(BaseProcess):
                 schema=Schema(
                     allOf=[
                         {"format": "geojson-feature-collection"},
-                        {"$ref": "https://geojson.org/schema/FeatureCollection.json"}
+                        {"$ref": "https://geojson.org/schema/FeatureCollection.json"},
                     ]
                 ),
             ),
@@ -184,7 +275,7 @@ class TrafficNoiseProcess(BaseProcess):
                 schema=Schema(
                     allOf=[
                         {"format": "geojson-feature-collection"},
-                        {"$ref": "https://geojson.org/schema/FeatureCollection.json"}
+                        {"$ref": "https://geojson.org/schema/FeatureCollection.json"},
                     ]
                 ),
             ),
@@ -196,9 +287,9 @@ class TrafficNoiseProcess(BaseProcess):
 
 # Create the FastAPI app
 app = OGCProcessesAPI(
-    title="Simple Process API",
-    version="1.0.0",
-    description="A simple API for running processes",
+    title="Noise Processes API",
+    version="0.1.0",
+    description="Calculate traffic noise propagation and create isosurfaces",
 ).get_app()
 
 if __name__ == "__main__":
