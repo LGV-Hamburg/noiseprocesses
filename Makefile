@@ -60,7 +60,7 @@ dist: build
 	cd NoiseModelling/$(WPS_SCRIPTS) && $(GRADLE) assembleDist
 	cd build/distributions && unzip -o scriptrunner.zip
 	cp -r scriptrunner/* ../../../../$(DIST_DIR)
-	rm -r NoiseModelling/wps_scripts/build
+	# rm -r NoiseModelling/wps_scripts/build
 
 # Check Java version
 check-java:

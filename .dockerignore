@@ -9,3 +9,7 @@
 !pyproject.toml
 !src
 !dist
+!NoiseModelling
+!Makefile
+!.env
+!app.py

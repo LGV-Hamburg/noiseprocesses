@@ -4,14 +4,31 @@ networks:
     external: true
 
 services:
-  app:
+  api:
     image: ${CONTAINER_REGISTRY}/analytics/${IMAGE_NAME}:${IMAGE_TAG}
-    restart: "unless-stopped"
-    # environment:
-    #   MY_ENV_VAR1: ${MY_ENV_VAR1}
+    restart: "no"
+    environment:
+      CELERY_BROKER_URL: "redis://redis:6379/0"
+      CELERY_RESULT_BACKEND: "redis://redis:6379/0"
+      REDIS_CACHE_URL: "redis://redis:6379/1"
+    ports:
+      - 8000:8000
+    command: ['uvicorn', 'app:app', '--host', '0.0.0.0', '--port', '8000']
+    networks:
+      - dev
+
+  worker:
+    image: ${CONTAINER_REGISTRY}/analytics/${IMAGE_NAME}:${IMAGE_TAG}
+    restart: "no"
+    environment:
+      CELERY_BROKER_URL: "redis://redis:6379/0"
+      CELERY_RESULT_BACKEND: "redis://redis:6379/0"
+      REDIS_CACHE_URL: "redis://redis:6379/1"
     # ports:
     #   - ${WEBAPP_PORT_CONTAINER}:${WEBAPP_PORT}
-    command: ['src/app.py']
+    command: ['celery', '-A', 'fastprocesses.worker.celery_app', 'worker', '--loglevel=debug']
+    networks:
+      - dev
 
   redis:
     image: docker.dragonflydb.io/dragonflydb/dragonfly:v1.27.1
@@ -19,5 +36,5 @@ services:
       - ${REDIS_PORT}
     restart: "unless-stopped"
     command: dragonfly --requirepass "" # --appendonly yes
-    networks: 
+    networks:
       - dev

@@ -1,6 +1,23 @@
-ARG $MAMBA_USER=mambauser
+# Stage for building the Java-based NoiseModelling library
+FROM maven:3.9.9-eclipse-temurin-11-focal AS java-builder
 
-FROM python:3.12-bookworm as base
+WORKDIR /build
+
+ENV CACHE_DIR=/build/cache
+
+RUN --mount=type=cache,target=$CACHE_DIR apt-get update && apt-get install -y --no-install-recommends \
+    make \
+    unzip \
+    && rm -rf /var/lib/apt/lists/*
+
+COPY Makefile .env ./
+# Copy the NoiseModelling source code
+RUN git clone --depth 1 --branch v4.0.5 https://github.com/Universite-Gustave-Eiffel/NoiseModelling.git NoiseModelling \
+    # Build the NoiseModelling library
+    && make check-java && make dist
+
+
+FROM python:3.12-bookworm AS base
 
 ENV CACHE_DIR=/app/cache
 
@@ -24,7 +41,7 @@ RUN touch README.md \
     && poetry build \
     && /app/.venv/bin/python -m pip install dist/*.whl --no-deps
 
-FROM python:3.12-slim-bookworm as runtime
+FROM python:3.12-slim-bookworm AS runtime
 
 ARG USER_UID=1000
 ARG USERNAME=pythonuser
@@ -38,14 +55,32 @@ RUN groupadd --gid $USER_GID $USERNAME && \
     useradd --create-home --no-log-init --gid $USER_GID --uid $USER_UID --shell /bin/bash $USERNAME && \
     chown -R $USERNAME:$USERNAME /home/$USERNAME /usr/local/lib /usr/local/bin
 
-WORKDIR /home/$USERNAME
+USER $USERNAME
 
-ENV VIRTUAL_ENV=/home/.venv \
-    PATH="/home/$USERNAME/.venv/bin:$PATH"
+WORKDIR /app
+
+# Install Java runtime
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    default-jdk \
+    && rm -rf /var/lib/apt/lists/*
+
+# Set Java environment variables
+ENV JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64
+ENV PATH="$JAVA_HOME/bin:$PATH"
+
+ENV VIRTUAL_ENV=/app/.venv \
+    PATH="/app/.venv/bin:$PATH"
 
 COPY --from=base \
     --chmod=0755 \
     --chown=$USERNAME:$USERNAME \
     ${VIRTUAL_ENV} ./.venv
 
+# Copy the built NoiseModelling dist folder from the java-builder stage
+COPY --from=java-builder \
+    --chmod=0755 \
+    --chown=$USERNAME:$USERNAME \
+    /build/dist ./dist
+
+COPY app.py app.py
 ENV PYTHONUNBUFFERED 1
