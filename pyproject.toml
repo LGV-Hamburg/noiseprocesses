@@ -25,7 +25,6 @@ classifiers = [
     "Typing :: Typed",
 ]
 dependencies = [
-    "fastprocesses @ git+https://github.com/StefanSchuhart/fastProcesses#v0.5.0",
     "cython (>=3.0.12,<4.0.0)",
     "jaydebeapi (>=1.2.3,<2.0.0)",
     "sqlalchemy (>=2.0.38,<3.0.0)",
@@ -33,7 +32,8 @@ dependencies = [
     "jpype1 (>=1.5.2,<2.0.0)",
     "numpy (>=2.2.3,<3.0.0)",
     "geojson-pydantic (>=1.2.0,<2.0.0)",
-    "shapely (>=2.0.7,<3.0.0)"
+    "shapely (>=2.0.7,<3.0.0)",
+    "fastprocesses (>=0.7.4,<0.8.0)"
 ]
 
 [project.urls]
@@ -86,7 +86,6 @@ readme = "README.md"
 
 [tool.poetry.dependencies]
 python = ">=3.12,<4.0"
-fastProcesses = { git = "https://github.com/User/fastProcesses.git", tag = "v0.5.0" }
 
 [tool.poetry.group.dev.dependencies]
 # formatting, quality, tests
