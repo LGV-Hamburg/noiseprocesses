@@ -48,3 +48,6 @@ To build run:
 make check-java
 make dist
 ```
+
+# LICENSE
+This software is based on and uses component from [NoiseModelling](https://github.com/Universite-Gustave-Eiffel/NoiseModelling/) and is licenced under GPLv3.
