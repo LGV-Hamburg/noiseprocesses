@@ -5,6 +5,11 @@ import jpype
 import jpype.imports
 from jpype.types import JFloat
 
+import logging
+
+from noiseprocesses.config import config
+logger = logging.getLogger(__name__)
+
 
 class JavaBridge:
     """Manages JVM initialization and class loading for NoiseModelling."""
@@ -18,12 +23,23 @@ class JavaBridge:
             )
 
         # Get path to NoiseModelling libraries
-        current_dir = Path(__file__).parent
-        lib_dir = (current_dir.parent.parent.parent / "dist" / "lib").resolve()
+
+        if config.JAVA_LIB_DIR:
+            lib_dir = Path(config.JAVA_LIB_DIR).resolve()
+        else:
+            current_dir = Path(__file__).parent
+            logger.debug(f"Current directory: {current_dir}")
+
+            lib_dir = (current_dir.parent.parent.parent / "dist" / "lib").resolve()
+        
+        logger.debug(f"Library directory: {lib_dir}")
 
         # Configure and start JVM if not already running
         if not jpype.isJVMStarted():
             classpath = str(lib_dir / "*")
+
+            logger.info(f"Starting JVM with classpath: {classpath}")
+
             jpype.startJVM(
                 jpype.getDefaultJVMPath(),
                 # Memory configuration
@@ -44,6 +60,11 @@ class JavaBridge:
                 convertStrings=True,  # Auto convert strings
                 interrupt=True,  # Allow thread interruption
             )
+
+        if not jpype.isJVMStarted():
+            logger.error("Failed to start JVM")
+        else:
+            logger.info("JVM started successfully")
 
         # Initialize commonly used classes
         self._init_classes()
