@@ -55,21 +55,23 @@ RUN groupadd --gid $USER_GID $USERNAME && \
     useradd --create-home --no-log-init --gid $USER_GID --uid $USER_UID --shell /bin/bash $USERNAME && \
     chown -R $USERNAME:$USERNAME /home/$USERNAME /usr/local/lib /usr/local/bin
 
-USER $USERNAME
-
-WORKDIR /app
-
 # Install Java runtime
 RUN apt-get update && apt-get install -y --no-install-recommends \
     default-jdk \
     && rm -rf /var/lib/apt/lists/*
 
-# Set Java environment variables
-ENV JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64
-ENV PATH="$JAVA_HOME/bin:$PATH"
+USER $USERNAME
+WORKDIR /app
 
-ENV VIRTUAL_ENV=/app/.venv \
-    PATH="/app/.venv/bin:$PATH"
+# Set Java environment variables
+ENV JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64 \
+    PATH="$JAVA_HOME/bin:$PATH" \
+    VIRTUAL_ENV=/app/.venv \
+    # needed to find and register classes within the worker
+    PATH="/app/.venv/bin:$PATH" \
+    PYTHONPATH="/app:${PYTHONPATH}" \
+    # needed to find the Java classes
+    JAVA_LIB_DIR="/app/dist/lib"
 
 COPY --from=base \
     --chmod=0755 \
@@ -82,5 +84,8 @@ COPY --from=java-builder \
     --chown=$USERNAME:$USERNAME \
     /build/dist ./dist
 
-COPY app.py app.py
+COPY --chmod=0755 \
+    --chown=$USERNAME:$USERNAME \
+    app.py app.py
+
 ENV PYTHONUNBUFFERED 1
