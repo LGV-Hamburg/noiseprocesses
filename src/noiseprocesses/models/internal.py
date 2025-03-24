@@ -7,8 +7,8 @@ from geojson_pydantic import (
 )
 from pydantic import model_validator
 
-from noiseprocesses.models.building_properties import BuildingPropertiesInternal
-from noiseprocesses.models.roads_properties import CnossosTrafficFlow
+from noiseprocesses.models.building_properties import BuildingPropertiesInternal, BuildingsFeatureCollection
+from noiseprocesses.models.roads_properties import CnossosTrafficFlow, RoadsFeatureCollection
 
 
 class RoadFeature(Feature[LineString | MultiLineString, CnossosTrafficFlow]):
