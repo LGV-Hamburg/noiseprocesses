@@ -30,8 +30,11 @@ class TrafficNoiseProcess(BaseProcess):
         progress_callback: Callable[[int, str], None] | None = None
     ) -> Dict[str, Any]:
         
+        user_outputs = exec_body["outputs"]
+
+        
         if progress_callback:
-            progress_callback(1, "Processing input")
+            progress_callback(0, f"Beginning calculations for {user_outputs}")
 
         calculator = RoadNoiseModellingCalculator(
             noise_calculation_config=NoiseCalculationConfig()
@@ -42,9 +45,13 @@ class TrafficNoiseProcess(BaseProcess):
             )
         except ValueError as value_error:
             logger.error("Some inputs are not valid: %s", value_error)
-        
-        user_outputs = exec_body["outputs"]
+            if progress_callback:
+                progress_callback(
+                    0, f"Calculations failed. Reason: Invalid inputs ({value_error})."
+                )
 
+            raise value_error
+        
         result = calculator.calculate_noise_levels(
             user_input, user_outputs
         )
