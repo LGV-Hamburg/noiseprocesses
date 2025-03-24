@@ -36,8 +36,11 @@ class CnossosTrafficFlow(BaseModel):
     def from_user_model(cls, user_model: 'TrafficFlow') -> Self:
         """Convert from user model to internal model."""
         # Pydantic v2 model_dump() with by_alias=True converts to internal field names
-        return cls(**user_model.model_dump())
-
+        return cls(**user_model.model_dump(by_alias=True))
+    PK: int = Field(
+        alias="id",
+        description="Unique identifier for the road segment",
+    )
     # Vehicle counts - default None to match database behavior
     LV_D: float | None = Field(
         default=None,
@@ -138,21 +141,21 @@ class CnossosTrafficFlow(BaseModel):
     LV_SPD_D: float | None = Field(
         default=None,
         description="Light vehicle speed in km/h (6-18h)",
-        ge=20.0,
+        ge=0.0,
         le=200.0,
         alias="light_speed_day"
     )
     LV_SPD_E: float | None = Field(
         default=None,
         description="Light vehicle speed in km/h (18-22h)",
-        ge=20.0,
+        ge=0.0,
         le=200.0,
         alias="light_speed_evening"
     )
     LV_SPD_N: float | None = Field(
         default=None,
         description="Light vehicle speed in km/h (22-6h)",
-        ge=20.0,
+        ge=0.0,
         le=200.0,
         alias="light_speed_night"
     )
@@ -160,21 +163,21 @@ class CnossosTrafficFlow(BaseModel):
     MV_SPD_D: float | None = Field(
         default=None,
         description="Medium vehicle speed in km/h (6-18h)",
-        ge=20.0,
+        ge=0.0,
         le=200.0,
         alias="medium_speed_day"
     )
     MV_SPD_E: float | None = Field(
         default=None,
         description="Medium vehicle speed in km/h (18-22h)",
-        ge=20.0,
+        ge=0.0,
         le=200.0,
         alias="medium_speed_evening"
     )
     MV_SPD_N: float | None = Field(
         default=None,
         description="Medium vehicle speed in km/h (22-6h)",
-        ge=20.0,
+        ge=0.0,
         le=200.0,
         alias="medium_speed_night"
     )
@@ -182,21 +185,21 @@ class CnossosTrafficFlow(BaseModel):
     HGV_SPD_D: float | None = Field(
         default=None,
         description="Heavy vehicle speed in km/h (6-18h)",
-        ge=20.0,
+        ge=0.0,
         le=200.0,
         alias="heavy_speed_day"
     )
     HGV_SPD_E: float | None = Field(
         default=None,
         description="Heavy vehicle speed in km/h (18-22h)",
-        ge=20.0,
+        ge=0.0,
         le=200.0,
         alias="heavy_speed_evening"
     )
     HGV_SPD_N: float | None = Field(
         default=None,
         description="Heavy vehicle speed in km/h (22-6h)",
-        ge=20.0,
+        ge=0.0,
         le=200.0,
         alias="heavy_speed_night"
     )
@@ -204,21 +207,21 @@ class CnossosTrafficFlow(BaseModel):
     WAV_SPD_D: float | None = Field(
         default=None,
         description="Moped speed in km/h (6-18h)",
-        ge=20.0,
+        ge=0.0,
         le=200.0,
         alias="light_moto_speed_day"
     )
     WAV_SPD_E: float | None = Field(
         default=None,
         description="Moped speed in km/h (18-22h)",
-        ge=20.0,
+        ge=0.0,
         le=200.0,
         alias="light_moto_speed_evening"
     )
     WAV_SPD_N: float | None = Field(
         default=None,
         description="Moped speed in km/h (22-6h)",
-        ge=20.0,
+        ge=0.0,
         le=200.0,
         alias="light_moto_speed_night"
     )
@@ -226,21 +229,21 @@ class CnossosTrafficFlow(BaseModel):
     WBV_SPD_D: float | None = Field(
         default=None,
         description="Motorcycle speed in km/h (6-18h)",
-        ge=20.0,
+        ge=0.0,
         le=200.0,
         alias="heavy_moto_speed_day"
     )
     WBV_SPD_E: float | None = Field(
         default=None,
         description="Motorcycle speed in km/h (18-22h)",
-        ge=20.0,
+        ge=0.0,
         le=200.0,
         alias="heavy_moto_speed_evening"
     )
     WBV_SPD_N: float | None = Field(
         default=None,
         description="Motorcycle speed in km/h (22-6h)",
-        ge=20.0,
+        ge=0.0,
         le=200.0,
         alias="heavy_moto_speed_night"
     )
@@ -249,7 +252,7 @@ class CnossosTrafficFlow(BaseModel):
     PVMT: str = Field(
         default="NL08",
         description="CNOSSOS road surface type",
-        pattern=r"^[A-Z]{2}\d{2}$",
+        pattern=r"^(NL(0[1-9]|1[0-4])|DEF)$",
         alias="pavement"
     )
     
@@ -306,7 +309,7 @@ class CnossosTrafficFlow(BaseModel):
         populate_by_name = True
 
 class TrafficFlow(BaseModel):
-    """User-friendly traffic flow parameters for a road segment.
+    """User-facing traffic flow parameters for a road segment.
     
     Required fields:
     - At least one vehicle count (light or heavy)
@@ -354,6 +357,10 @@ class TrafficFlow(BaseModel):
             
         return self
 
+    sid: int = Field(
+        alias="id",
+        description="Unique identifier for the road segment",
+    )
     # Day period (6-18h)
     light_vehicles_day: float = Field(
         default=0.0,
@@ -534,7 +541,7 @@ class TrafficFlow(BaseModel):
     pavement: str = Field(
         default="NL08",
         description="CNOSSOS road surface type (e.g. NL08)",
-        pattern=r"^[A-Z]{2}\d{2}$",
+        pattern=r"^(NL(0[1-9]|1[0-4])|DEF)$",
     )
     
     temperature_day: float = Field(
@@ -579,4 +586,8 @@ class TrafficFlow(BaseModel):
 
 RoadsFeatureCollection = FeatureCollection[
     Feature[LineString | MultiLineString, TrafficFlow]
+]
+
+RoadsFeature = Feature[
+    LineString | MultiLineString, TrafficFlow
 ]
