@@ -75,6 +75,7 @@ class TrafficNoiseProcess(BaseProcess):
                     allOf=[
                         {"format": "geojson-feature-collection"},
                         {"$ref": "https://geojson.org/schema/FeatureCollection.json"},
+                        {"$ref": "https://bitbucket.org/geowerkstatt-hamburg/noiseprocesses/schema/buildings-schema.json"},
                     ]
                 ),
                 minOccurs=1,
@@ -87,6 +88,7 @@ class TrafficNoiseProcess(BaseProcess):
                     allOf=[
                         {"format": "geojson-feature-collection"},
                         {"$ref": "https://geojson.org/schema/FeatureCollection.json"},
+                        {"$ref": "https://bitbucket.org/geowerkstatt-hamburg/noiseprocesses/schema/buildings-schema.json"},
                     ]
                 ),
                 minOccurs=1,
