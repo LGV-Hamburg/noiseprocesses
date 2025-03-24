@@ -1,0 +1,80 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "type": "object",
+    "properties": {
+      "type": {
+        "type": "string",
+        "enum": ["FeatureCollection"]
+      },
+      "numberReturned": {
+        "type": "integer"
+      },
+      "numberMatched": {
+        "type": "integer"
+      },
+      "timeStamp": {
+        "type": "string",
+        "format": "date-time"
+      },
+      "features": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "properties": {
+            "type": {
+              "type": "string",
+              "enum": ["Feature"]
+            },
+            "id": {
+              "type": "integer"
+            },
+            "geometry": {
+              "type": "object",
+              "properties": {
+                "type": {
+                  "type": "string",
+                  "enum": ["LineString"]
+                },
+                "coordinates": {
+                  "type": "array",
+                  "items": {
+                    "type": "array",
+                    "minItems": 2,
+                    "maxItems": 2,
+                    "items": [
+                      { "type": "number" },
+                      { "type": "number" }
+                    ]
+                  }
+                }
+              },
+              "required": ["type", "coordinates"]
+            },
+            "properties": {
+              "type": "object",
+              "properties": {
+                "id": { "type": "integer" },
+                "building_height": { "type": "number" }
+              },
+              "required": ["id", "strassenname", "pavement"]
+            }
+          },
+          "required": ["type", "geometry", "properties"]
+        }
+      },
+      "links": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "properties": {
+            "href": { "type": "string", "format": "uri" },
+            "rel": { "type": "string" },
+            "type": { "type": "string" },
+            "title": { "type": "string" }
+          },
+          "required": ["href", "rel", "type"]
+        }
+      }
+    },
+    "required": ["type", "features"]
+  }
