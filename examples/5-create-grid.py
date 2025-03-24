@@ -14,8 +14,8 @@ basic_config = RegularGridConfig(
     buildings_table="BUILDINGS",
     output_table="RECEIVERS_GRID",
     delta=10,  # 10-meter grid spacing
-    height=2.75,  # 4 meters receiver height
-    create_triangles=True,
+    calculation_height=2.75,  # 4 meters receiver height
+    create_triangles=False,
 )
 
 buildings_path = Path(
@@ -101,12 +101,12 @@ if results:
 ################
 
 # import roads
-db.import_geojson("examples/roads.geojson", "ROADS_TRAFFIC", crs=2154)
+db.import_geojson("examples/roads-user.geojson", "ROADS_TRAFFIC", crs=2154)
 
 delaunay_config = DelaunayGridConfig(
     buildings_table="BUILDINGS",
     output_table="RECEIVERS_GRID",
-    height=2.75,  # 4 meters receiver height
+    calculation_height=2.75,  # 4 meters receiver height
     sources_table="ROADS_TRAFFIC",
     road_width=15,
 )
