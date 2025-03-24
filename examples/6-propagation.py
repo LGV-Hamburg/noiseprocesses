@@ -19,7 +19,12 @@ buildings_path = Path(
 )
 if buildings_path.exists():
     print("\nImporting buildings data...")
-    db.import_shapefile(str(buildings_path), "buildings")
+    # db.import_shapefile(str(buildings_path), "buildings")
+    db.import_geojson(
+        "examples/buildings.geojson",
+        "buildings",
+        25832
+    )
 
 # create reveicer grid -> RECEIVERS
 print("generating receivers grid")
