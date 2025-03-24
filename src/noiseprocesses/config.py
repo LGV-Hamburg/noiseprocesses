@@ -1,4 +1,6 @@
 from pydantic_settings import BaseSettings
 
 class AppConfig(BaseSettings):
-    pass
+    JAVA_LIB_DIR: str | None = None
+
+config = AppConfig()
