@@ -1,6 +1,6 @@
 apiVersion: v2
 name: noise-modelling-api
-description: A Helm chart for Noise Modelling API and Worker
+description: A Helm chart for NoiseModelling API and Worker
 type: application
-version: 0.5.7
-appVersion: "2.0.16"
+version: 0.9.0
+appVersion: "0.9.0"
