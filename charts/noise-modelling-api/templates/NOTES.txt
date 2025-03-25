@@ -1,0 +1,13 @@
+Your API service is available at:
+  http://{{ include "noise-modelling-api.fullname" . }}.{{ .Release.Namespace }}.svc.cluster.local:{{ .Values.service.port }}/noise
+
+Available endpoints:
+- Swagger UI:   /noise/docs
+- Redoc:        /noise/redoc
+- OpenAPI spec: /noise/openapi.json
+
+To verify the API service:
+  kubectl --namespace {{ .Release.Namespace }} get svc {{ include "noise-modelling-api.fullname" . }}
+
+To port-forward the service to your local machine:
+  kubectl --namespace {{ .Release.Namespace }} port-forward svc/{{ include "noise-modelling-api.fullname" . }} {{ .Values.service.port }}:{{ .Values.service.port }}

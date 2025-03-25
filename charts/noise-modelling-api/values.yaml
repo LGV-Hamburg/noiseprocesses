@@ -1,0 +1,106 @@
+image:
+  repository: lgvanalytics.azurecr.io/analytics/coup-noise-api-v2
+  tag: "2.0.15"
+  pullPolicy: IfNotPresent
+  pullSecrets: []    # e.g. - name: regcred
+
+nameOverride: ""
+fullnameOverride: ""
+
+replicaCount:
+  api: 1
+  worker: 1
+
+podLabels:
+  api: {}    # e.g. environment: prod
+  worker: {} # e.g. type: background
+
+# node selector
+nodeSelector:
+  worker:
+    ump.reservedFor: apps
+  api:
+    ump.reservedFor: apps
+# Node tolerations
+tolerations:
+  api:     
+    - key: "ump/reservedFor"
+      operator: "Equal"
+      value: "apps"
+      effect: "NoSchedule"
+    - key: "ump/reservedFor"
+      operator: "Equal"
+      value: "apps"
+      effect: "NoExecute"
+  worker:
+    - key: "ump/reservedFor"
+      operator: "Equal"
+      value: "apps"
+      effect: "NoSchedule"
+    - key: "ump/reservedFor"
+      operator: "Equal"
+      value: "apps"
+      effect: "NoExecute"
+
+service:
+  type: ClusterIP
+  port: 8008
+
+redis:
+  host: redis
+  port: 6379
+  db: "0"
+  existingSecret: ""
+  existingSecretKey: ""
+  ssl: false
+
+env:
+  corsAllowedOrigins: 
+    - "http://localhost:9001"
+    - "https://localhost:9001"
+    - "http://localhost:9002"
+    - "https://localhost:9002"
+  celeryDefaultQueue: noise
+
+serviceAccount:
+  create: true
+  annotations: {}
+  name: ""
+
+resources:
+  api:
+    limits:
+      cpu: 1
+      memory: 1024Mi
+    requests:
+      cpu: 200m
+      memory: 256Mi
+  worker:
+    limits:
+      cpu: 2
+      memory: 2Gi
+    requests:
+      cpu: 500m
+      memory: 512Mi
+
+autoscaling:
+  api:
+    hpa:
+      enabled: false
+      minReplicas: 2
+      maxReplicas: 10
+      targetCPUUtilization: 70
+      targetMemoryUtilization: 80
+  worker:
+    hpa:
+      enabled: false
+      minReplicas: 2
+      maxReplicas: 15
+      targetCPUUtilization: 60
+      targetMemoryUtilization: 75
+    vpa:
+      enabled: false  # Make VPA optional
+      minAllowedCPU: "200m"
+      minAllowedMemory: "256Mi"
+      maxAllowedCPU: "4"
+      maxAllowedMemory: "8Gi"

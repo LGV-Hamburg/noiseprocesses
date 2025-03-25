@@ -1,0 +1,63 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "noise-modelling-api.fullname" . }}-api
+  labels:
+    {{- include "noise-modelling-api.selectorLabels" . | nindent 4 }}
+    component: api
+    {{- with .Values.podLabels.api }}
+    {{- toYaml . | nindent 8 }}
+    {{- end }}
+
+spec:
+  replicas: {{ .Values.replicaCount.api }}
+  selector:
+    matchLabels:
+      {{- include "noise-modelling-api.selectorLabels" . | nindent 6 }}
+      component: api
+  template:
+    metadata:
+      labels:
+        {{- include "noise-modelling-api.selectorLabels" . | nindent 8 }}
+        component: api
+    spec:
+      {{- with .Values.image.pullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.nodeSelector.api }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations.api }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      containers:
+        - name: {{ .Chart.Name }}-api
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          command:
+            - /bin/sh
+            - -c
+            - |
+              uvicorn app:app --host 0.0.0.0 --port 8000 --reload
+          ports:
+            - name: http
+              containerPort: {{ .Values.service.port }}
+              protocol: TCP
+          envFrom:
+            - configMapRef:
+                name: {{ include "noise-modelling-api.fullname" . }}
+          env:
+            - name: REDIS_PASSWORD
+          {{- if .Values.redis.existingSecret }}
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.redis.existingSecret }}
+                  key: {{ .Values.redis.existingSecretKey }}
+          {{- else }}
+              value: ""
+          {{- end }}
+          resources:
+            {{- toYaml .Values.resources.api | nindent 12 }}

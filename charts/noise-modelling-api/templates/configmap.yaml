@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "noise-modelling-api.fullname" . }}
+  labels:
+    {{- include "noise-modelling-api.labels" . | nindent 4 }}
+data:
+  LOG_LEVEL: "{{ .Values.env.logLevel }}"
+  JAVA_LIB_DIR: "{{ .Values.javaLibDir }}"
+  CELERY_BROKER_URL: {{ .Values.celery.brokerUrl | quote }}
+  CELERY_RESULT_BACKEND: {{ .Values.celery.resultBackend | quote }}
+  CELERY_TASK_RESULT_EXPIRES: "{{ .Values.celery.taskResultExpires }}"

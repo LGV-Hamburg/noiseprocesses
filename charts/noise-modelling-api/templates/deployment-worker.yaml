@@ -1,0 +1,54 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "noise-modelling-api.fullname" . }}-worker
+  labels:
+    {{- include "noise-modelling-api.selectorLabels" . | nindent 4 }}
+    component: worker
+    {{- with .Values.podLabels.worker }}
+    {{- toYaml . | nindent 8 }}
+    {{- end }}
+spec:
+  replicas: {{ .Values.replicaCount.worker }}
+  selector:
+    matchLabels:
+      {{- include "noise-modelling-api.selectorLabels" . | nindent 6 }}
+      component: worker
+  template:
+    metadata:
+      labels:
+        {{- include "noise-modelling-api.selectorLabels" . | nindent 8 }}
+        component: worker
+    spec:
+      {{- with .Values.image.pullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.nodeSelector.worker }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations.worker }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      containers:
+        - name: {{ .Chart.Name }}-worker
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          command: ["celery", "-A", "fastprocesses.worker.celery_app", "worker", "--loglevel=info"]
+          env:
+            - name: REDIS_PASSWORD
+          {{- if .Values.redis.existingSecret }}
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.redis.existingSecret }}
+                  key: {{ .Values.redis.existingSecretKey }}
+          {{- else }}
+              value: ""
+          {{- end }}
+          envFrom:
+            - configMapRef:
+                name: {{ include "noise-modelling-api.fullname" . }}
+          resources:
+            {{- toYaml .Values.resources.worker | nindent 12 }}
