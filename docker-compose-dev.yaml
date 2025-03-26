@@ -8,9 +8,13 @@ services:
     image: ${CONTAINER_REGISTRY}/${IMAGE_NAME}:${IMAGE_TAG}
     restart: "no"
     environment:
-      CELERY_BROKER_URL: "redis://redis:6379/0"
-      CELERY_RESULT_BACKEND: "redis://redis:6379/0"
-      REDIS_CACHE_URL: "redis://redis:6379/1"
+      RESULT_CACHE_HOST: "redis"
+      RESULT_CACHE_PORT: 6379
+      RESULT_CACHE_DB: 1
+
+      CELERY_BROKER_HOST: "redis"
+      CELERY_BROKER_PORT: 6379
+      CELERY_BROKER_DB: 0
     ports:
       - 8000:8000
     command: ['uvicorn', 'app:app', '--host', '0.0.0.0', '--port', '8000']
@@ -21,9 +25,13 @@ services:
     image: ${CONTAINER_REGISTRY}/${IMAGE_NAME}:${IMAGE_TAG}
     restart: "no"
     environment:
-      CELERY_BROKER_URL: "redis://redis:6379/0"
-      CELERY_RESULT_BACKEND: "redis://redis:6379/0"
-      REDIS_CACHE_URL: "redis://redis:6379/1"
+      RESULT_CACHE_HOST: "redis"
+      RESULT_CACHE_PORT: 6379
+      RESULT_CACHE_DB: 1
+
+      CELERY_BROKER_HOST: "redis"
+      CELERY_BROKER_PORT: 6379
+      CELERY_BROKER_DB: 0
     # ports:
     #   - ${WEBAPP_PORT_CONTAINER}:${WEBAPP_PORT}
     command: ['celery', '-A', 'fastprocesses.worker.celery_app', 'worker', '--loglevel=debug']
