@@ -1,6 +1,6 @@
 image:
-  repository: lgvanalytics.azurecr.io/analytics/coup-noise-api-v2
-  tag: "2.0.15"
+  repository: lgvanalytics.azurecr.io/noiseprocesses
+  tag: "0.0.2"
   pullPolicy: IfNotPresent
   pullSecrets: []    # e.g. - name: regcred
 
