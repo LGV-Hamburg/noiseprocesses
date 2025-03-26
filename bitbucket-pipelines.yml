@@ -1,0 +1,33 @@
+image: alpine/helm:3.12.0
+
+pipelines:
+  tags:
+    'chart-v*':
+      - step:
+          name: Package and publish helm chart
+          script:
+            # Install dependencies
+            - apk add --no-cache git openssh-client curl
+
+            # Configure git with token
+            - git config --global credential.helper store
+            - echo "https://x-token-auth:${BB_ACCESS_TOKEN}@bitbucket.org" > ~/.git-credentials
+            - git config --global user.email "pipeline@example.com"
+            - git config --global user.name "Bitbucket Pipeline"
+
+            # Lint and package chart
+            - helm lint charts/noise-modelling-api/
+            - helm package charts/noise-modelling-api/
+
+            # Clone using token auth
+            - git clone https://x-token-auth:${BB_ACCESS_TOKEN}@bitbucket.org/geowerkstatt-hamburg/urban-model-platform-helm-charts.git
+
+            # Copy and update index
+            - cp noise-modelling-api-*.tgz urban-model-platform-helm-charts/
+            - cd urban-model-platform-helm-charts
+            - helm repo index . --url https://api.bitbucket.org/2.0/repositories/geowerkstatt-hamburg/urban-model-platform-helm-charts/src/main
+
+            # Push changes using token
+            - git add .
+            - git commit -m "Add noise-modelling-api chart ${BITBUCKET_TAG}"
+            - git push origin main
