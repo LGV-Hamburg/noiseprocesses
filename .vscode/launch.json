@@ -5,10 +5,11 @@
     "version": "0.2.0",
     "compounds": [
         {
-            "name": "api+worker",
+            "name": "api, worker, flower",
             "configurations": [
                 "Api",
-                "Worker"
+                "Worker",
+                "celery flower"
             ],
             "stopAll": true
         }
@@ -61,6 +62,25 @@
             "justMyCode": false,
             "preLaunchTask": "start-redis-container",
             "postDebugTask": "stop-redis-container",
+            "autoReload": {
+                "enable": true
+            }
+        },
+        {
+            "name": "celery flower",
+            "type": "debugpy",
+            "request": "launch",
+            "module": "celery",
+            "console": "integratedTerminal",
+            "args": [
+                "-A",
+                "fastprocesses.worker.celery_app",
+                "flower",
+                "--port=5555"
+            ],
+            "jinja": true,
+            "envFile": "${workspaceFolder}/.env",
+            "justMyCode": false,
             "autoReload": {
                 "enable": true
             }

@@ -33,7 +33,7 @@ dependencies = [
     "numpy (>=2.2.3,<3.0.0)",
     "geojson-pydantic (>=1.2.0,<2.0.0)",
     "shapely (>=2.0.7,<3.0.0)",
-    "fastprocesses (==0.7.5)"
+    "fastprocesses (==0.8.1)"
 ]
 
 [project.urls]
@@ -101,6 +101,7 @@ pytest-xdist = ">=2.2.0,<3"
 types-toml = ">=0.10.1,<1"
 pre-commit = ">=3.4.0,<4"
 packaging = "^24.2"
+flower = "^2.0.1"
 
 [tool.poetry.group.docs]
 optional = true
