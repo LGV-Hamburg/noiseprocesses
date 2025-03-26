@@ -5,7 +5,7 @@ networks:
 
 services:
   api:
-    image: ${CONTAINER_REGISTRY}/analytics/${IMAGE_NAME}:${IMAGE_TAG}
+    image: ${CONTAINER_REGISTRY}/${IMAGE_NAME}:${IMAGE_TAG}
     restart: "no"
     environment:
       CELERY_BROKER_URL: "redis://redis:6379/0"
@@ -18,7 +18,7 @@ services:
       - dev
 
   worker:
-    image: ${CONTAINER_REGISTRY}/analytics/${IMAGE_NAME}:${IMAGE_TAG}
+    image: ${CONTAINER_REGISTRY}/${IMAGE_NAME}:${IMAGE_TAG}
     restart: "no"
     environment:
       CELERY_BROKER_URL: "redis://redis:6379/0"
