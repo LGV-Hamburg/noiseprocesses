@@ -61,3 +61,11 @@ spec:
                 name: {{ include "noise-modelling-api.fullname" . }}
           resources:
             {{- toYaml .Values.resources.worker | nindent 12 }}
+          volumeMounts:
+            - name: memory-volume
+              mountPath: /tmp
+      volumes:
+        - name: memory-volume
+          emptyDir:
+            medium: Memory  # Use memory-based storage
+            sizeLimit: 500Mi
