@@ -50,12 +50,21 @@ spec:
             - configMapRef:
                 name: {{ include "noise-modelling-api.fullname" . }}
           env:
-            - name: REDIS_PASSWORD
-          {{- if .Values.redis.existingSecret }}
+            - name: CELERY_BROKER_PASSWORD
+          {{- if .Values.config.celery.existingSecret }}
               valueFrom:
                 secretKeyRef:
-                  name: {{ .Values.redis.existingSecret }}
-                  key: {{ .Values.redis.existingSecretKey }}
+                  name: {{ .Values.config.celery.existingSecret }}
+                  key: {{ .Values.config.celery.existingSecret }}
+          {{- else }}
+              value: ""
+          {{- end }}
+            - name: RESULT_CACHE_PASSWORD
+          {{- if .Values.config.celery.existingSecret }}
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.config.resultCache.existingSecret }}
+                  key: {{ .Values.config.resultCache.existingSecret }}
           {{- else }}
               value: ""
           {{- end }}

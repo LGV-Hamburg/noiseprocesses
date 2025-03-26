@@ -46,21 +46,25 @@ service:
   type: ClusterIP
   port: 8008
 
-redis:
-  host: redis
-  port: 6379
-  db: "0"
-  existingSecret: ""
-  existingSecretKey: ""
-  ssl: false
+config:
+  celery: 
+    host: redis
+    port: 6379
+    db: 0
+    existingSecret: ""
+    existingSecretKey: ""
 
-env:
-  corsAllowedOrigins: 
-    - "http://localhost:9001"
-    - "https://localhost:9001"
-    - "http://localhost:9002"
-    - "https://localhost:9002"
-  celeryDefaultQueue: noise
+
+  logLevel: DEBUG
+  javaLibDir: /app/dist/lib
+
+  resultCache:
+    host: redis
+    port: 6379
+    db: 1
+    existingSecret: ""
+    existingSecretKey: ""
+    taskResultExpiresDays:
 
 serviceAccount:
   create: true

@@ -5,8 +5,14 @@ metadata:
   labels:
     {{- include "noise-modelling-api.labels" . | nindent 4 }}
 data:
-  LOG_LEVEL: "{{ .Values.env.logLevel }}"
-  JAVA_LIB_DIR: "{{ .Values.javaLibDir }}"
-  CELERY_BROKER_URL: {{ .Values.celery.brokerUrl | quote }}
-  CELERY_RESULT_BACKEND: {{ .Values.celery.resultBackend | quote }}
-  CELERY_TASK_RESULT_EXPIRES: "{{ .Values.celery.taskResultExpires }}"
+  LOG_LEVEL: "{{ .Values.config.logLevel }}"
+  JAVA_LIB_DIR: "{{ .Values.config.javaLibDir }}"
+
+  RESULTS_CACHE_TTL: {{ .Values.config.resultCache.taskResultExpiresDays | quote }}
+  RESULT_CACHE_HOST: {{ .Values.config.resultCache.host | quote }}
+  RESULT_CACHE_PORT: {{ .Values.config.resultCache.port | quote }}
+  RESULT_CACHE_DB: {{ .Values.config.resultCache.db | quote }}
+  
+  CELERY_BROKER_HOST: {{ .Values.config.celery.host | quote }}
+  CELERY_BROKER_PORT: {{ .Values.config.celery.port | quote }}
+  CELERY_BROKER_DB: {{ .Values.config.celery.db | quote }}
