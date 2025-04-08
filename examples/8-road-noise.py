@@ -15,12 +15,16 @@ roads_traffic = {}
 with open("examples/roads-user.geojson") as f:
     roads_traffic = json.load(f)
 
+grounds = {}
+with open("examples/grounds-user.geojson") as f:
+    grounds = json.load(f)
 
 request_body = {
     "inputs": {
         "buildings": buildings,
         "roads": roads_traffic,
         "crs": "http://www.opengis.net/def/crs/EPSG/0/25832",
+        "ground_absorption": grounds,
     },
     "outputs": {
         # "noise_evening": {},
