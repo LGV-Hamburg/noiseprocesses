@@ -152,7 +152,7 @@ class NoiseCalculationUserInput(BaseModel):
     acoustic_parameters: AcousticParameters | None = None
     propagation_settings: PropagationSettings | None = None
     receiver_grid_settings: GridSettingsUser | None = None
-    iosurface_settings: IsoSurfaceUserSettings | None = None
+    isosurface_settings: IsoSurfaceUserSettings | None = None
 
     @model_validator(mode="before")
     def validate_and_filter_roads(cls, values):
