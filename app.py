@@ -82,7 +82,7 @@ class TrafficNoiseProcess(BaseProcess):
                     allOf=[
                         {"format": "geojson-feature-collection"},
                         {"$ref": "https://geojson.org/schema/FeatureCollection.json"},
-                        {"$ref": "https://bitbucket.org/geowerkstatt-hamburg/noiseprocesses/schema/buildings-schema.json"},
+                        {"$ref": "https://bitbucket.org/geowerkstatt-hamburg/noiseprocesses/schemas/buildings-schema.json"},
                     ]
                 ),
                 minOccurs=1,
@@ -95,7 +95,7 @@ class TrafficNoiseProcess(BaseProcess):
                     allOf=[
                         {"format": "geojson-feature-collection"},
                         {"$ref": "https://geojson.org/schema/FeatureCollection.json"},
-                        {"$ref": "https://bitbucket.org/geowerkstatt-hamburg/noiseprocesses/schema/buildings-schema.json"},
+                        {"$ref": "https://bitbucket.org/geowerkstatt-hamburg/noiseprocesses/schemas/roads-schema.json"},
                     ]
                 ),
                 minOccurs=1,
@@ -249,8 +249,8 @@ class TrafficNoiseProcess(BaseProcess):
         },
         outputs={
             "noise_day": ProcessOutput(
-                title="Output Text",
-                description="Processed text",
+                title="Noise isosurface day",
+                description="Isosurface containing noise levels during the day period (6-18h)",
                 schema=Schema(
                     allOf=[
                         {"format": "geojson-feature-collection"},
@@ -259,8 +259,8 @@ class TrafficNoiseProcess(BaseProcess):
                 ),
             ),
             "noise_evening": ProcessOutput(
-                title="Output Text",
-                description="Processed text",
+                title="Noise isosurface evening",
+                description="Isosurface containing noise levels during the evening period (18-22h)",
                 schema=Schema(
                     allOf=[
                         {"format": "geojson-feature-collection"},
@@ -269,8 +269,8 @@ class TrafficNoiseProcess(BaseProcess):
                 ),
             ),
             "noise_night": ProcessOutput(
-                title="Output Text",
-                description="Processed text",
+                title="Noise isosurface night",
+                description="Isosurface containing noise levels during the night period (22-6h)",
                 schema=Schema(
                     allOf=[
                         {"format": "geojson-feature-collection"},
@@ -279,8 +279,8 @@ class TrafficNoiseProcess(BaseProcess):
                 ),
             ),
             "noise_den": ProcessOutput(
-                title="Output Text",
-                description="Processed text",
+                title="Noise isosurface day-evening-night",
+                description="Isosurface containing noise levels during the a 24 hour period",
                 schema=Schema(
                     allOf=[
                         {"format": "geojson-feature-collection"},
