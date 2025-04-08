@@ -5,6 +5,7 @@ from pydantic import BaseModel, Field
 
 
 class GroundAbsorptionInternal(BaseModel):
+    id: int | str
     G: float = Field(
         alias="absorption",
         default=0.0,
@@ -21,6 +22,7 @@ class GroundAbsorptionInternal(BaseModel):
 
 
 class GroundAbsorption(BaseModel):
+    id: int | str
     absorption: float = Field(
         default=0.0, ge=0.0, le=1.0, description="Ground absorption coefficient"
     )

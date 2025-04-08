@@ -7,9 +7,16 @@ from geojson_pydantic import (
 )
 from pydantic import model_validator
 
-from noiseprocesses.models.building_properties import BuildingPropertiesInternal, BuildingsFeatureCollection
-from noiseprocesses.models.roads_properties import CnossosTrafficFlow, RoadsFeatureCollection
-
+from noiseprocesses.models.building_properties import (
+    BuildingPropertiesInternal, BuildingsFeatureCollection
+)
+from noiseprocesses.models.ground_absorption import GroundAbsorptionInternal
+from noiseprocesses.models.roads_properties import (
+    CnossosTrafficFlow, RoadsFeatureCollection
+)
+from noiseprocesses.models.ground_absorption import (
+    GroundAbsorptionInternal, GroundAbsorptionFeatureCollection
+)
 
 class RoadFeature(Feature[LineString | MultiLineString, CnossosTrafficFlow]):
     """A road feature with required traffic properties."""
@@ -39,7 +46,8 @@ class RoadsFeatureCollectionInternal(FeatureCollection[RoadFeature]):
                     id=feature.id,
                     type="Feature",
                 )
-                for feature in user_collection.features
+                # skip features without properties, silently
+                for feature in user_collection.features if feature.properties
             ],
         )
 
@@ -63,6 +71,34 @@ class BuildingsFeatureCollectionInternal(
                     id=feature.id,
                     type="Feature",
                 )
-                for feature in user_collection.features
+                # skip features without properties, silently
+                for feature in user_collection.features if feature.properties
             ],
         )
+
+GroundAbsorptionFeature = Feature[Polygon, GroundAbsorptionInternal]
+
+class GroundAbsorptionFeatureCollectionInternal(
+    FeatureCollection[GroundAbsorptionFeature]
+):
+    @classmethod
+    def from_user_collection(
+        cls, user_collection: "GroundAbsorptionFeatureCollection"
+    ) -> "GroundAbsorptionFeatureCollectionInternal":
+        """Convert from user feature collection to internal format."""
+        return cls(
+            type="FeatureCollection",
+            features=[
+                Feature(
+                    geometry=feature.geometry,
+                    properties=GroundAbsorptionInternal.from_user_model(
+                        feature.properties
+                    ),
+                    id=feature.id,
+                    type="Feature",
+                )
+                # skip features without properties, silently
+                for feature in user_collection.features if feature.properties
+            ],
+        )
+
