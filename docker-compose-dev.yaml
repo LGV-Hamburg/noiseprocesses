@@ -2,6 +2,9 @@ networks:
   dev:
     name: ${DOCKER_DEV_NETWORK}
     external: true
+volumes:
+  redis_data:
+    driver: local
 
 services:
   api:
@@ -46,3 +49,5 @@ services:
     command: dragonfly --requirepass "" # --appendonly yes
     networks:
       - dev
+    volumes:
+      - redis_data:/data
