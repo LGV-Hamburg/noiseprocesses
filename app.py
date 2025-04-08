@@ -225,7 +225,7 @@ class TrafficNoiseProcess(BaseProcess):
                 minOccurs=0,
                 maxOccurs=1,
             ),
-            "iosurface_settings": ProcessInput(
+            "isosurface_settings": ProcessInput(
                 title="IsoSurface Settings",
                 description="Settings for isosurface generation",
                 schema=Schema(
