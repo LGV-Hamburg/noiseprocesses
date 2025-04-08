@@ -23,12 +23,12 @@ class InputRequiredTables(BaseModel):
 class InputOptionalTables(BaseModel):
     model_config = ConfigDict(frozen=True)
 
-    dem_table: str | None = Field(
-        default=None,
+    dem_table: str = Field(
+        default="DEM",
         description="Digital Elevation Model table"
     )
-    ground_absorption_table: str | None = Field(
-        default=None,
+    ground_absorption_table: str = Field(
+        default="GROUNDS",
         description="Ground absorption coefficients table"
     )
 
