@@ -6,6 +6,7 @@ from noiseprocesses.core.database import NoiseDatabase
 from noiseprocesses.models.grid_config import DelaunayGridConfig
 from noiseprocesses.models.internal import (
     BuildingsFeatureCollectionInternal,
+    GroundAbsorptionFeatureCollectionInternal,
     RoadsFeatureCollectionInternal,
 )
 from noiseprocesses.models.noise_calculation_config import (
@@ -143,8 +144,14 @@ class RoadNoiseModellingCalculator:
             user_input.roads
         )
         # - grounds
+        grounds = None
+        if user_input.ground_absorption:
+            grounds = GroundAbsorptionFeatureCollectionInternal.from_user_collection(
+                user_input.ground_absorption
+            )
 
         # - dem
+        dem = None
 
         # setup the database
         noise_db = NoiseDatabase(
@@ -172,7 +179,14 @@ class RoadNoiseModellingCalculator:
             self._ensure_roads_have_z(self.config.required_input.roads_table)
 
         # - load dem -> tif
+
         # - grounds -> geojson
+        if grounds:
+            noise_db.import_geojson(
+                grounds.model_dump(exclude_none=True),
+                self.config.optional_input.ground_absorption_table,
+                user_input.crs,
+            )
 
         # generate receivers (using Delaunay with triangle creation)
         # configure grid parameters
@@ -193,9 +207,13 @@ class RoadNoiseModellingCalculator:
 
         # calculate propagation
         road_prop = RoadPropagationCalculator(noise_db)
-        road_prop.calculate_propagation(self.config)
+        road_prop.calculate_propagation(
+            self.config,
+            True if dem else False,
+            True if grounds else False
+        )
 
-        # create isocontour
+        # finally: create isocontour
         surface_generator = IsoSurfaceBezier(noise_db)
 
         output: dict[str, dict] = {}
