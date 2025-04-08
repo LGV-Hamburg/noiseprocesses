@@ -21,18 +21,20 @@ class RoadPropagationCalculator:
         self.database = database
         self.java_bridge = JavaBridge.get_instance()
 
-    def calculate_propagation(self, config: NoiseCalculationConfig) -> str:
+    def calculate_propagation(
+            self, config: NoiseCalculationConfig,
+            use_dem: bool = False,
+            use_grounds: bool = False,
+        ) -> None:
         """Calculate noise propagation using NoiseModelling.
 
         Args:
-            emission_table: Table containing emission points
-            receivers_table: Table containing receiver points
-            buildings_table: Table containing building geometries
-            dem_table: Optional DEM table name
-            ground_table: Optional ground absorption table name
+            config: NoiseCalculationConfig object with all required parameters for noise propagation calculation
+            use_dem: bool derive z-values for streets from DEM
+            use_grounds: bool Wether to include ground
 
         Returns:
-            str: Name of the main output table (LDEN_GEOM)
+            None
         """
         logger.info("Starting propagation calculation")
 
@@ -91,11 +93,13 @@ class RoadPropagationCalculator:
             noise_map.setComputeHorizontalDiffraction(settings.horizontal_diffraction)
             noise_map.setComputeVerticalDiffraction(settings.vertical_diffraction)
 
-            # Set optional DEM and ground absorption
-            if dem_table := config.optional_input.dem_table:
-                noise_map.setDemTable(dem_table)
-            if ground_table := config.optional_input.ground_absorption_table:
-                noise_map.setSoilTableName(ground_table)
+            # Import table with Snow, Forest, Grass, Pasture field polygons.
+            # Attribute G is associated with each polygon
+            if use_grounds:
+                noise_map.setSoilTableName(config.optional_input.ground_absorption_table)
+            # Set DEM table if provided
+            if use_dem:
+                noise_map.setDemTable(config.optional_input.dem_table)
 
             # Configure environmental conditions
             self._configure_environmental_data(noise_map, config)
@@ -179,7 +183,6 @@ class RoadPropagationCalculator:
             logger.info(
                 f"Calculation complete. Created tables: {', '.join(created_tables)}"
             )
-            return "LDEN_GEOM"
 
         except Exception as e:
             logger.error(f"Propagation calculation failed: {str(e)}")
