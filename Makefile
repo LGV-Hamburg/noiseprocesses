@@ -29,7 +29,7 @@ build-image:
 
 push-registry:
 # login into our azure registry
-	az acr login -n lgvudh
+	az acr login -n ${CONTAINER_REGISTRY}
 # push image to the registry
 	docker push  ${CONTAINER_REGISTRY}/$(IMAGE_NAME):$(IMAGE_TAG)
 
