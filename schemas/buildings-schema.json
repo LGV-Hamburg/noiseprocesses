@@ -1,80 +1,327 @@
 {
-    "$schema": "http://json-schema.org/draft-07/schema#",
-    "type": "object",
-    "properties": {
-      "type": {
-        "type": "string",
-        "enum": ["FeatureCollection"]
-      },
-      "numberReturned": {
-        "type": "integer"
-      },
-      "numberMatched": {
-        "type": "integer"
-      },
-      "timeStamp": {
-        "type": "string",
-        "format": "date-time"
-      },
-      "features": {
-        "type": "array",
-        "items": {
-          "type": "object",
-          "properties": {
-            "type": {
-              "type": "string",
-              "enum": ["Feature"]
-            },
-            "id": {
+  "$defs": {
+    "BuildingProperties": {
+      "properties": {
+        "id": {
+          "anyOf": [
+            {
               "type": "integer"
             },
-            "geometry": {
-              "type": "object",
-              "properties": {
-                "type": {
-                  "type": "string",
-                  "enum": ["LineString"]
-                },
-                "coordinates": {
-                  "type": "array",
-                  "items": {
-                    "type": "array",
-                    "minItems": 2,
-                    "maxItems": 2,
-                    "items": [
-                      { "type": "number" },
-                      { "type": "number" }
-                    ]
-                  }
-                }
-              },
-              "required": ["type", "coordinates"]
-            },
-            "properties": {
-              "type": "object",
-              "properties": {
-                "id": { "type": "integer" },
-                "building_height": { "type": "number" }
-              },
-              "required": ["id", "strassenname", "pavement"]
+            {
+              "type": "string"
             }
-          },
-          "required": ["type", "geometry", "properties"]
+          ],
+          "title": "Id"
+        },
+        "building_height": {
+          "title": "Building Height",
+          "type": "number"
         }
       },
-      "links": {
-        "type": "array",
-        "items": {
-          "type": "object",
-          "properties": {
-            "href": { "type": "string", "format": "uri" },
-            "rel": { "type": "string" },
-            "type": { "type": "string" },
-            "title": { "type": "string" }
-          },
-          "required": ["href", "rel", "type"]
-        }
-      }
+      "required": [
+        "id",
+        "building_height"
+      ],
+      "title": "BuildingProperties",
+      "type": "object"
     },
-    "required": ["type", "features"]
-  }
+    "Feature_Polygon_BuildingProperties_": {
+      "properties": {
+        "bbox": {
+          "anyOf": [
+            {
+              "maxItems": 4,
+              "minItems": 4,
+              "prefixItems": [
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "number"
+                }
+              ],
+              "type": "array"
+            },
+            {
+              "maxItems": 6,
+              "minItems": 6,
+              "prefixItems": [
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "number"
+                }
+              ],
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Bbox"
+        },
+        "type": {
+          "const": "Feature",
+          "title": "Type",
+          "type": "string"
+        },
+        "geometry": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Polygon"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "properties": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/BuildingProperties"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "id": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Id"
+        }
+      },
+      "required": [
+        "type",
+        "geometry",
+        "properties"
+      ],
+      "title": "Feature[Polygon, BuildingProperties]",
+      "type": "object"
+    },
+    "Polygon": {
+      "description": "Polygon Model",
+      "properties": {
+        "bbox": {
+          "anyOf": [
+            {
+              "maxItems": 4,
+              "minItems": 4,
+              "prefixItems": [
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "number"
+                }
+              ],
+              "type": "array"
+            },
+            {
+              "maxItems": 6,
+              "minItems": 6,
+              "prefixItems": [
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "number"
+                }
+              ],
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Bbox"
+        },
+        "type": {
+          "const": "Polygon",
+          "title": "Type",
+          "type": "string"
+        },
+        "coordinates": {
+          "items": {
+            "items": {
+              "anyOf": [
+                {
+                  "$ref": "#/$defs/Position2D"
+                },
+                {
+                  "$ref": "#/$defs/Position3D"
+                }
+              ]
+            },
+            "minItems": 4,
+            "type": "array"
+          },
+          "title": "Coordinates",
+          "type": "array"
+        }
+      },
+      "required": [
+        "type",
+        "coordinates"
+      ],
+      "title": "Polygon",
+      "type": "object"
+    },
+    "Position2D": {
+      "maxItems": 2,
+      "minItems": 2,
+      "prefixItems": [
+        {
+          "title": "Longitude",
+          "type": "number"
+        },
+        {
+          "title": "Latitude",
+          "type": "number"
+        }
+      ],
+      "type": "array"
+    },
+    "Position3D": {
+      "maxItems": 3,
+      "minItems": 3,
+      "prefixItems": [
+        {
+          "title": "Longitude",
+          "type": "number"
+        },
+        {
+          "title": "Latitude",
+          "type": "number"
+        },
+        {
+          "title": "Altitude",
+          "type": "number"
+        }
+      ],
+      "type": "array"
+    }
+  },
+  "properties": {
+    "bbox": {
+      "anyOf": [
+        {
+          "maxItems": 4,
+          "minItems": 4,
+          "prefixItems": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "number"
+            },
+            {
+              "type": "number"
+            },
+            {
+              "type": "number"
+            }
+          ],
+          "type": "array"
+        },
+        {
+          "maxItems": 6,
+          "minItems": 6,
+          "prefixItems": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "number"
+            },
+            {
+              "type": "number"
+            },
+            {
+              "type": "number"
+            },
+            {
+              "type": "number"
+            },
+            {
+              "type": "number"
+            }
+          ],
+          "type": "array"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Bbox"
+    },
+    "type": {
+      "const": "FeatureCollection",
+      "title": "Type",
+      "type": "string"
+    },
+    "features": {
+      "items": {
+        "$ref": "#/$defs/Feature_Polygon_BuildingProperties_"
+      },
+      "title": "Features",
+      "type": "array"
+    }
+  },
+  "required": [
+    "type",
+    "features"
+  ],
+  "title": "FeatureCollection[Feature[Polygon, BuildingProperties]]",
+  "type": "object"
+}
