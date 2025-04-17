@@ -14,6 +14,7 @@ from pydantic import (
 )
 
 from noiseprocesses.models.building_properties import BuildingsFeatureCollection
+from noiseprocesses.models.dem_feature import BboxFeature
 from noiseprocesses.models.grid_config import GridSettingsUser
 from noiseprocesses.models.ground_absorption import GroundAbsorptionFeatureCollection
 from noiseprocesses.models.isosurface_config import IsoSurfaceUserSettings
@@ -147,7 +148,8 @@ class NoiseCalculationUserInput(BaseModel):
     buildings: BuildingsFeatureCollection
     roads: RoadsFeatureCollection
     crs: Crs
-    dem: AnyUrl | None = None
+    dem_url: AnyUrl | None = None
+    dem_bbox_feature: BboxFeature | None = None
     ground_absorption: GroundAbsorptionFeatureCollection | None = None
     acoustic_parameters: AcousticParameters | None = None
     propagation_settings: PropagationSettings | None = None
