@@ -1,6 +1,7 @@
 import logging
 from typing import Any, Callable, Dict
 
+from pydantic import ValidationError
 import uvicorn
 from fastprocesses.api.server import OGCProcessesAPI
 from fastprocesses.core.base_process import BaseProcess
@@ -42,6 +43,15 @@ class TrafficNoiseProcess(BaseProcess):
             user_input: NoiseCalculationUserInput = (
                 NoiseCalculationUserInput.model_validate(exec_body["inputs"])
             )
+        except ValidationError as validation_error:
+            logger.error("Some inputs are not valid: %s", validation_error)
+            if progress_callback:
+                progress_callback(
+                    0,
+                    f"Calculations failed. Reason: Invalid inputs ({validation_error}).",
+                )
+
+            raise ValueError(validation_error.errors())
         except ValueError as value_error:
             logger.error("Some inputs are not valid: %s", value_error)
             if progress_callback:
@@ -131,6 +141,8 @@ class TrafficNoiseProcess(BaseProcess):
                     "A GeoJSON Polygon feature representing the bounding box for the DEM."
                     "This is used if the dem_url does not contain a bbox."
                 ),
+                minOccurs=0,
+                maxOccurs=1,
                 schema=Schema(
                     allOf=[
                         {"format": "geojson-feature"},
