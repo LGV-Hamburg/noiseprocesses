@@ -19,12 +19,21 @@ grounds = {}
 with open("examples/grounds-user.geojson") as f:
     grounds = json.load(f)
 
+dem_bbox_feature = {}
+with open("examples/dem_bbox-user.geojson") as f:
+    dem_bbox_feature = json.load(f)
+
 request_body = {
     "inputs": {
         "buildings": buildings,
         "roads": roads_traffic,
         "crs": "http://www.opengis.net/def/crs/EPSG/0/25832",
         "ground_absorption": grounds,
+        "propagation_settings": {
+            "vertical_diffraction": True, "horizontal_diffraction": True
+        },
+        # "dem_bbox_feature": dem_bbox_feature,
+        "dem_url": "https://ump-lgv.germanywestcentral.cloudapp.azure.com/raster/dem5_hh/cog/bbox/566700,5934580,566800,5934680/500x500.tif?coord_crs=epsg:25832"
     },
     "outputs": {
         # "noise_evening": {},
