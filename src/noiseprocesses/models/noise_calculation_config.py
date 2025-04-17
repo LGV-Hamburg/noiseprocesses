@@ -54,10 +54,10 @@ class PropagationSettings(BaseModel):
     model_config = ConfigDict(extra="ignore")
 
     vertical_diffraction: bool = Field(
-        default=False, description="Enable vertical edge diffraction"
+        default=True, description="Enable vertical edge diffraction"
     )
     horizontal_diffraction: bool = Field(
-        default=False, description="Enable horizontal edge diffraction"
+        default=True, description="Enable horizontal edge diffraction"
     )
     favorable_day: str = Field(
         default="0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5",
