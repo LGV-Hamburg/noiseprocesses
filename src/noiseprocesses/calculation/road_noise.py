@@ -1,5 +1,6 @@
 import json
 import logging
+from typing import Callable
 
 from noiseprocesses.calculation.road_propagation import RoadPropagationCalculator
 from noiseprocesses.core.database import NoiseDatabase
@@ -15,6 +16,7 @@ from noiseprocesses.models.noise_calculation_config import (
     OutputIsoSurfaces,
 )
 from noiseprocesses.utils.contouring import IsoSurfaceBezier
+from noiseprocesses.utils.dem import load_convert_save_dem
 from noiseprocesses.utils.grids import DelaunayGridGenerator
 
 logger = logging.getLogger(__name__)
@@ -56,7 +58,8 @@ class RoadNoiseModellingCalculator:
 
         if dimension_result and dimension_result[0][0] == 2:
             logger.info(
-                f"Roads in table '{roads_table}' are 2D. Adding Z-values with default Z={default_z}."
+                f"Roads in table '{roads_table}' are 2D."
+                "Adding Z-values with default Z={default_z}."
             )
             # Update geometries to 3D with the default Z-value
             # copy, as in-place update did not work
@@ -109,6 +112,7 @@ class RoadNoiseModellingCalculator:
         self,
         user_input: NoiseCalculationUserInput,
         user_output: dict[OutputIsoSurfaces, dict],
+        progress_callback: Callable[[int, str], None] | None = None,
     ) -> dict:
         """
         Calculate complete noise levels including emission and propagation
@@ -134,6 +138,9 @@ class RoadNoiseModellingCalculator:
 
         # validate user inputs
         # - buildings user input -> buildings internal
+        if progress_callback:
+            progress_callback(1, "Validating user input")
+
         buildings = BuildingsFeatureCollectionInternal.from_user_collection(
             user_input.buildings
         )
@@ -149,13 +156,27 @@ class RoadNoiseModellingCalculator:
             )
 
         # - dem
-        dem = None
+        dem_url = user_input.dem_url
+        dem_bbox_feature = user_input.dem_bbox_feature
+
+        if dem_bbox_feature and not dem_url:
+            raise ValueError(
+                "If 'dem_bbox_feature' was provided, 'dem_url' must be provided, too."
+            )
+
+        if progress_callback:
+            progress_callback(2, "Loading DEM data")
+        dem_path = None
+        if dem_url:
+            dem_path = load_convert_save_dem(dem_url)
 
         # setup the database
         noise_db = NoiseDatabase(
             self.config.database.name, self.config.database.in_memory
         )
 
+        if progress_callback:
+            progress_callback(3, "Importing into database")
         # import data
         # - buildings -> geojson import
         noise_db.import_geojson(
@@ -172,11 +193,21 @@ class RoadNoiseModellingCalculator:
         )
 
         #make the roads 3D, set height to 0.05
-        # Ensure roads have Z-values if no DEM is provided
-        if not user_input.dem:
-            self._ensure_roads_have_z(self.config.required_input.roads_table)
+        # Ensure roads have Z-values
+        self._ensure_roads_have_z(self.config.required_input.roads_table)
 
         # - load dem -> tif
+        crs = user_input.crs
+        if isinstance(user_input.crs, str):
+            crs = user_input.crs.split("/")[-1]
+
+        if dem_path:
+            noise_db.import_raster(
+                dem_path,
+                self.config.optional_input.dem_table,
+                int(crs),
+
+            )
 
         # - grounds -> geojson
         if grounds:
@@ -184,6 +215,11 @@ class RoadNoiseModellingCalculator:
                 grounds.model_dump(exclude_none=True),
                 self.config.optional_input.ground_absorption_table,
                 user_input.crs,
+            )
+
+        if progress_callback:
+            progress_callback(
+                4, "Importing into database complete. Generating receivers grid"
             )
 
         # generate receivers (using Delaunay with triangle creation)
@@ -201,15 +237,25 @@ class RoadNoiseModellingCalculator:
             grid_config.road_width = self.config.receiver_grid_settings.road_width
 
         delauny_generator = DelaunayGridGenerator(noise_db)
+
+        if progress_callback:
+            progress_callback(5, "Generating receivers grid")
+
         delauny_generator.generate_receivers(grid_config)
+
+        if progress_callback:
+            progress_callback(10, "Generating receivers grid complete. Calculating noise levels")
 
         # calculate propagation
         road_prop = RoadPropagationCalculator(noise_db)
         road_prop.calculate_propagation(
             self.config,
-            True if dem else False,
+            True if dem_url else False,
             True if grounds else False
         )
+
+        if progress_callback:
+            progress_callback(90, "Calculating noise levels complete. Generating isocontours")
 
         # finally: create isocontour
         surface_generator = IsoSurfaceBezier(noise_db)
@@ -230,5 +276,7 @@ class RoadNoiseModellingCalculator:
             with open(surface_file, "r") as stream:
                 output[output_table] = json.load(stream)
 
+        if progress_callback:
+            progress_callback(100, "Generating isocontours complete.")
         # ...and return it
         return output
