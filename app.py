@@ -74,10 +74,11 @@ class TrafficNoiseProcess(BaseProcess):
     process_description = ProcessDescription(
         id="traffic_noise_propagation",
         title="Traffic Noise Propagation Calculation",
-        version="1.0.0",
+        version="v4.0.5-1.0.0",
         description=(
             "A process for calculating traffic noise "
-            "propagation and creating isosurfaces"
+            "propagation and creating isosurfaces based on NoiseModelling 4.0.5"
+            "(https://noise-planet.org/noisemodelling.html)"
         ),
         jobControlOptions=[
             ProcessJobControlOptions.ASYNC_EXECUTE,
