@@ -26,13 +26,12 @@ logger = logging.getLogger(__name__)
 @register_process("traffic_noise_propagation")
 class TrafficNoiseProcess(BaseProcess):
     async def execute(
-        self, exec_body: Dict[str, Any],
-        progress_callback: Callable[[int, str], None] | None = None
+        self,
+        exec_body: Dict[str, Any],
+        progress_callback: Callable[[int, str], None] | None = None,
     ) -> Dict[str, Any]:
-        
         user_outputs = exec_body["outputs"]
 
-        
         if progress_callback:
             progress_callback(0, f"Beginning calculations for {user_outputs}")
 
@@ -51,10 +50,8 @@ class TrafficNoiseProcess(BaseProcess):
                 )
 
             raise value_error
-        
-        result = calculator.calculate_noise_levels(
-            user_input, user_outputs
-        )
+
+        result = calculator.calculate_noise_levels(user_input, user_outputs)
 
         if progress_callback:
             progress_callback(100, f"Done calculating {user_outputs}!")
@@ -82,7 +79,9 @@ class TrafficNoiseProcess(BaseProcess):
                     allOf=[
                         {"format": "geojson-feature-collection"},
                         {"$ref": "https://geojson.org/schema/FeatureCollection.json"},
-                        {"$ref": "https://bitbucket.org/geowerkstatt-hamburg/noiseprocesses/schemas/buildings-schema.json"},
+                        {
+                            "$ref": "https://bitbucket.org/geowerkstatt-hamburg/noiseprocesses/schemas/buildings-schema.json"
+                        },
                     ]
                 ),
                 minOccurs=1,
@@ -95,7 +94,9 @@ class TrafficNoiseProcess(BaseProcess):
                     allOf=[
                         {"format": "geojson-feature-collection"},
                         {"$ref": "https://geojson.org/schema/FeatureCollection.json"},
-                        {"$ref": "https://bitbucket.org/geowerkstatt-hamburg/noiseprocesses/schemas/roads-schema.json"},
+                        {
+                            "$ref": "https://bitbucket.org/geowerkstatt-hamburg/noiseprocesses/schemas/roads-schema.json"
+                        },
                     ]
                 ),
                 minOccurs=1,
@@ -112,12 +113,30 @@ class TrafficNoiseProcess(BaseProcess):
                 minOccurs=1,
                 maxOccurs=1,
             ),
-            "dem": ProcessInput(
+            "dem_url": ProcessInput(
                 title="Digital Elevation Model",
-                description="A URL to the Digital Elevation Model",
+                description=(
+                    "A URL to the Digital Elevation Model."
+                    "The URL must point to a COG file and"
+                    "must have abounding box. If the bbox"
+                    "is omitted polygon feature can be submitted instead."
+                ),
                 schema=Schema(type="string", format="uri"),
                 minOccurs=0,
                 maxOccurs=1,
+            ),
+            "dem_bbox_feature": ProcessInput(
+                title="Polygon feature as substitute for a bbox",
+                description=(
+                    "A GeoJSON Polygon feature representing the bounding box for the DEM."
+                    "This is used if the dem_url does not contain a bbox."
+                ),
+                schema=Schema(
+                    allOf=[
+                        {"format": "geojson-feature"},
+                        {"$ref": "https://geojson.org/schema/Polygon.json"},
+                    ]
+                ),
             ),
             "ground_absorption": ProcessInput(
                 title="Ground Absorption Feature Collection",
@@ -126,6 +145,9 @@ class TrafficNoiseProcess(BaseProcess):
                     allOf=[
                         {"format": "geojson-feature-collection"},
                         {"$ref": "https://geojson.org/schema/FeatureCollection.json"},
+                        {
+                            "$ref": "https://bitbucket.org/geowerkstatt-hamburg/noiseprocesses/schemas/grounds-schema.json"
+                        },
                     ]
                 ),
                 minOccurs=0,
@@ -233,7 +255,9 @@ class TrafficNoiseProcess(BaseProcess):
                     properties={
                         "iso_classes": {
                             "type": "string",
-                            "default": "35.0,40.0,45.0,50.0,55.0,60.0,65.0,70.0,75.0,80.0,200.0",
+                            "default": (
+                                "35.0,40.0,45.0,50.0,55.0,60.0,65.0,70.0,75.0,80.0,200.0"
+                            ),
                         },
                         "smooth_coefficient": {
                             "type": "number",
