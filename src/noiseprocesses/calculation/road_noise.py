@@ -114,10 +114,8 @@ class RoadNoiseModellingCalculator:
         Calculate complete noise levels including emission and propagation
 
         Args:
-            source_table: Name of source table (roads/railway)
-            receivers_table: Name of receivers table
-            buildings_table: Name of buildings table
-            **kwargs: Additional calculation parameters
+            user_input (NoiseCalculationUserInput): User input for noise calculation
+            user_output (dict[OutputIsoSurfaces, dict]): User output for noise calculation
 
         Returns:
             dict: Noise Isosurfaces for user selected outputs
