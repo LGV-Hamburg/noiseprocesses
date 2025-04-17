@@ -61,7 +61,9 @@ class TrafficNoiseProcess(BaseProcess):
 
             raise value_error
 
-        result = calculator.calculate_noise_levels(user_input, user_outputs)
+        result = calculator.calculate_noise_levels(
+            user_input, user_outputs, progress_callback
+        )
 
         if progress_callback:
             progress_callback(100, f"Done calculating {user_outputs}!")
@@ -239,7 +241,7 @@ class TrafficNoiseProcess(BaseProcess):
                     properties={
                         "grid_type": {
                             "type": "string",
-                            "enum": ["REGULAR", "DELAUNAY"],
+                            "enum": ["DELAUNAY"],
                             "default": "DELAUNAY",
                         },
                         "calculation_height": {
