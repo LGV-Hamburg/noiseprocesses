@@ -74,13 +74,13 @@ def convert_to_asc_array(input_path: str) -> ASCData:
         # Handle HTTPS URLs
         if input_path.startswith('https://'):
             input_path = f'/vsicurl/{input_path}'
-            
+
         # Open the input raster
         src_ds: gdal.Dataset = gdal.Open(input_path)
 
         if not src_ds:
             raise ValueError(f"Could not open {input_path}")
-        
+
         # Read data into numpy array directly from source
         data = src_ds.GetRasterBand(1).ReadAsArray()
 
