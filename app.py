@@ -218,8 +218,8 @@ class TrafficNoiseProcess(BaseProcess):
                 schema=Schema(
                     type="object",
                     properties={
-                        "vertical_diffraction": {"type": "boolean", "default": False},
-                        "horizontal_diffraction": {"type": "boolean", "default": False},
+                        "vertical_diffraction": {"type": "boolean", "default": True},
+                        "horizontal_diffraction": {"type": "boolean", "default": True},
                         "favorable_day": {
                             "type": "string",
                             "default": "0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5",
@@ -239,21 +239,33 @@ class TrafficNoiseProcess(BaseProcess):
                     properties={
                         "grid_type": {
                             "type": "string",
-                            "enum": ["REGULAR", "DELAUNAY", "BUILDINGS"],
+                            "enum": ["REGULAR", "DELAUNAY"],
                             "default": "DELAUNAY",
                         },
                         "calculation_height": {
                             "type": "number",
                             "minimum": 0,
+                            "maximum": 100.0,
                             "default": 4.0,
                         },
-                        "max_area": {"type": "number", "minimum": 0, "default": 2500.0},
+                        "max_area": {
+                            "type": "number",
+                            "minimum": 0,
+                            "default": 2500.0,
+                            "maximum": 2500.
+                        },
                         "max_cell_dist": {
                             "type": "number",
                             "minimum": 0,
+                            "maximum": 10000.0,
                             "default": 600.0,
                         },
-                        "road_width": {"type": "number", "minimum": 0, "default": 2.0},
+                        "road_width": {
+                            "type": "number",
+                            "minimum": 0,
+                            "maximum": 50.0,
+                            "default": 2.0
+                        },
                     },
                 ),
                 minOccurs=0,
