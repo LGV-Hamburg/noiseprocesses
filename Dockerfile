@@ -13,9 +13,9 @@ RUN --mount=type=cache,target=$CACHE_DIR apt-get update && apt-get install -y --
 COPY Makefile .env ./
 # Copy the NoiseModelling source code
 RUN git clone --depth 1 --branch v4.0.5 https://github.com/Universite-Gustave-Eiffel/NoiseModelling.git NoiseModelling \
-    && git verify-commit HEAD \    
+    && cd NoiseModelling && git verify-commit HEAD \
 # Build the NoiseModelling library
-    && make check-java && make dist
+    && cd .. && make check-java && make dist
 
 
 FROM python:3.12-bookworm AS base
