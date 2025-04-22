@@ -32,8 +32,11 @@ request_body = {
         "propagation_settings": {
             "vertical_diffraction": True, "horizontal_diffraction": True
         },
+        "acoustic_parameters": {
+            "max_source_distance": 147,
+        },
         # "dem_bbox_feature": dem_bbox_feature,
-        "dem_url": "https://ump-lgv.germanywestcentral.cloudapp.azure.com/raster/dem5_hh/cog/bbox/566700,5934580,566800,5934680/500x500.tif?coord_crs=epsg:25832"
+        # "dem_url": "https://ump-lgv.germanywestcentral.cloudapp.azure.com/raster/dem5_hh/cog/bbox/566700,5934580,566800,5934680/500x500.tif?coord_crs=epsg:25832"
     },
     "outputs": {
         # "noise_evening": {},
