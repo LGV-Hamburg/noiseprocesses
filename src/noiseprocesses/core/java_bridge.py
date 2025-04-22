@@ -1,13 +1,15 @@
+import logging
+import threading
 from pathlib import Path
 from typing import Optional
 
 import jpype
 import jpype.imports
+from jpype import JImplements, JOverride
 from jpype.types import JFloat
 
-import logging
-
 from noiseprocesses.config import config
+
 logger = logging.getLogger(__name__)
 
 
@@ -31,7 +33,7 @@ class JavaBridge:
             logger.debug(f"Current directory: {current_dir}")
 
             lib_dir = (current_dir.parent.parent.parent / "dist" / "lib").resolve()
-        
+
         logger.debug(f"Library directory: {lib_dir}")
 
         # Configure and start JVM if not already running
@@ -69,6 +71,98 @@ class JavaBridge:
         # Initialize commonly used classes
         self._init_classes()
 
+        # redirect log messages from java
+        # self._redirect_java_logging()
+
+        # Redirect Java System.out and System.err to Python
+        self._redirect_java_output()
+
+    def _redirect_java_logging(self):
+        """Redirect Java SLF4J logs to Python logging."""
+
+        # Dynamically define the PythonLogAppender class
+        # because it needs a running JVM
+        @JImplements("ch.qos.logback.core.Appender")
+        class PythonLogAppender:
+            def __init__(self, log_method):
+                self.log_method = log_method
+
+            @JOverride
+            def doAppend(self, event):
+                message = event.getFormattedMessage()
+                self.log_method(f"Java: {message}")
+
+            @JOverride
+            def start(self):
+                pass
+
+            @JOverride
+            def stop(self):
+                pass
+
+            @JOverride
+            def isStarted(self):
+                return True
+
+        # Get the root logger from SLF4J
+        logger_context = jpype.JClass("org.slf4j.LoggerFactory").getILoggerFactory()
+        root_logger = logger_context.getLogger("ROOT")
+
+        # Create and attach the Python log appender
+        python_appender = PythonLogAppender(logger.info)
+        root_logger.addAppender(python_appender)
+
+    def _redirect_java_output(self):
+        """Redirect Java System.out and System.err to Python logging."""
+
+        # Create piped streams for capturing output
+        self.stdout_pipe = self.PipedOutputStream()
+        self.stderr_pipe = self.PipedOutputStream()
+
+        # Redirect System.out and System.err
+        self.System.setOut(self.PrintStream(self.stdout_pipe, True))
+        self.System.setErr(self.PrintStream(self.stderr_pipe, True))
+
+        # Flush streams after each write
+        self.System.out.flush()
+        self.System.err.flush()
+
+        # Start threads to listen to the streams
+        threading.Thread(
+            target=self._capture_stream,
+            args=(self.stdout_pipe, logger.info),
+            daemon=True,
+        ).start()
+
+        threading.Thread(
+            target=self._capture_stream,
+            args=(self.stderr_pipe, logger.error),
+            daemon=True,
+        ).start()
+
+    def _capture_stream(self, piped_output_stream, log_method):
+        """Capture Java output stream and log it in Python."""
+
+        # Create a reader for the piped input stream
+        piped_input_stream = self.PipedInputStream(piped_output_stream)
+        reader = self.BufferedReader(self.InputStreamReader(piped_input_stream))
+
+        # Read lines and log them
+        try:
+            while True:
+                line = reader.readLine()
+                if line is None:
+                    break
+                log_method(f"Java: {line}")
+        except Exception as e:
+            logger.error(f"Error capturing Java output: {e}")
+        finally:
+            # Close the reader
+            try:
+                reader.close()
+            except Exception as e:
+                logger.error(f"Error closing Java output stream: {e}")
+
     @classmethod
     def get_instance(cls) -> "JavaBridge":
         if cls._instance is None:
@@ -78,17 +172,27 @@ class JavaBridge:
     @classmethod
     def shutdown(cls):
         if jpype.isJVMStarted():
+            logger.info("Shutting down JVM...")
             jpype.shutdownJVM()
         cls._instance = None
 
     def _init_classes(self):
         """Initialize commonly used Java classes."""
         # Using JPype's import style
-        from java.io import File, StringReader  # type: ignore
+        from java.io import (  # type: ignore
+            BufferedReader,
+            File,
+            InputStreamReader,
+            PipedInputStream,
+            PipedOutputStream,
+            PrintStream,
+            StringReader,
+        )
+        from java.lang import System  # type: ignore
         from java.sql import DriverManager, Types  # type: ignore
-        from java.util import Properties, HashSet, ArrayList  # type: ignore
-        from java.util.concurrent.atomic import AtomicInteger  # type: ignore
         from java.time import LocalDateTime  # type: ignore
+        from java.util import ArrayList, HashSet, Properties  # type: ignore
+        from java.util.concurrent.atomic import AtomicInteger  # type: ignore
         from org.h2gis.api import EmptyProgressVisitor  # type: ignore
         from org.h2gis.functions.factory import H2GISFunctions  # type: ignore
         from org.h2gis.functions.io.asc import AscReaderDriver  # type: ignore
@@ -107,30 +211,36 @@ class JavaBridge:
         from org.h2gis.utilities.dbtypes import DBUtils  # type: ignore
         from org.h2gis.utilities.wrapper import ConnectionWrapper  # type: ignore
         from org.locationtech.jts.io import WKTReader, WKTWriter  # type: ignore
-
         from org.noise_planet.noisemodelling.jdbc import (  # type: ignore
             BezierContouring,
             LDENConfig,
+            LDENPointNoiseMapFactory,
             LDENPropagationProcessData,
             PointNoiseMap,
             TriangleNoiseMap,
-            LDENPointNoiseMapFactory
         )
-        from org.noise_planet.noisemodelling.pathfinder import ( # type: ignore
+        from org.noise_planet.noisemodelling.pathfinder import (  # type: ignore
             RootProgressVisitor,
         )
         from org.noise_planet.noisemodelling.pathfinder.utils import (  # type: ignore
-            PowerUtils,
-            ProgressMetric,
-            ProfilerThread,
             JVMMemoryMetric,
+            PowerUtils,
+            ProfilerThread,
+            ProgressMetric,
             ReceiverStatsMetric,
         )
         from org.noise_planet.noisemodelling.propagation import (  # type: ignore
-            PropagationProcessPathData
+            PropagationProcessPathData,
         )
+        from ch.qos.logback.classic import LoggerContext  # type: ignore
+        from ch.qos.logback.classic.spi import ILoggingEvent  # type: ignore
+        from ch.qos.logback.core import AppenderBase  # type: ignore
 
         # Store classes as instance attributes
+        self.LoggerContext = LoggerContext
+        self.ILoggingEvent = ILoggingEvent
+        self.AppenderBase = AppenderBase
+
         self.AtomicInteger = AtomicInteger
         self.ArrayList = ArrayList
         self.JFloat = JFloat
@@ -146,7 +256,15 @@ class JavaBridge:
         self.LDENPropagationProcessData = LDENPropagationProcessData
         self.PropagationProcessPathData = PropagationProcessPathData
         self.PointNoiseMap = PointNoiseMap
+
         self.StringReader = StringReader
+        self.System = System
+        self.PrintStream = PrintStream
+        self.PipedOutputStream = PipedOutputStream
+        self.BufferedReader = BufferedReader
+        self.InputStreamReader = InputStreamReader
+        self.PipedInputStream = PipedInputStream
+
         self.TriangleNoiseMap = TriangleNoiseMap
         self.Types = Types
 
