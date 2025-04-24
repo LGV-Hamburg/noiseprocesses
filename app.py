@@ -74,7 +74,7 @@ class TrafficNoiseProcess(BaseProcess):
     process_description = ProcessDescription(
         id="traffic_noise_propagation",
         title="Traffic Noise Propagation Calculation",
-        version="v4.0.5-1.0.0",
+        version="v4.0.5-1.0.1",
         description=(
             "A process for calculating traffic noise "
             "propagation and creating isosurfaces based on NoiseModelling 4.0.5"
@@ -341,14 +341,18 @@ class TrafficNoiseProcess(BaseProcess):
             ),
         },
         keywords=["text", "processing"],
-        metadata={"created": "2024-02-19", "provider": "Example Organization"},
+        metadata={
+            "created": "2024-02-19",
+            "updated": "2024-04-24",
+            "provider": "Agency for Geoinformation and Surveying Hamburg"
+        },
     )
 
 
 # Create the FastAPI app
 app = OGCProcessesAPI(
     title="Noise Processes API",
-    version="0.1.0",
+    version="1.0.1",
     description="Calculate traffic noise propagation and create isosurfaces",
 ).get_app()
 
