@@ -1,7 +1,7 @@
 import logging
 import threading
 from pathlib import Path
-from typing import Optional
+from typing import Callable, Optional
 
 import jpype
 import jpype.imports
@@ -75,7 +75,7 @@ class JavaBridge:
         # self._redirect_java_logging()
 
         # Redirect Java System.out and System.err to Python
-        self._redirect_java_output()
+        # self.redirect_java_output()
 
     def _redirect_java_logging(self):
         """Redirect Java SLF4J logs to Python logging."""
@@ -112,7 +112,10 @@ class JavaBridge:
         python_appender = PythonLogAppender(logger.info)
         root_logger.addAppender(python_appender)
 
-    def _redirect_java_output(self):
+    def redirect_java_output(
+            self,
+            progress_callback: Callable[[int, str], None] | None = None
+    ):
         """Redirect Java System.out and System.err to Python logging."""
 
         # Create piped streams for capturing output
@@ -130,38 +133,84 @@ class JavaBridge:
         # Start threads to listen to the streams
         threading.Thread(
             target=self._capture_stream,
-            args=(self.stdout_pipe, logger.info),
+            args=(self.stdout_pipe, logger.info, progress_callback),
             daemon=True,
         ).start()
 
         threading.Thread(
             target=self._capture_stream,
-            args=(self.stderr_pipe, logger.error),
+            args=(self.stderr_pipe, logger.error, progress_callback),
             daemon=True,
         ).start()
 
-    def _capture_stream(self, piped_output_stream, log_method):
+    def _capture_stream(
+            self,
+            piped_output_stream,
+            log_method,
+            progress_callback: Callable[[int, str], None] | None = None
+    ):
         """Capture Java output stream and log it in Python."""
 
         # Create a reader for the piped input stream
         piped_input_stream = self.PipedInputStream(piped_output_stream)
         reader = self.BufferedReader(self.InputStreamReader(piped_input_stream))
 
-        # Read lines and log them
-        try:
-            while True:
-                line = reader.readLine()
-                if line is None:
-                    break
-                log_method(f"Java: {line}")
-        except Exception as e:
-            logger.error(f"Error capturing Java output: {e}")
-        finally:
-            # Close the reader
+        match_pattern: str = "[main] INFO org.noise_planet.noisemodelling.jdbc.PointNoiseMap - Begin processing of cell"
+
+        while True:  # Outer loop to handle broken pipe errors
             try:
-                reader.close()
+                # Read lines and log them
+                while True:
+                    line = reader.readLine()
+                    if line is None:
+                        break
+
+                    log_method(f"Java: {line}")
+
+                    # Extract progress information
+                    if match_pattern in line:
+                        current_cell, total_cells, progress_percentage = self.java_log_extractor(
+                            line
+                        )
+
+                        # Invoke progress_callback
+                        if progress_callback:
+                            progress_callback(progress_percentage, f"Begin processing of cell {current_cell} / {total_cells}")
             except Exception as e:
-                logger.error(f"Error closing Java output stream: {e}")
+                if "Pipe broken" in str(e):
+                    logger.warning("Broken pipe detected. Attempting to resume reading...")
+                    continue  # Restart the outer loop
+                else:
+                    logger.error(f"Error capturing Java output: {e}")
+                    break  # Exit the outer loop for other exceptions
+            finally:
+                # Close the reader if exiting the loop
+                try:
+                    reader.close()
+                except Exception as e:
+                    logger.error(f"Error closing Java output stream: {e}")
+                break  # Exit the outer loop after cleanup
+
+    def java_log_extractor(
+            self,
+            log_line: str,
+    ):
+        # Check if the line matches the pattern for progress
+        # Extract progress information
+        parts = log_line.split("Begin processing of cell")[1].strip()
+        cell_info = parts.split("/")
+        current_cell = int(cell_info[0].strip())
+        total_cells = int(cell_info[1].strip())
+
+        # Calculate progress percentage
+        # (-1 because log indicates beginning of processing)
+        progress_percentage = int(((current_cell - 1) / total_cells) * 100)
+
+        # progress perentage is already advanced by 10%
+        if progress_percentage == 0:
+            progress_percentage = 10 
+
+        return current_cell, total_cells, progress_percentage
 
     @classmethod
     def get_instance(cls) -> "JavaBridge":
@@ -232,14 +281,14 @@ class JavaBridge:
         from org.noise_planet.noisemodelling.propagation import (  # type: ignore
             PropagationProcessPathData,
         )
-        from ch.qos.logback.classic import LoggerContext  # type: ignore
-        from ch.qos.logback.classic.spi import ILoggingEvent  # type: ignore
-        from ch.qos.logback.core import AppenderBase  # type: ignore
+        # from ch.qos.logback.classic import LoggerContext  # type: ignore
+        # from ch.qos.logback.classic.spi import ILoggingEvent  # type: ignore
+        # from ch.qos.logback.core import AppenderBase  # type: ignore
 
         # Store classes as instance attributes
-        self.LoggerContext = LoggerContext
-        self.ILoggingEvent = ILoggingEvent
-        self.AppenderBase = AppenderBase
+        # self.LoggerContext = LoggerContext
+        # self.ILoggingEvent = ILoggingEvent
+        # self.AppenderBase = AppenderBase
 
         self.AtomicInteger = AtomicInteger
         self.ArrayList = ArrayList
