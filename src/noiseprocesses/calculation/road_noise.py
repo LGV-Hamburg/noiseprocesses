@@ -3,6 +3,7 @@ import logging
 from typing import Callable
 
 from noiseprocesses.calculation.road_propagation import RoadPropagationCalculator
+from noiseprocesses.core.java_bridge import JavaBridge
 from noiseprocesses.core.database import NoiseDatabase
 from noiseprocesses.models.grid_config import DelaunayGridConfig
 from noiseprocesses.models.internal import (
@@ -124,6 +125,13 @@ class RoadNoiseModellingCalculator:
         Returns:
             dict: Noise Isosurfaces for user selected outputs
         """
+        # initialize redirecting java output
+        java_bridge = JavaBridge.get_instance()
+        
+        java_bridge.redirect_java_output(
+            progress_callback=progress_callback
+        )
+
         # config setup, take defaults if user did not provide any
         self.config.acoustic_params = (
             user_input.acoustic_parameters or self.config.acoustic_params
@@ -166,6 +174,7 @@ class RoadNoiseModellingCalculator:
 
         if progress_callback:
             progress_callback(2, "Loading DEM data")
+
         dem_path = None
         if dem_url:
             dem_path = load_convert_save_dem(dem_url)
