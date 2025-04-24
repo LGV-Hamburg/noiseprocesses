@@ -49,7 +49,11 @@ ARG USERNAME=pythonuser
 ARG USER_GID=2000
 ARG SOURCE_COMMIT
 
-LABEL maintainer="Urban Data Analytics" name="analytics/mobilitatsmonitor_dashboard" source_commit=$SOURCE_COMMIT
+LABEL com.lgv.uda.maintainer="Urban Data Analytics" \
+    com.lgv.uda.name="analytics/noiseprocesses" \
+    com.lgv.uda.version="4.0.5-1.0.1" \
+    com.lgv.uda.source_commit=$SOURCE_COMMIT \
+    org.opencontainers.image.source="https://github.com/UrbanDataAnalytics/noiseprocesses"
 
 # add user and group
 RUN groupadd --gid $USER_GID $USERNAME && \
