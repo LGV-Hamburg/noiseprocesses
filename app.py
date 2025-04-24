@@ -29,12 +29,12 @@ class TrafficNoiseProcess(BaseProcess):
     async def execute(
         self,
         exec_body: Dict[str, Any],
-        progress_callback: Callable[[int, str], None] | None = None,
+        job_progress_callback: Callable[[int, str], None] | None = None,
     ) -> Dict[str, Any]:
         user_outputs = exec_body["outputs"]
 
-        if progress_callback:
-            progress_callback(0, f"Beginning calculations for {user_outputs}")
+        if job_progress_callback:
+            job_progress_callback(0, f"Beginning calculations for {user_outputs}")
 
         calculator = RoadNoiseModellingCalculator(
             noise_calculation_config=NoiseCalculationConfig()
@@ -45,8 +45,8 @@ class TrafficNoiseProcess(BaseProcess):
             )
         except ValidationError as validation_error:
             logger.error("Some inputs are not valid: %s", validation_error)
-            if progress_callback:
-                progress_callback(
+            if job_progress_callback:
+                job_progress_callback(
                     0,
                     f"Calculations failed. Reason: Invalid inputs ({validation_error}).",
                 )
@@ -54,19 +54,19 @@ class TrafficNoiseProcess(BaseProcess):
             raise ValueError(validation_error.errors())
         except ValueError as value_error:
             logger.error("Some inputs are not valid: %s", value_error)
-            if progress_callback:
-                progress_callback(
+            if job_progress_callback:
+                job_progress_callback(
                     0, f"Calculations failed. Reason: Invalid inputs ({value_error})."
                 )
 
             raise value_error
 
         result = calculator.calculate_noise_levels(
-            user_input, user_outputs, progress_callback
+            user_input, user_outputs, job_progress_callback
         )
 
-        if progress_callback:
-            progress_callback(100, f"Done calculating {user_outputs}!")
+        if job_progress_callback:
+            job_progress_callback(100, f"Done calculating {user_outputs}!")
 
         return result
 
