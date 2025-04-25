@@ -26,6 +26,8 @@ WORKDIR /app
 
 RUN --mount=type=cache,target=$CACHE_DIR apt-get update && apt-get install -y --no-install-recommends \
     git \
+    gdal-bin \
+    libgdal-dev \
     && rm -rf /var/lib/apt/lists/* \
     && pip install poetry==2.1.2
 
@@ -36,6 +38,9 @@ ENV POETRY_NO_INTERACTION=1 \
 
 COPY pyproject.toml poetry.lock ./
 RUN --mount=type=cache,target=$POETRY_CACHE_DIR poetry install --without=dev --no-root
+
+# Install Python bindings for GDAL (osgeo)
+RUN /app/.venv/bin/python -m pip install gdal==$(gdal-config --version)
 
 COPY src ./src
 RUN touch README.md \
@@ -60,9 +65,11 @@ RUN groupadd --gid $USER_GID $USERNAME && \
     useradd --create-home --no-log-init --gid $USER_GID --uid $USER_UID --shell /bin/bash $USERNAME && \
     chown -R $USERNAME:$USERNAME /home/$USERNAME /usr/local/lib /usr/local/bin
 
-# Install Java runtime
+# Install Java runtime and gdal/osgeo
 RUN apt-get update && apt-get install -y --no-install-recommends \
     default-jdk \
+    gdal-bin \
+    libgdal-dev \
     && rm -rf /var/lib/apt/lists/*
 
 USER $USERNAME
