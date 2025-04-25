@@ -4,4 +4,4 @@ dependencies:
   - copier=9.5.0
   - copier-templates-extensions=0.3.0
   # required for raster support, easier to install than with poetry and apt
-  - gdal
+  - gdal==3.10.3
