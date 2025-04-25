@@ -13,7 +13,7 @@ RUN --mount=type=cache,target=$CACHE_DIR apt-get update && apt-get install -y --
 COPY Makefile .env ./
 # Copy the NoiseModelling source code
 RUN git clone --depth 1 --branch v4.0.5 https://github.com/Universite-Gustave-Eiffel/NoiseModelling.git NoiseModelling \
-    && cd NoiseModelling && git verify-commit HEAD \
+    && cd NoiseModelling \
 # Build the NoiseModelling library
     && cd .. && make check-java && make dist
 
@@ -27,7 +27,7 @@ WORKDIR /app
 RUN --mount=type=cache,target=$CACHE_DIR apt-get update && apt-get install -y --no-install-recommends \
     git \
     && rm -rf /var/lib/apt/lists/* \
-    && pip install poetry
+    && pip install poetry==2.1.2
 
 ENV POETRY_NO_INTERACTION=1 \
     POETRY_VIRTUALENVS_IN_PROJECT=1 \
