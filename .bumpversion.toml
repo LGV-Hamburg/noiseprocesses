@@ -1,0 +1,45 @@
+[bumpversion]
+current_version = "4.0.5-1.0.1"
+commit = true
+tag = true
+message = "Bump version: {current_version} → {new_version}"
+
+serialize = [
+    "{major}.{minor}.{patch}-{project_major}.{project_minor}.{project_patch}",
+]
+
+parse = """
+(?x)
+```
+(?P<major>0|[1-9]\\d*)\\.
+(?P<minor>0|[1-9]\\d*)\\.
+(?P<patch>0|[1-9]\\d*)
+-
+(?P<project_major>0|[1-9]\\d*)\\.
+(?P<project_minor>0|[1-9]\\d*)\\.
+(?P<project_patch>0|[1-9]\\d*)
+"""
+
+# Define the parts of the version
+[bumpversion.part.major]
+[bumpversion.part.minor]
+[bumpversion.part.patch]
+[bumpversion.part.project_major]
+[bumpversion.part.project_minor]
+[bumpversion.part.project_patch]
+
+# File-specific configurations
+[[bumpversion.file]]
+filename = "Dockerfile"
+search = 'com.lgv.uda.version="{current_version}"'
+replace = 'com.lgv.uda.version="{new_version}"'
+
+[[bumpversion.file]]
+filename = ".env"
+search = "IMAGE_TAG={current_version}"
+replace = "IMAGE_TAG={new_version}"
+
+[[bumpversion.file]]
+filename = "pyproject.toml"
+search = 'version = "{current_version}"'
+replace = 'version = "{new_version}"'
