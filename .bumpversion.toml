@@ -8,9 +8,7 @@ serialize = [
     "{major}.{minor}.{patch}-{project_major}.{project_minor}.{project_patch}",
 ]
 
-parse = """
-(?x)
-```
+parse = """(?x)
 (?P<major>0|[1-9]\\d*)\\.
 (?P<minor>0|[1-9]\\d*)\\.
 (?P<patch>0|[1-9]\\d*)
