@@ -1,18 +1,21 @@
-from enum import Enum
+from enum import StrEnum
 from typing import Literal, Optional
 from pydantic import BaseModel, Field, computed_field
 
 from shapely.geometry import base
 from shapely import wkt
 
-class GridType(Enum):
+class GridType(StrEnum):
     """Grid generation type"""
     REGULAR = "regular".upper()
     DELAUNAY = "delaunay".upper()
-    BUILDINGS = "buildings".upper()
+    BUILDINGS_2D = "buildings_2d".upper()
+    BUILDINGS_3D = "buildings_3d".upper()
 
 class GridSettingsUser(BaseModel):
-    grid_type: GridType = GridType.DELAUNAY
+    grid_type: GridType = Field(
+        GridType.DELAUNAY
+    )
     calculation_height: float = Field(
         default=4.0,
         gt=0,
@@ -33,6 +36,30 @@ class GridSettingsUser(BaseModel):
         gt=0,
         description="Buffer around roads (meters)"
     )
+
+class BuildingGridSettingsUser(BaseModel):
+    """Configuration for building grid generation"""
+
+    calculation_height_2d: float = Field(
+        default=4.0,
+        gt=0,
+        description="Height of receivers in meters"
+    )
+    distance_from_wall: float = Field(
+        default=2.0,
+        description="Distance of receivers from the wall (meters)",
+        gt=0
+    )  # Distance of receivers from the wall (meters)
+    height_between_levels_3d: float = Field(
+        default=2.5,
+        description="Height between levels for 3D building grids",
+        gt=0
+    )  # Height between levels 3D grids
+    receiver_distance: float = Field(
+        default=10.0,
+        gt=0,
+        description="Spacing between receivers (meters)",
+    )  # Spacing between receivers (meters)
 
 class GridConfig(BaseModel):
     """Base configuration for grid generation"""
@@ -140,3 +167,70 @@ class DelaunayGridConfig(GridConfig):
         default=None,
         description="Folder to dump debug information on triangulation errors"
     )
+
+
+class BuildingGridConfig(BaseModel):
+    """Base configuration for building grid generation"""
+    
+    class Config:
+        """Pydantic model configuration"""
+        arbitrary_types_allowed = True
+
+    # Required parameters
+    buildings_table: str = Field(
+        ...,
+        description="Name of the Buildings table containing THE_GEOM"
+    )
+    
+    # Common optional parameters with defaults
+
+    output_table: str = Field(
+        default="RECEIVERS",
+        description="Name of the output receivers table"
+    )
+    
+    sources_table: Optional[str] = Field(
+        default=None,
+        description="Table name containing source geometries"
+    )
+
+    distance_from_wall: float = Field(
+        default=2.0,
+        description="Distance of receivers from the wall (meters)",
+    )  # Distance of receivers from the wall (meters)
+    receiver_distance: float = Field(
+        default=10.0,
+        gt=0,
+        description="Spacing between receivers in meters"
+    )
+
+
+class BuildingGridConfig2d(BuildingGridConfig):
+    """Configuration for 2d building grid generation"""
+    
+    grid_type: Literal[GridType.BUILDINGS_2D] = Field(
+        default=GridType.BUILDINGS_2D,
+        description="Type of grid to generate"
+    )
+
+    calculation_height: float = Field(
+        default=10.0,
+        gt=0,
+        description="Spacing between receivers (meters)",
+        alias="calculation_height_2d"
+    )  # Spacing between receivers (meters)
+
+class BuildingGridConfig3d(BuildingGridConfig):
+    """Configuration for 3d building grid generation"""
+
+    grid_type: Literal[GridType.BUILDINGS_3D] = Field(
+        default=GridType.BUILDINGS_3D,
+        description="Type of grid to generate"
+    )
+
+    height_between_levels: float = Field(
+        default=2.5,
+        gt=0,
+        description="Height between levels for 3D building grids",
+        alias="height_between_levels_3d"
+    )  # Height between levels 3D grids
