@@ -1,90 +1,507 @@
 {
-    "$schema": "http://json-schema.org/draft-07/schema#",
-    "type": "object",
-    "properties": {
-      "type": {
-        "type": "string",
-        "enum": ["FeatureCollection"]
-      },
-      "numberReturned": {
-        "type": "integer"
-      },
-      "numberMatched": {
-        "type": "integer"
-      },
-      "timeStamp": {
-        "type": "string",
-        "format": "date-time"
-      },
-      "features": {
-        "type": "array",
-        "items": {
-          "type": "object",
-          "properties": {
-            "type": {
-              "type": "string",
-              "enum": ["Feature"]
-            },
-            "id": {
-              "type": "integer"
-            },
-            "geometry": {
-              "type": "object",
-              "properties": {
-                "type": {
-                  "type": "string",
-                  "enum": ["LineString"]
-                },
-                "coordinates": {
-                  "type": "array",
-                  "items": {
-                    "type": "array",
-                    "minItems": 2,
-                    "maxItems": 3,
-                    "items": [
-                      { "type": "number" },
-                      { "type": "number" },
-                      { "type": "number", "optional": true }
-                    ]
-                  }
-                }
-              },
-              "required": ["type", "coordinates"]
-            },
-            "properties": {
-              "type": "object",
-              "properties": {
-                "id": { "type": "integer" },
-                "light_speed_day": { "type": "number" },
-                "light_speed_evening": { "type": "number" },
-                "light_speed_night": { "type": "number" },
-                "medium_speed_day": { "type": "number" },
-                "medium_speed_evening": { "type": "number" },
-                "medium_speed_night": { "type": "number" },
-                "heavy_speed_day": { "type": "number" },
-                "heavy_speed_evening": { "type": "number" },
-                "heavy_speed_night": { "type": "number" },
-                "pavement": { "type": "string" }
-              },
-              "required": ["id", "strassenname", "pavement"]
-            }
-          },
-          "required": ["type", "geometry", "properties"]
-        }
-      },
-      "links": {
-        "type": "array",
-        "items": {
-          "type": "object",
-          "properties": {
-            "href": { "type": "string", "format": "uri" },
-            "rel": { "type": "string" },
-            "type": { "type": "string" },
-            "title": { "type": "string" }
-          },
-          "required": ["href", "rel", "type"]
-        }
-      }
+  "$defs": {
+    "JunctionType": {
+      "description": "CNOSSOS junction types",
+      "enum": [
+        0,
+        1,
+        2
+      ],
+      "title": "JunctionType",
+      "type": "integer"
+    }
+  },
+  "description": "User-facing traffic flow parameters for a road segment.\n\nRequired fields:\n- At least one vehicle count (light or heavy)\n- Speed for each provided vehicle count\n\nOptional fields:\n- Medium vehicles\n- Motorcycles (light and heavy)\n- All associated speeds",
+  "properties": {
+    "id": {
+      "description": "Unique identifier for the road segment",
+      "title": "Id",
+      "type": "integer"
     },
-    "required": ["type", "features"]
-  }
+    "light_vehicles_day": {
+      "default": 0.0,
+      "description": "Light vehicles per hour (6-18h)",
+      "minimum": 0.0,
+      "title": "Light Vehicles Day",
+      "type": "number"
+    },
+    "medium_vehicles_day": {
+      "anyOf": [
+        {
+          "minimum": 0.0,
+          "type": "number"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "Medium heavy vehicles, delivery vans > 3.5t, buses per hour (6-18h)",
+      "title": "Medium Vehicles Day"
+    },
+    "heavy_vehicles_day": {
+      "default": 0.0,
+      "description": "Heavy duty vehicles, buses with 3+ axles per hour (6-18h)",
+      "minimum": 0.0,
+      "title": "Heavy Vehicles Day",
+      "type": "number"
+    },
+    "light_motorcycles_day": {
+      "anyOf": [
+        {
+          "minimum": 0.0,
+          "type": "number"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "Mopeds, tricycles, quads \u2264 50cc per hour (6-18h)",
+      "title": "Light Motorcycles Day"
+    },
+    "heavy_motorcycles_day": {
+      "anyOf": [
+        {
+          "minimum": 0.0,
+          "type": "number"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "Motorcycles, tricycles, quads > 50cc per hour (6-18h)",
+      "title": "Heavy Motorcycles Day"
+    },
+    "light_vehicles_evening": {
+      "default": 0.0,
+      "description": "Light vehicles per hour (18-22h)",
+      "minimum": 0.0,
+      "title": "Light Vehicles Evening",
+      "type": "number"
+    },
+    "medium_vehicles_evening": {
+      "anyOf": [
+        {
+          "minimum": 0.0,
+          "type": "number"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "Medium heavy vehicles per hour (18-22h)",
+      "title": "Medium Vehicles Evening"
+    },
+    "heavy_vehicles_evening": {
+      "default": 0.0,
+      "description": "Heavy duty vehicles per hour (18-22h)",
+      "minimum": 0.0,
+      "title": "Heavy Vehicles Evening",
+      "type": "number"
+    },
+    "light_motorcycles_evening": {
+      "anyOf": [
+        {
+          "minimum": 0.0,
+          "type": "number"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "Mopeds \u2264 50cc per hour (18-22h)",
+      "title": "Light Motorcycles Evening"
+    },
+    "heavy_motorcycles_evening": {
+      "anyOf": [
+        {
+          "minimum": 0.0,
+          "type": "number"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "Motorcycles > 50cc per hour (18-22h)",
+      "title": "Heavy Motorcycles Evening"
+    },
+    "light_vehicles_night": {
+      "default": 0.0,
+      "description": "Light vehicles per hour (22-6h)",
+      "minimum": 0.0,
+      "title": "Light Vehicles Night",
+      "type": "number"
+    },
+    "medium_vehicles_night": {
+      "anyOf": [
+        {
+          "minimum": 0.0,
+          "type": "number"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "Medium heavy vehicles per hour (22-6h)",
+      "title": "Medium Vehicles Night"
+    },
+    "heavy_vehicles_night": {
+      "default": 0.0,
+      "description": "Heavy duty vehicles per hour (22-6h)",
+      "minimum": 0.0,
+      "title": "Heavy Vehicles Night",
+      "type": "number"
+    },
+    "light_motorcycles_night": {
+      "anyOf": [
+        {
+          "minimum": 0.0,
+          "type": "number"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "Mopeds \u2264 50cc per hour (22-6h)",
+      "title": "Light Motorcycles Night"
+    },
+    "heavy_motorcycles_night": {
+      "anyOf": [
+        {
+          "minimum": 0.0,
+          "type": "number"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "Motorcycles > 50cc per hour (22-6h)",
+      "title": "Heavy Motorcycles Night"
+    },
+    "light_speed_day": {
+      "anyOf": [
+        {
+          "maximum": 200.0,
+          "minimum": 0.0,
+          "type": "number"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "Light vehicle speed in km/h (6-18h)",
+      "title": "Light Speed Day"
+    },
+    "light_speed_evening": {
+      "anyOf": [
+        {
+          "maximum": 200.0,
+          "minimum": 0.0,
+          "type": "number"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "Light vehicle speed in km/h (18-22h)",
+      "title": "Light Speed Evening"
+    },
+    "light_speed_night": {
+      "anyOf": [
+        {
+          "maximum": 200.0,
+          "minimum": 0.0,
+          "type": "number"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "Light vehicle speed in km/h (22-6h)",
+      "title": "Light Speed Night"
+    },
+    "medium_speed_day": {
+      "anyOf": [
+        {
+          "maximum": 200.0,
+          "minimum": 0.0,
+          "type": "number"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "Medium vehicle speed in km/h (6-18h)",
+      "title": "Medium Speed Day"
+    },
+    "medium_speed_evening": {
+      "anyOf": [
+        {
+          "maximum": 200.0,
+          "minimum": 0.0,
+          "type": "number"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "Medium vehicle speed in km/h (18-22h)",
+      "title": "Medium Speed Evening"
+    },
+    "medium_speed_night": {
+      "anyOf": [
+        {
+          "maximum": 200.0,
+          "minimum": 0.0,
+          "type": "number"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "Medium vehicle speed in km/h (22-6h)",
+      "title": "Medium Speed Night"
+    },
+    "heavy_speed_day": {
+      "anyOf": [
+        {
+          "maximum": 200.0,
+          "minimum": 0.0,
+          "type": "number"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "Heavy vehicle speed in km/h (6-18h)",
+      "title": "Heavy Speed Day"
+    },
+    "heavy_speed_evening": {
+      "anyOf": [
+        {
+          "maximum": 200.0,
+          "minimum": 0.0,
+          "type": "number"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "Heavy vehicle speed in km/h (18-22h)",
+      "title": "Heavy Speed Evening"
+    },
+    "heavy_speed_night": {
+      "anyOf": [
+        {
+          "maximum": 200.0,
+          "minimum": 0.0,
+          "type": "number"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "Heavy vehicle speed in km/h (22-6h)",
+      "title": "Heavy Speed Night"
+    },
+    "light_moto_speed_day": {
+      "anyOf": [
+        {
+          "maximum": 200.0,
+          "minimum": 0.0,
+          "type": "number"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "Moped speed in km/h (6-18h)",
+      "title": "Light Moto Speed Day"
+    },
+    "light_moto_speed_evening": {
+      "anyOf": [
+        {
+          "maximum": 200.0,
+          "minimum": 0.0,
+          "type": "number"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "Moped speed in km/h (18-22h)",
+      "title": "Light Moto Speed Evening"
+    },
+    "light_moto_speed_night": {
+      "anyOf": [
+        {
+          "maximum": 200.0,
+          "minimum": 0.0,
+          "type": "number"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "Moped speed in km/h (22-6h)",
+      "title": "Light Moto Speed Night"
+    },
+    "heavy_moto_speed_day": {
+      "anyOf": [
+        {
+          "maximum": 200.0,
+          "minimum": 0.0,
+          "type": "number"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "Motorcycle speed in km/h (6-18h)",
+      "title": "Heavy Moto Speed Day"
+    },
+    "heavy_moto_speed_evening": {
+      "anyOf": [
+        {
+          "maximum": 200.0,
+          "minimum": 0.0,
+          "type": "number"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "Motorcycle speed in km/h (18-22h)",
+      "title": "Heavy Moto Speed Evening"
+    },
+    "heavy_moto_speed_night": {
+      "anyOf": [
+        {
+          "maximum": 200.0,
+          "minimum": 0.0,
+          "type": "number"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "Motorcycle speed in km/h (22-6h)",
+      "title": "Heavy Moto Speed Night"
+    },
+    "pavement": {
+      "default": "NL08",
+      "description": "CNOSSOS road surface type (e.g. NL08)",
+      "pattern": "^(NL(0[1-9]|1[0-4])|DEF)$",
+      "title": "Pavement",
+      "type": "string"
+    },
+    "temperature_day": {
+      "default": 20.0,
+      "description": "Average temperature in \u00b0C (6-18h)",
+      "title": "Temperature Day",
+      "type": "number"
+    },
+    "temperature_evening": {
+      "default": 20.0,
+      "description": "Average temperature in \u00b0C (18-22h)",
+      "title": "Temperature Evening",
+      "type": "number"
+    },
+    "temperature_night": {
+      "default": 20.0,
+      "description": "Average temperature in \u00b0C (22-6h)",
+      "title": "Temperature Night",
+      "type": "number"
+    },
+    "studded_tires_months": {
+      "anyOf": [
+        {
+          "maximum": 12.0,
+          "minimum": 0.0,
+          "type": "number"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "Months per year with studded tires (0-12)",
+      "title": "Studded Tires Months"
+    },
+    "studded_tires_ratio": {
+      "anyOf": [
+        {
+          "maximum": 1.0,
+          "minimum": 0.0,
+          "type": "number"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "Ratio of vehicles with studded tires (0-1)",
+      "title": "Studded Tires Ratio"
+    },
+    "junction_distance": {
+      "anyOf": [
+        {
+          "minimum": 0.0,
+          "type": "number"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "Distance to junction in meters",
+      "title": "Junction Distance"
+    },
+    "junction_type": {
+      "$ref": "#/$defs/JunctionType",
+      "default": 0,
+      "description": "Type of junction (0=none, 1=traffic light, 2=roundabout)"
+    },
+    "slope": {
+      "anyOf": [
+        {
+          "type": "number"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "Road slope in percent",
+      "title": "Slope"
+    }
+  },
+  "required": [
+    "id"
+  ],
+  "title": "TrafficFlow",
+  "type": "object"
+}
