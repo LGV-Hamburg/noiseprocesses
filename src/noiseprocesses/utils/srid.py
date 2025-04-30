@@ -2,7 +2,11 @@ from noiseprocesses.core.java_bridge import JavaBridge
 from noiseprocesses.core.database import NoiseDatabase
 
 
-def get_srid(database: NoiseDatabase, java_bridge: JavaBridge, config) -> int:
+def get_srid(
+        database: NoiseDatabase,
+        java_bridge: JavaBridge,
+        config
+) -> int:
     """
     Get SRID from input tables using JavaBridge's GeometryTableUtilities.
 
