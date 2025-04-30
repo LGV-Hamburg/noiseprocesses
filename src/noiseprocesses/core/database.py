@@ -18,7 +18,7 @@ class SQLBuilder:
     @staticmethod
     def drop_table(table_name: str) -> str:
         safe_name = f'"{table_name.replace('"', '""')}"'
-        return f"DROP TABLE IF EXISTS {safe_name}"
+        return f"DROP TABLE IF EXISTS {safe_name.upper()}"
 
     @staticmethod
     def create_spatial_index(table_name: str) -> str:
@@ -73,6 +73,10 @@ class SQLBuilder:
         """Validate table/column name."""
         return bool(re.match(r"^[A-Za-z][A-Za-z0-9_]*$", identifier))
 
+    @staticmethod
+    def create_pk_column(table_name: str, pk_name: str) -> str:
+        return f"ALTER TABLE {table_name} ADD {pk_name} INT AUTO_INCREMENT PRIMARY KEY;"
+
 
 class NoiseDatabase:
     """Manages H2GIS database connections and operations for NoiseModelling."""
@@ -84,6 +88,7 @@ class NoiseDatabase:
         self.java_bridge = JavaBridge.get_instance()
         self.connection = self._init_java_connection()
         self.metadata = MetaData()
+        self.primary_key_column = "PK"  # Default primary key column name
 
         # Initialize H2GIS spatial extension
         self._init_spatial_extension()
@@ -237,7 +242,9 @@ class NoiseDatabase:
             # Check for PK column existence
             result = statement.executeQuery(f"SELECT * FROM {table_name}")
             meta = result.getMetaData()
-            pk_field_index = self.java_bridge.JDBCUtilities.getFieldIndex(meta, "PK")
+            pk_field_index = self.java_bridge.JDBCUtilities.getFieldIndex(
+                meta, self.primary_key_column
+            )
 
             # Check for primary key constraint
             table_location = self.java_bridge.TableLocation.parse(table_name)
@@ -253,8 +260,12 @@ class NoiseDatabase:
     def add_primary_key(self, table_name: str) -> None:
         """Add primary key to table using SQLAlchemy."""
         statements = [
-            text(f"ALTER TABLE {table_name} ALTER COLUMN PK INT NOT NULL"),
-            text(f"ALTER TABLE {table_name} ADD PRIMARY KEY (PK)"),
+            text(
+                f"ALTER TABLE {table_name} ALTER COLUMN {self.primary_key_column} INT NOT NULL"
+            ),
+            text(
+                f"ALTER TABLE {table_name} ADD PRIMARY KEY ({self.primary_key_column})"
+            ),
         ]
         for stmt in statements:
             self.execute(stmt)
@@ -401,7 +412,7 @@ class NoiseDatabase:
         self._process_imported_table(table_name, crs)
 
     def _process_imported_table(self, table_name: str, crs: str | int) -> None:
-        """Process an imported table with indexing and SRID handling."""
+        """Process an imported table with indexing, SRID handling, optimizations and primary keys."""
         TableLocation = self.java_bridge.TableLocation
         table_location = TableLocation.parse(
             table_name, self.java_bridge.DBUtils.getDBType(self.connection)
@@ -415,11 +426,18 @@ class NoiseDatabase:
             )
         ]
         if not spatial_fields:
-            print("Warning: Table does not contain geometry field")
+            logger.warning("Table does not contain geometry field")
             return
 
         # Create spatial index
         self.create_spatial_index(table_name)
+
+        # optimize table
+        count = self.java_bridge.JDBCUtilities.getRowCount(
+            self.connection, table_location
+        )
+        if count > 10000:  # Only optimize for large datasets
+            self.optimize_table(table_name)
 
         # Handle SRID
         table_srid = self.java_bridge.GeometryTableUtilities.getSRID(
@@ -434,6 +452,19 @@ class NoiseDatabase:
 
         # Handle primary key
         has_pk_column, has_pk_constraint = self.check_pk_column(table_name)
+        logger.warning(
+            f"Table {table_name} has PK column: {has_pk_column}, has PK constraint: {has_pk_constraint}"
+        )
+
+        if not has_pk_column:
+            logger.info(
+                f"Adding primary key column {self.primary_key_column} to table {table_name}"
+            )
+            stmt = self.connection.createStatement()
+            stmt.execute(SQLBuilder.create_pk_column(table_name, self.primary_key_column))
+            stmt.close()
+            has_pk_column, has_pk_constraint = True, True
+
         if has_pk_column and not has_pk_constraint:
             self.add_primary_key(table_name)
 
