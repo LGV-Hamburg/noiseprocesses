@@ -2,6 +2,7 @@ import logging
 
 from pathlib import Path
 
+from noiseprocesses.utils import srid
 from noiseprocesses.core.database import NoiseDatabase, SQLBuilder
 from noiseprocesses.models.grid_config import DelaunayGridConfig, RegularGridConfig
 from noiseprocesses.core.java_bridge import JavaBridge
@@ -31,7 +32,11 @@ class DelaunayGridGenerator:
         logger.info("Starting Delaunay grid generation")
 
         # Get SRID from input tables
-        self.target_srid = self._get_srid(config)
+        self.target_srid = srid.get_srid(
+            self.database,
+            self.java_bridge,
+            config
+        )
 
         # Drop existing tables
         self.database.execute(
@@ -91,32 +96,6 @@ class DelaunayGridGenerator:
         logger.info(f"Created {receiver_count} receivers")
 
         return config.output_table
-
-    def _get_srid(self, config: DelaunayGridConfig) -> int:
-        """Get SRID from input tables"""
-        srid = 0
-        TableLocation = self.java_bridge.TableLocation
-
-        # Try buildings table first
-        if config.buildings_table:
-            srid = self.java_bridge.GeometryTableUtilities.getSRID(
-                self.database.connection,
-                TableLocation.parse(config.buildings_table)
-            )
-
-        # Try sources table if no SRID found
-        if srid == 0 and config.sources_table:
-            srid = self.java_bridge.GeometryTableUtilities.getSRID(
-                self.database.connection,
-                TableLocation.parse(config.sources_table)
-            )
-
-        if srid in (0, 3785, 4326):
-            raise ValueError(
-                f"Invalid SRID: {srid}. Please use a metric projection system."
-            )
-
-        return srid
 
     def _configure_triangulation(
             self, triangle_map, config: DelaunayGridConfig
@@ -202,7 +181,11 @@ class RegularGridGenerator:
         """
         logger.info("Starting regular grid generation")
 
-        self.target_srid = self._get_srid(config)
+        self.target_srid = srid.get_srid(
+            self.database,
+            self.java_bridge,
+            config
+        )
 
         fence_envelop = self._get_fence_envelop(config, self.target_srid)
 
@@ -216,36 +199,6 @@ class RegularGridGenerator:
             self._create_triangles(config.output_table, self.target_srid)
 
         return config.output_table
-
-    def _get_srid(self, config: RegularGridConfig) -> int:
-        """Determine SRID from input tables"""
-
-        srid = 0
-
-        TableLocation = self.database.java_bridge.TableLocation
-
-        if self.target_srid == 0 and config.buildings_table:
-            srid = self.java_bridge.GeometryTableUtilities.getSRID(
-                self.database.connection, TableLocation.parse(config.buildings_table)
-            )
-
-        if self.target_srid == 0 and config.sources_table:
-            srid = self.java_bridge.GeometryTableUtilities.getSRID(
-                self.database.connection, TableLocation.parse(config.sources_table)
-            )
-        
-        if self.target_srid == 0 and config.fence_table:
-            srid = self.java_bridge.GeometryTableUtilities.getSRID(
-                self.database.connection, TableLocation.parse(config.fence_table)
-            )
-
-        self.target_srid = srid
-
-        if self.target_srid in (0, 3785, 4326):
-            raise ValueError(
-                f"Invalid SRID: {srid}. Please use a metric projection system.")
-
-        return srid
 
     def _get_fence_strategies(self, config: RegularGridConfig, srid: int) -> dict:
         """Define fence geometry calculation strategies"""
