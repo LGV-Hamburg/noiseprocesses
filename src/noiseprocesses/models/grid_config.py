@@ -175,6 +175,7 @@ class BuildingGridConfig(BaseModel):
     class Config:
         """Pydantic model configuration"""
         arbitrary_types_allowed = True
+        populate_by_name = True
 
     # Required parameters
     buildings_table: str = Field(
