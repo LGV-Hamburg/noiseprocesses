@@ -1,6 +1,15 @@
 # NoiseProcesses
 
-A python wrapper for NoiseModelling v4.
+A python wrapper for NoiseModelling v4.0.
+
+## Acknowledgment
+
+This project is derived from the NoiseModelling project, an open-source tool for environmental noise mapping.
+
+NoiseModelling is developed by the DECIDE team from the Lab-STICC (CNRS) and the Mixt Research Unit in Environmental Acoustics (Université Gustave Eiffel). You can find more information about NoiseModelling at [http://noise-planet.org/noisemodelling.html](http://noise-planet.org/noisemodelling.html).
+
+NoiseModelling is distributed under the GNU General Public License v3.0.
+
 
 ## For Developers
 ### Python project setup 
@@ -50,4 +59,4 @@ make dist
 ```
 
 # LICENSE
-This software is based on and uses component from [NoiseModelling](https://github.com/Universite-Gustave-Eiffel/NoiseModelling/) and is licenced under GPLv3.
+This software is based on and uses components from [NoiseModelling](https://github.com/Universite-Gustave-Eiffel/NoiseModelling/) and is licenced under GPLv3.
