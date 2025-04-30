@@ -21,6 +21,12 @@ class SQLBuilder:
         return f"DROP TABLE IF EXISTS {safe_name.upper()}"
 
     @staticmethod
+    def create_index(table_name: str, column_name: str) -> str:
+        safe_name = f'"{table_name.replace('"', '""').upper()}"'
+        safe_column = f'"{column_name.replace('"', '""').upper()}"'
+        return f"CREATE INDEX ON {safe_name}({safe_column})"
+
+    @staticmethod
     def create_spatial_index(table_name: str) -> str:
         safe_name = f'"{table_name.replace('"', '""')}"'
         return f"CREATE SPATIAL INDEX ON {safe_name}(the_geom)"
