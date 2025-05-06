@@ -995,6 +995,20 @@ pytz = "*"
 tornado = ">=5.0.0,<7.0.0"
 
 [[package]]
+name = "gdal"
+version = "3.10.3"
+description = "GDAL: Geospatial Data Abstraction Library"
+optional = false
+python-versions = ">=3.8.0"
+groups = ["main"]
+files = [
+    {file = "gdal-3.10.3.tar.gz", hash = "sha256:b5550650daeeae8e41091581d9aea7d75a9f15b0ebbeb8c96e37458fa02264cd"},
+]
+
+[package.extras]
+numpy = ["numpy (>1.0.0)"]
+
+[[package]]
 name = "geojson-pydantic"
 version = "1.2.0"
 description = "Pydantic data models for the GeoJSON spec."
@@ -4141,4 +4155,4 @@ type = ["pytest-mypy"]
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.12,<4.0"
-content-hash = "18b38169b5a46e2362afa1301b1d8bdc96a0b40696f1c4a1f6fb051001a72925"
+content-hash = "a218f71bb28a018ecac3d5d037422bacbff6a994d896b07c728e5173112364e5"
