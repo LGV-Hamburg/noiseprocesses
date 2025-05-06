@@ -51,7 +51,12 @@ class TrafficNoiseProp(BaseProcess):
                     f"Calculations failed. Reason: Invalid inputs ({validation_error}).",
                 )
 
-            raise ValueError(validation_error.errors())
+            raise ValueError(
+                validation_error.errors(
+                    include_input=False, include_url=False,
+                    include_context=False
+                )
+            )
         except ValueError as value_error:
             logger.error("Some inputs are not valid: %s", value_error)
             if job_progress_callback:
