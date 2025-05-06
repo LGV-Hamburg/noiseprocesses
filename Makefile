@@ -25,7 +25,11 @@ lock:
 build-image:
 	@echo 'Building release ${CONTAINER_REGISTRY}/$(IMAGE_NAME):$(IMAGE_TAG)'
 # build your image
-	docker compose -f docker-compose-build.yaml build --build-arg SOURCE_COMMIT=$(GIT_COMMIT) app
+	DOCKER_BUILDKIT=1 docker compose \
+		-f docker-compose-build.yaml \
+		build \
+		--build-arg SOURCE_COMMIT=$(GIT_COMMIT) \
+		app
 
 push-registry:
 # login into our azure registry
