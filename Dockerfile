@@ -17,41 +17,55 @@ RUN git clone --depth 1 --branch v4.0.5 https://github.com/Universite-Gustave-Ei
 # Build the NoiseModelling library
     && cd .. && make check-java && make dist
 
+FROM ghcr.io/osgeo/gdal:ubuntu-small-3.10.3 AS python-builder
 
-FROM python:3.12-bookworm AS base
+ARG MAMBA_DOCKERFILE_ACTIVATE=1
 
-ENV CACHE_DIR=/app/cache
-
-WORKDIR /app
-
-RUN --mount=type=cache,target=$CACHE_DIR apt-get update && apt-get install -y --no-install-recommends \
-    git \
-    gdal-bin \
-    libgdal-dev \
-    && rm -rf /var/lib/apt/lists/* \
-    && pip install poetry==2.1.2
-
-ENV POETRY_NO_INTERACTION=1 \
+ENV CACHE_DIR=/app/cache \
+    POETRY_NO_INTERACTION=1 \
     POETRY_VIRTUALENVS_IN_PROJECT=1 \
     POETRY_VIRTUALENVS_CREATE=1 \
     POETRY_CACHE_DIR=/app/poetry_cache
 
-COPY pyproject.toml poetry.lock ./
-RUN --mount=type=cache,target=$POETRY_CACHE_DIR poetry install --without=dev --no-root
+WORKDIR /app
 
-# Install Python bindings for GDAL (osgeo)
-RUN /app/.venv/bin/python -m pip install gdal==$(gdal-config --version)
+# Install system-wide Python and dependencies
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    python3.12 \
+    python3.12-venv \
+    python3-pip \
+    python3-dev \
+    pipx \
+    g++ \
+    # wget \
+    && rm -rf /var/lib/apt/lists/* \
+    && pipx ensurepath
+
+ENV POETRY_ENV=/poetry
+# Install Poetry using the system-wide Python
+RUN python3 -m venv $POETRY_ENV \
+    && ${POETRY_ENV}/bin/pip install -U pip setuptools \
+    && ${POETRY_ENV}/bin/pip install poetry
+
+# Create a virtual environment using the system-wide Python
+RUN python3.12 -m venv /app/.venv
+
+# Activate the virtual environment and install dependencies with Poetry
+ENV PATH="/app/.venv/bin:$PATH"
+COPY pyproject.toml poetry.lock ./
+RUN ${POETRY_ENV}/bin/poetry install --without=dev --no-root
 
 COPY src ./src
 RUN touch README.md \
-    && poetry build \
+    && ${POETRY_ENV}/bin/poetry build \
     && /app/.venv/bin/python -m pip install dist/*.whl --no-deps
 
-FROM python:3.12-slim-bookworm AS runtime
+# FROM python:3.12.10-slim-bookworm AS runtime
+FROM ghcr.io/osgeo/gdal:ubuntu-small-3.10.3 AS runtime
 
 ARG USER_UID=1000
-ARG USERNAME=pythonuser
-ARG USER_GID=2000
+ARG USERNAME=ubuntu
+ARG USER_GID=1000
 ARG SOURCE_COMMIT
 
 LABEL com.lgv.uda.maintainer="Urban Data Analytics" \
@@ -60,16 +74,14 @@ LABEL com.lgv.uda.maintainer="Urban Data Analytics" \
     com.lgv.uda.source_commit=$SOURCE_COMMIT \
     org.opencontainers.image.source="https://github.com/UrbanDataAnalytics/noiseprocesses"
 
-# add user and group
-RUN groupadd --gid $USER_GID $USERNAME && \
-    useradd --create-home --no-log-init --gid $USER_GID --uid $USER_UID --shell /bin/bash $USERNAME && \
-    chown -R $USERNAME:$USERNAME /home/$USERNAME /usr/local/lib /usr/local/bin
+# # add user and group
+# RUN groupadd --gid $USER_GID $USERNAME && \
+#     useradd --create-home --no-log-init --gid $USER_GID --uid $USER_UID --shell /bin/bash $USERNAME && \
+#     chown -R $USERNAME:$USERNAME /home/$USERNAME /usr/local/lib /usr/local/bin
 
-# Install Java runtime and gdal/osgeo
+# Install Java runtime
 RUN apt-get update && apt-get install -y --no-install-recommends \
     default-jdk \
-    gdal-bin \
-    libgdal-dev \
     && rm -rf /var/lib/apt/lists/*
 
 USER $USERNAME
@@ -85,7 +97,7 @@ ENV JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64 \
     # needed to find the Java classes
     JAVA_LIB_DIR="/app/dist/lib"
 
-COPY --from=base \
+COPY --from=python-builder \
     --chmod=0755 \
     --chown=$USERNAME:$USERNAME \
     ${VIRTUAL_ENV} ./.venv
