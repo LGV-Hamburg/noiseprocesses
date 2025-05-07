@@ -60,7 +60,7 @@ class RoadNoiseModellingCalculator:
         if dimension_result and dimension_result[0][0] == 2:
             logger.info(
                 f"Roads in table '{roads_table}' are 2D."
-                "Adding Z-values with default Z={default_z}."
+                f"Adding Z-values with default Z={default_z}."
             )
             # Update geometries to 3D with the default Z-value
             # copy, as in-place update did not work
