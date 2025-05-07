@@ -28,7 +28,7 @@ request_body = {
         "buildings": buildings,
         "roads": roads_traffic,
         "crs": "http://www.opengis.net/def/crs/EPSG/0/25832",
-        "ground_absorption": grounds,
+        # "ground_absorption": grounds,
         "propagation_settings": {
             "vertical_diffraction": True, "horizontal_diffraction": True
         },
@@ -44,8 +44,19 @@ request_body = {
         "noise_den": {},
     },
 }
+
+alternative_request_body = None
+with open("examples/example-request-body.json") as f:
+    alternative_request_body = json.load(f)
+
+if alternative_request_body:
+    request_body = alternative_request_body
+
+url = "https://ump-lgv.germanywestcentral.cloudapp.azure.com/api/processes/noise_v4:traffic_noise_propagation/execution"
+url = "http://localhost:8000/processes/traffic_noise_propagation/execution"
+
 response = requests.post(
-    "http://localhost:8000/processes/traffic_noise_propagation/execution",
+    url,
     json=request_body,
 )
 
