@@ -259,7 +259,14 @@ class JavaBridge:
         )
         from org.h2gis.utilities.dbtypes import DBUtils  # type: ignore
         from org.h2gis.utilities.wrapper import ConnectionWrapper  # type: ignore
-        from org.locationtech.jts.io import WKTReader, WKTWriter  # type: ignore
+        from org.locationtech.jts.io import (  # type: ignore
+            WKTReader, WKTWriter
+        )
+        from org.locationtech.jts.geom import (  # type: ignore
+            Coordinate,
+            LineString,
+            MultiLineString,
+        )
         from org.noise_planet.noisemodelling.jdbc import (  # type: ignore
             BezierContouring,
             LDENConfig,
@@ -339,6 +346,9 @@ class JavaBridge:
         self.PRJUtil = PRJUtil
         self.WKTReader = WKTReader
         self.WKTWriter = WKTWriter
+        self.Coordinate = Coordinate
+        self.LineString = LineString
+        self.MultiLineString = MultiLineString
         self.RootProgressVisitor = RootProgressVisitor
 
         self.ProgressMetric = ProgressMetric
