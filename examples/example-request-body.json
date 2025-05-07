@@ -1,0 +1,364 @@
+{
+    "inputs": {
+        "acoustic_parameters": {
+            "humidity": 75,
+            "max_reflection_distance": 50,
+            "max_source_distance": 150,
+            "reflection_order": 1,
+            "temperature": 15,
+            "wall_alpha": 0.1
+        },
+        "isosurface_settings": {
+            "iso_classes": "35.0,40.0,45.0,50.0,55.0,60.0,65.0,70.0,75.0,80.0,200.0",
+            "smooth_coefficient": 0.5
+        },
+        "propagation_settings": {
+            "favorable_day": "0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5",
+            "favorable_evening": null,
+            "favorable_night": null,
+            "horizontal_diffraction": true,
+            "vertical_diffraction": true
+        },
+        "receiver_grid_settings": {
+            "calculation_height": 4,
+            "grid_type": "DELAUNAY",
+            "max_area": 2500,
+            "max_cell_dist": 600,
+            "road_width": 2
+        },
+        "buildings": {
+            "type": "FeatureCollection",
+            "numberReturned": 10,
+            "numberMatched": 18,
+            "timeStamp": "2025-05-05T10:54:18Z",
+            "features": [],
+            "links": [
+                {
+                    "href": "https://ump-lgv.germanywestcentral.cloudapp.azure.com/oaf/buildings_footprint/collections/buildings/items?filter=S_INTERSECTS%28geometry%2C%20POLYGON%28%28565558.3668421292%205934228.1441249745%2C%20565558.3668421292%205934357.422156364%2C%20565644.6268166918%205934357.422156364%2C%20565644.6268166918%205934228.1441249745%2C%20565558.3668421292%205934228.1441249745%29%29%29&crs=http%3A%2F%2Fwww.opengis.net%2Fdef%2Fcrs%2FEPSG%2F0%2F25832&filter-crs=http%3A%2F%2Fwww.opengis.net%2Fdef%2Fcrs%2FEPSG%2F0%2F25832&f=json",
+                    "rel": "self",
+                    "type": "application/geo+json",
+                    "title": "Dieses Dokument"
+                },
+                {
+                    "href": "https://ump-lgv.germanywestcentral.cloudapp.azure.com/oaf/buildings_footprint/collections/buildings/items?filter=S_INTERSECTS%28geometry%2C%20POLYGON%28%28565558.3668421292%205934228.1441249745%2C%20565558.3668421292%205934357.422156364%2C%20565644.6268166918%205934357.422156364%2C%20565644.6268166918%205934228.1441249745%2C%20565558.3668421292%205934228.1441249745%29%29%29&crs=http%3A%2F%2Fwww.opengis.net%2Fdef%2Fcrs%2FEPSG%2F0%2F25832&filter-crs=http%3A%2F%2Fwww.opengis.net%2Fdef%2Fcrs%2FEPSG%2F0%2F25832&f=html",
+                    "rel": "alternate",
+                    "type": "text/html",
+                    "title": "Dieses Dokument als HTML"
+                },
+                {
+                    "href": "https://ump-lgv.germanywestcentral.cloudapp.azure.com/oaf/buildings_footprint/collections/buildings/items?filter=S_INTERSECTS%28geometry%2C%20POLYGON%28%28565558.3668421292%205934228.1441249745%2C%20565558.3668421292%205934357.422156364%2C%20565644.6268166918%205934357.422156364%2C%20565644.6268166918%205934228.1441249745%2C%20565558.3668421292%205934228.1441249745%29%29%29&crs=http%3A%2F%2Fwww.opengis.net%2Fdef%2Fcrs%2FEPSG%2F0%2F25832&filter-crs=http%3A%2F%2Fwww.opengis.net%2Fdef%2Fcrs%2FEPSG%2F0%2F25832&offset=10",
+                    "rel": "next",
+                    "type": "application/geo+json",
+                    "title": "Nächste Seite"
+                }
+            ]
+        },
+        "roads": {
+            "type": "FeatureCollection",
+            "numberReturned": 6,
+            "numberMatched": 6,
+            "timeStamp": "2025-05-05T10:54:20Z",
+            "features": [
+                {
+                    "type": "Feature",
+                    "id": 12183,
+                    "geometry": {
+                        "type": "LineString",
+                        "coordinates": [
+                            [
+                                565584.07,
+                                5934263.54
+                            ],
+                            [
+                                565577.95,
+                                5934261.22
+                            ],
+                            [
+                                565450.61,
+                                5934170.32
+                            ],
+                            [
+                                565446.29,
+                                5934167.53
+                            ],
+                            [
+                                565438.34,
+                                5934162.21
+                            ]
+                        ]
+                    },
+                    "properties": {
+                        "id": 12183,
+                        "strassenname": "Große Bleichen",
+                        "light_vehicles_day": 276.74752,
+                        "medium_vehicles_day": 5.161547776,
+                        "heavy_vehicles_day": 6.252015616,
+                        "light_vehicles_evening": 175.561708,
+                        "medium_vehicles_evening": 1.3769428288,
+                        "heavy_vehicles_evening": 1.5548253952,
+                        "light_vehicles_night": 37.620366,
+                        "medium_vehicles_night": 0.77647152,
+                        "heavy_vehicles_night": 0.9232952256,
+                        "light_speed_day": 20,
+                        "light_speed_evening": 20,
+                        "light_speed_night": 20,
+                        "medium_speed_day": 20,
+                        "medium_speed_evening": 20,
+                        "medium_speed_night": 20,
+                        "heavy_speed_day": 20,
+                        "heavy_speed_evening": 20,
+                        "heavy_speed_night": 20,
+                        "pavement": "NL13"
+                    }
+                },
+                {
+                    "type": "Feature",
+                    "id": 22004,
+                    "geometry": {
+                        "type": "LineString",
+                        "coordinates": [
+                            [
+                                565675.975561,
+                                5934327.923719
+                            ],
+                            [
+                                565584.07,
+                                5934263.54
+                            ]
+                        ]
+                    },
+                    "properties": {
+                        "id": 22004,
+                        "strassenname": "Große Bleichen",
+                        "light_vehicles_day": 276.74752,
+                        "medium_vehicles_day": 5.161547776,
+                        "heavy_vehicles_day": 6.252015616,
+                        "light_vehicles_evening": 175.561708,
+                        "medium_vehicles_evening": 1.3769428288,
+                        "heavy_vehicles_evening": 1.5548253952,
+                        "light_vehicles_night": 37.620366,
+                        "medium_vehicles_night": 0.77647152,
+                        "heavy_vehicles_night": 0.9232952256,
+                        "light_speed_day": 20,
+                        "light_speed_evening": 20,
+                        "light_speed_night": 20,
+                        "medium_speed_day": 20,
+                        "medium_speed_evening": 20,
+                        "medium_speed_night": 20,
+                        "heavy_speed_day": 20,
+                        "heavy_speed_evening": 20,
+                        "heavy_speed_night": 20,
+                        "pavement": "NL13"
+                    }
+                },
+                {
+                    "type": "Feature",
+                    "id": 32984,
+                    "geometry": {
+                        "type": "LineString",
+                        "coordinates": [
+                            [
+                                565584.07,
+                                5934263.54
+                            ],
+                            [
+                                565586.476946,
+                                5934257.934046
+                            ]
+                        ]
+                    },
+                    "properties": {
+                        "id": 32984,
+                        "strassenname": "Poststraße",
+                        "light_vehicles_day": 272.971008,
+                        "medium_vehicles_day": 2.610100864,
+                        "heavy_vehicles_day": 3.161530624,
+                        "light_vehicles_evening": 173.1659832,
+                        "medium_vehicles_evening": 0.6962949532,
+                        "heavy_vehicles_evening": 0.7862469328,
+                        "light_vehicles_night": 37.1069964,
+                        "medium_vehicles_night": 0.39264753,
+                        "heavy_vehicles_night": 0.4668936084,
+                        "light_speed_day": 20,
+                        "light_speed_evening": 20,
+                        "light_speed_night": 20,
+                        "medium_speed_day": 20,
+                        "medium_speed_evening": 20,
+                        "medium_speed_night": 20,
+                        "heavy_speed_day": 20,
+                        "heavy_speed_evening": 20,
+                        "heavy_speed_night": 20,
+                        "pavement": "NL05"
+                    }
+                },
+                {
+                    "type": "Feature",
+                    "id": 32985,
+                    "geometry": {
+                        "type": "LineString",
+                        "coordinates": [
+                            [
+                                565586.476946,
+                                5934257.934046
+                            ],
+                            [
+                                565587.2,
+                                5934256.25
+                            ],
+                            [
+                                565590.73,
+                                5934250.07
+                            ],
+                            [
+                                565621.86,
+                                5934208.13
+                            ],
+                            [
+                                565627.58,
+                                5934200.99
+                            ],
+                            [
+                                565636.41,
+                                5934191.09
+                            ]
+                        ]
+                    },
+                    "properties": {
+                        "id": 32985,
+                        "strassenname": "Poststraße",
+                        "light_vehicles_day": 272.971008,
+                        "medium_vehicles_day": 2.610100864,
+                        "heavy_vehicles_day": 3.161530624,
+                        "light_vehicles_evening": 173.1659832,
+                        "medium_vehicles_evening": 0.6962949532,
+                        "heavy_vehicles_evening": 0.7862469328,
+                        "light_vehicles_night": 37.1069964,
+                        "medium_vehicles_night": 0.39264753,
+                        "heavy_vehicles_night": 0.4668936084,
+                        "light_speed_day": 20,
+                        "light_speed_evening": 20,
+                        "light_speed_night": 20,
+                        "medium_speed_day": 20,
+                        "medium_speed_evening": 20,
+                        "medium_speed_night": 20,
+                        "heavy_speed_day": 20,
+                        "heavy_speed_evening": 20,
+                        "heavy_speed_night": 20,
+                        "pavement": "NL05"
+                    }
+                },
+                {
+                    "type": "Feature",
+                    "id": 47599,
+                    "geometry": {
+                        "type": "LineString",
+                        "coordinates": [
+                            [
+                                565539.168984,
+                                5934332.922113
+                            ],
+                            [
+                                565579.24,
+                                5934276.32
+                            ],
+                            [
+                                565580.26,
+                                5934274.11
+                            ],
+                            [
+                                565581.29,
+                                5934271.7
+                            ],
+                            [
+                                565581.569844,
+                                5934270.878587
+                            ]
+                        ]
+                    },
+                    "properties": {
+                        "id": 47599,
+                        "strassenname": "Poststraße",
+                        "light_vehicles_day": 272.971008,
+                        "medium_vehicles_day": 2.610100864,
+                        "heavy_vehicles_day": 3.161530624,
+                        "light_vehicles_evening": 173.1659832,
+                        "medium_vehicles_evening": 0.6962949532,
+                        "heavy_vehicles_evening": 0.7862469328,
+                        "light_vehicles_night": 37.1069964,
+                        "medium_vehicles_night": 0.39264753,
+                        "heavy_vehicles_night": 0.4668936084,
+                        "light_speed_day": 20,
+                        "light_speed_evening": 20,
+                        "light_speed_night": 20,
+                        "medium_speed_day": 20,
+                        "medium_speed_evening": 20,
+                        "medium_speed_night": 20,
+                        "heavy_speed_day": 20,
+                        "heavy_speed_evening": 20,
+                        "heavy_speed_night": 20,
+                        "pavement": "NL13"
+                    }
+                },
+                {
+                    "type": "Feature",
+                    "id": 47600,
+                    "geometry": {
+                        "type": "LineString",
+                        "coordinates": [
+                            [
+                                565581.569844,
+                                5934270.878587
+                            ],
+                            [
+                                565584.07,
+                                5934263.54
+                            ]
+                        ]
+                    },
+                    "properties": {
+                        "id": 47600,
+                        "strassenname": "Poststraße",
+                        "light_vehicles_day": 272.971008,
+                        "medium_vehicles_day": 2.610100864,
+                        "heavy_vehicles_day": 3.161530624,
+                        "light_vehicles_evening": 173.1659832,
+                        "medium_vehicles_evening": 0.6962949532,
+                        "heavy_vehicles_evening": 0.7862469328,
+                        "light_vehicles_night": 37.1069964,
+                        "medium_vehicles_night": 0.39264753,
+                        "heavy_vehicles_night": 0.4668936084,
+                        "light_speed_day": 20,
+                        "light_speed_evening": 20,
+                        "light_speed_night": 20,
+                        "medium_speed_day": 20,
+                        "medium_speed_evening": 20,
+                        "medium_speed_night": 20,
+                        "heavy_speed_day": 20,
+                        "heavy_speed_evening": 20,
+                        "heavy_speed_night": 20,
+                        "pavement": "NL13"
+                    }
+                }
+            ],
+            "links": [
+                {
+                    "href": "https://ump-lgv.germanywestcentral.cloudapp.azure.com/oaf/streets_traffic/collections/streets/items?filter=S_INTERSECTS%28geometry%2C%20POLYGON%28%28565558.3668421292%205934228.1441249745%2C%20565558.3668421292%205934357.422156364%2C%20565644.6268166918%205934357.422156364%2C%20565644.6268166918%205934228.1441249745%2C%20565558.3668421292%205934228.1441249745%29%29%29&crs=http%3A%2F%2Fwww.opengis.net%2Fdef%2Fcrs%2FEPSG%2F0%2F25832&filter-crs=http%3A%2F%2Fwww.opengis.net%2Fdef%2Fcrs%2FEPSG%2F0%2F25832&f=json",
+                    "rel": "self",
+                    "type": "application/geo+json",
+                    "title": "Dieses Dokument"
+                },
+                {
+                    "href": "https://ump-lgv.germanywestcentral.cloudapp.azure.com/oaf/streets_traffic/collections/streets/items?filter=S_INTERSECTS%28geometry%2C%20POLYGON%28%28565558.3668421292%205934228.1441249745%2C%20565558.3668421292%205934357.422156364%2C%20565644.6268166918%205934357.422156364%2C%20565644.6268166918%205934228.1441249745%2C%20565558.3668421292%205934228.1441249745%29%29%29&crs=http%3A%2F%2Fwww.opengis.net%2Fdef%2Fcrs%2FEPSG%2F0%2F25832&filter-crs=http%3A%2F%2Fwww.opengis.net%2Fdef%2Fcrs%2FEPSG%2F0%2F25832&f=html",
+                    "rel": "alternate",
+                    "type": "text/html",
+                    "title": "Dieses Dokument als HTML"
+                }
+            ]
+        },
+        "crs": "http://www.opengis.net/def/crs/EPSG/0/25832",
+        "dem_url": "https://ump-lgv.germanywestcentral.cloudapp.azure.com/raster/dem5_hh/cog/bbox/565558.3668421292,5934228.1441249745,565644.6268166918,5934357.422156364/500x500.tif?coord_crs=epsg:25832"
+    },
+    "outputs": {
+        "noise_night": {}
+    }
+}
