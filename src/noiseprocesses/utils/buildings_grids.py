@@ -1,11 +1,10 @@
 import logging
+import math
 
-from noiseprocesses.core.java_bridge import JavaBridge
 from noiseprocesses.core.database import NoiseDatabase, SQLBuilder
-from noiseprocesses.models.grid_config import (
-    BuildingGridConfig2d, BuildingGridConfig3d
-)
-
+from noiseprocesses.core.java_bridge import JavaBridge
+from noiseprocesses.models.grid_config import BuildingGridConfig2d, BuildingGridConfig3d
+from noiseprocesses.utils import line_to_points as ltp
 from noiseprocesses.utils import srid
 
 logger = logging.getLogger(__name__)
@@ -32,11 +31,7 @@ class BuildingGridGenerator2d:
         logger.info("Starting 2D building grid generation")
 
         # Get SRID from input tables
-        self.target_srid = srid.get_srid(
-            self.database,
-            self.java_bridge,
-            config
-        )
+        self.target_srid = srid.get_srid(self.database, self.java_bridge, config)
 
         # Drop existing tables
         self.database.execute(SQLBuilder.drop_table(config.output_table))
@@ -58,7 +53,7 @@ class BuildingGridGenerator2d:
         )
         self.database.execute("CREATE SPATIAL INDEX ON tmp_receivers_lines(the_geom)")
 
-        # identify buildings whose heights exceed the 
+        # identify buildings whose heights exceed the
         # receiver height (overlapping buildings)
         logger.info(
             "Identifying buildings that intersect "
@@ -75,7 +70,7 @@ class BuildingGridGenerator2d:
             JOIN tmp_receivers_lines s
             ON ST_Intersects(b.the_geom, s.the_geom)
             WHERE b.pk != s.pk
-            AND b.height > {config.calculation_height}
+            AND b.building_height > {config.receiver_height}
             """
         )
 
@@ -103,9 +98,9 @@ class BuildingGridGenerator2d:
                     ST_Buffer(ST_Accum(b.the_geom), {config.distance_from_wall})
                 ) AS the_geom
             FROM tmp_relation_screen_building r
-            JOIN {config.buildings_table} b ON ON r.PK_building = b.PK_building
+            JOIN {config.buildings_table} b ON r.PK_building = b.PK
             JOIN tmp_receivers_lines s ON r.pk_screen = s.pk
-            GROUP BY r.pk_screen, s.the_geom
+            GROUP BY r.pk_screen, s.the_geom;
             """
         )
         self.database.execute(
@@ -137,17 +132,67 @@ class BuildingGridGenerator2d:
         )
         self.database.execute("ALTER TABLE TMP_SCREENS_MERGE ADD PRIMARY KEY(pk)")
 
-        # Convert lines to points
-        logger.info("Converting lines to points")
+        logger.info("Splitting lines into points and populating TMP_SCREENS")
+        self.database.execute(SQLBuilder.drop_table("TMP_SCREENS"))
         self.database.execute(
-            f"""
-            CREATE TABLE {config.output_table} AS
-            SELECT
-                ST_SetSRID(ST_PointN(the_geom, generate_series(1, ST_NumPoints(the_geom))), {self.target_srid}) AS the_geom
-            FROM tmp_receivers_lines
+            """
+            CREATE TABLE TMP_SCREENS(
+                pk INT NOT NULL,
+                the_geom GEOMETRY
+            )
             """
         )
-        self.database.execute(f"CREATE SPATIAL INDEX ON {config.output_table}(the_geom)")
+
+        # Populate TMP_SCREENS with points
+        batch = []
+        for row in self.database.query("SELECT pk, the_geom FROM TMP_SCREENS_MERGE"):
+            pk, geom = row[0], row[1]
+            points = ltp.split_line_to_points(geom, config.receiver_distance)
+            for point in points:
+                # Extract x, y from the point
+                x, y = point.x, point.y
+
+                # Filter out NaN coordinates
+                if math.isnan(x) or math.isnan(y):
+                    continue
+
+                # Add the receiver height as the z value
+                z = config.receiver_height
+
+                # Insert the point into TMP_SCREENS
+                batch.append((pk, x, y, z, self.target_srid))
+
+        # Execute the batch insert
+        self.database.execute_batch(
+            "INSERT INTO TMP_SCREENS(pk, the_geom) VALUES (?, ST_SetSRID(ST_MakePoint(?, ?, ?), ?))",
+            batch
+        )
+
+        logger.info("Finally, creating RECEIVERS table...")
+        # Create the RECEIVERS table
+        self.database.execute(
+            f"""
+            CREATE TABLE {config.output_table}(
+                pk INT NOT NULL AUTO_INCREMENT,
+                the_geom GEOMETRY,
+                build_pk INT
+            )
+            """
+        )
+
+        # Insert data into the RECEIVERS table
+        self.database.execute(
+            f"""
+            INSERT INTO {config.output_table}(the_geom, build_pk)
+            SELECT
+                ST_SetSRID(the_geom, {self.target_srid}),
+                pk AS build_pk
+            FROM TMP_SCREENS
+            """
+        )
+
+        logger.info("Add primary key to the RECEIVERS table")
+        self.database.execute(f"ALTER TABLE {config.output_table} ADD PRIMARY KEY(pk)")
 
         logger.info(f"2D building grid generation completed: {config.output_table}")
         return config.output_table
@@ -174,11 +219,7 @@ class BuildingGridGenerator3d:
         logger.info("Starting 3D building grid generation")
 
         # Get SRID from input tables
-        self.target_srid = srid.get_srid(
-            self.database,
-            self.java_bridge,
-            config
-        )
+        self.target_srid = srid.get_srid(self.database, self.java_bridge, config)
 
         # Drop existing tables
         self.database.execute(SQLBuilder.drop_table(config.output_table))
@@ -194,7 +235,7 @@ class BuildingGridGenerator3d:
                     ST_ToMultiLine(ST_Buffer(b.the_geom, {config.distance_from_wall}, 'join=bevel')),
                     0.05
                 ) AS the_geom,
-                b.height AS building_height
+                b.building_height AS building_height
             FROM {config.buildings_table} b
             """
         )
@@ -217,7 +258,9 @@ class BuildingGridGenerator3d:
             FROM tmp_receivers_lines
             """
         )
-        self.database.execute(f"CREATE SPATIAL INDEX ON {config.output_table}(the_geom)")
+        self.database.execute(
+            f"CREATE SPATIAL INDEX ON {config.output_table}(the_geom)"
+        )
 
         logger.info(f"3D building grid generation completed: {config.output_table}")
         return config.output_table
