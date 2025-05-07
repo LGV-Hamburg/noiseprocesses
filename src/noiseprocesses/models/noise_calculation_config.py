@@ -15,7 +15,7 @@ from pydantic import (
 
 from noiseprocesses.models.building_properties import BuildingsFeatureCollection
 from noiseprocesses.models.dem_feature import BboxFeature
-from noiseprocesses.models.grid_config import GridSettingsUser
+from noiseprocesses.models.grid_config import BuildingGridSettingsUser, GridSettingsUser
 from noiseprocesses.models.ground_absorption import GroundAbsorptionFeatureCollection
 from noiseprocesses.models.isosurface_config import IsoSurfaceUserSettings
 from noiseprocesses.models.propagation_config import (
@@ -153,7 +153,9 @@ class NoiseCalculationUserInput(BaseModel):
     ground_absorption: GroundAbsorptionFeatureCollection | None = None
     acoustic_parameters: AcousticParameters | None = None
     propagation_settings: PropagationSettings | None = None
-    receiver_grid_settings: GridSettingsUser | None = None
+    receiver_grid_settings: (
+        GridSettingsUser | BuildingGridSettingsUser | None
+    ) = None
     isosurface_settings: IsoSurfaceUserSettings | None = None
 
     @model_validator(mode="before")
@@ -180,6 +182,24 @@ class NoiseCalculationUserInput(BaseModel):
             )
         return values
 
+    @model_validator(mode="before")
+    def validate_feature_collections(cls, values):
+        # Validate roads
+        roads = values.get("roads")
+        if roads and not roads["features"]:
+            raise ValueError("The 'roads' FeatureCollection contains no features.")
+
+        # Validate buildings
+        buildings = values.get("buildings")
+        if buildings and not buildings["features"]:
+            raise ValueError("The 'buildings' FeatureCollection contains no features.")
+
+        # Validate ground absorption
+        ground_absorption = values.get("ground_absorption")
+        if ground_absorption and not ground_absorption["features"]:
+            raise ValueError("The 'ground_absorption' FeatureCollection contains no features.")
+
+        return values
 
 if __name__ == "__main__":
     import json
