@@ -1,5 +1,5 @@
 import logging
-from enum import Enum, StrEnum
+from enum import StrEnum
 from pathlib import Path
 from typing import Annotated, Optional
 
@@ -15,7 +15,10 @@ from pydantic import (
 
 from noiseprocesses.models.building_properties import BuildingsFeatureCollection
 from noiseprocesses.models.dem_feature import BboxFeature
-from noiseprocesses.models.grid_config import BuildingGridSettingsUser, GridSettingsUser
+from noiseprocesses.models.grid_config import (
+    BuildingGridSettingsUser,
+    GridSettingsUser,
+)
 from noiseprocesses.models.ground_absorption import GroundAbsorptionFeatureCollection
 from noiseprocesses.models.isosurface_config import IsoSurfaceUserSettings
 from noiseprocesses.models.propagation_config import (
@@ -127,6 +130,9 @@ class NoiseCalculationConfig(BaseModel):
     receiver_grid_settings: GridSettingsUser = (
         GridSettingsUser()
     )  # internal defaults, user overridable
+    building_grid_settings: BuildingGridSettingsUser | None = (
+        None
+    )  # internal defaults, user overridable
     performance: PerformanceSettings = PerformanceSettings()
 
 
@@ -153,9 +159,8 @@ class NoiseCalculationUserInput(BaseModel):
     ground_absorption: GroundAbsorptionFeatureCollection | None = None
     acoustic_parameters: AcousticParameters | None = None
     propagation_settings: PropagationSettings | None = None
-    receiver_grid_settings: (
-        GridSettingsUser | BuildingGridSettingsUser | None
-    ) = None
+    receiver_grid_settings: GridSettingsUser | None = None
+    building_grid_settings: BuildingGridSettingsUser | None = None
     isosurface_settings: IsoSurfaceUserSettings | None = None
 
     @model_validator(mode="before")
