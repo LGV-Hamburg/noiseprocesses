@@ -1,28 +1,17 @@
 import logging
-from enum import Enum, StrEnum
-from pathlib import Path
-from typing import Annotated, Optional
+from enum import StrEnum
 
-from geojson_pydantic import FeatureCollection
 from pydantic import (
-    AnyUrl,
     BaseModel,
     ConfigDict,
-    Field,
-    ValidationError,
-    model_validator,
 )
 
-from noiseprocesses.models.building_properties import BuildingsFeatureCollection
-from noiseprocesses.models.dem_feature import BboxFeature
-from noiseprocesses.models.grid_config import BuildingGridConfig, BuildingGridConfig2d, GridSettingsUser
-from noiseprocesses.models.ground_absorption import GroundAbsorptionFeatureCollection
-from noiseprocesses.models.isosurface_config import IsoSurfaceUserSettings
+from noiseprocesses.models.grid_config import BuildingGridSettingsUser
 from noiseprocesses.models.propagation_config import (
     InputOptionalTables,
     InputRequiredTables,
 )
-from noiseprocesses.models.roads_properties import RoadsFeature, RoadsFeatureCollection
+
 from noiseprocesses.models.noise_calculation_config import (
     AcousticParameters, PropagationSettings,
     PerformanceSettings, DatabaseConfig
@@ -54,7 +43,7 @@ class ImmissionBuildingsCalculationConfig(BaseModel):
     output_controls: dict[OutputReceiversTables, dict] = {
         OutputReceiversTables.noise_den: {}
     }  # internal defaults, user overridable
-    building_grid_settings: BuildingGridConfig = (
-        BuildingGridConfig2d()
+    building_grid_settings: BuildingGridSettingsUser = (
+        BuildingGridSettingsUser()
     )  # internal defaults, user overridable
     performance: PerformanceSettings = PerformanceSettings()
