@@ -3,7 +3,7 @@ import math
 
 from noiseprocesses.core.database import NoiseDatabase, SQLBuilder
 from noiseprocesses.core.java_bridge import JavaBridge
-from noiseprocesses.models.grid_config import BuildingGridConfig, BuildingGridConfig2d, BuildingGridConfig3d
+from noiseprocesses.models.grid_config import BuildingGridConfig
 from noiseprocesses.utils import line_to_points as ltp
 from noiseprocesses.utils import srid
 
