@@ -347,8 +347,8 @@ class TrafficNoiseProp(BaseProcess):
         },
         keywords=["text", "processing"],
         metadata={
-            "created": "2024-02-19",
-            "updated": "2024-04-24",
+            "created": "2025-02-19",
+            "updated": "2025-04-24",
             "provider": "Agency for Geoinformation and Surveying Hamburg"
         },
     )
@@ -406,7 +406,7 @@ class TrafficNoiseBuildings(BaseProcess):
         version="v4.0.5-1.0.1",
         description=(
             "A process for calculating traffic noise "
-            "immission around based on NoiseModelling 4.0.5"
+            "immission near buildings based on NoiseModelling 4.0.5"
             "(https://noise-planet.org/noisemodelling.html)"
         ),
         jobControlOptions=[
@@ -563,7 +563,7 @@ class TrafficNoiseBuildings(BaseProcess):
                 minOccurs=0,
                 maxOccurs=1,
             ),
-            "receiver_grid_settings": ProcessInput(
+            "building_grid_settings": ProcessInput(
                 title="Receiver Grid Settings",
                 description="Settings for the receiver grid",
                 schema=Schema(
@@ -574,7 +574,7 @@ class TrafficNoiseBuildings(BaseProcess):
                             "enum": ["BUILDINGS_2D", "BUILDINGS_3D"],
                             "default": "BUILDINGS",
                         },
-                        "calculation_height_2d": {
+                        "receiver_height_2d": {
                             "type": "number",
                             "minimum": 0,
                             "maximum": 100.0,
@@ -586,7 +586,7 @@ class TrafficNoiseBuildings(BaseProcess):
                             "maximum": 1000.0,
                             "default": 10.0,
                         },
-                        "wall_distance": {
+                        "distance_from_wall": {
                             "type": "number",
                             "minimum": 0,
                             "maximum": 50.0,
@@ -602,35 +602,12 @@ class TrafficNoiseBuildings(BaseProcess):
                 ),
                 minOccurs=0,
                 maxOccurs=1,
-            ),
-            "isosurface_settings": ProcessInput(
-                title="IsoSurface Settings",
-                description="Settings for isosurface generation",
-                schema=Schema(
-                    type="object",
-                    properties={
-                        "iso_classes": {
-                            "type": "string",
-                            "default": (
-                                "35.0,40.0,45.0,50.0,55.0,60.0,65.0,70.0,75.0,80.0,200.0"
-                            ),
-                        },
-                        "smooth_coefficient": {
-                            "type": "number",
-                            "minimum": 0.0,
-                            "maximum": 100.0,
-                            "default": 0.5,
-                        },
-                    },
-                ),
-                minOccurs=0,
-                maxOccurs=1,
-            ),
+            )
         },
         outputs={
             "noise_day": ProcessOutput(
-                title="Noise isosurface day",
-                description="Isosurface containing noise levels during the day period (6-18h)",
+                title="Noise day",
+                description="Point locations with Laeq around buildings during the day period (6-18h)",
                 schema=Schema(
                     allOf=[
                         {"format": "geojson-feature-collection"},
@@ -639,8 +616,8 @@ class TrafficNoiseBuildings(BaseProcess):
                 ),
             ),
             "noise_evening": ProcessOutput(
-                title="Noise isosurface evening",
-                description="Isosurface containing noise levels during the evening period (18-22h)",
+                title="Noise evening",
+                description="Point locations with Laeq around buildings during the evening period (18-22h)",
                 schema=Schema(
                     allOf=[
                         {"format": "geojson-feature-collection"},
@@ -649,8 +626,8 @@ class TrafficNoiseBuildings(BaseProcess):
                 ),
             ),
             "noise_night": ProcessOutput(
-                title="Noise isosurface night",
-                description="Isosurface containing noise levels during the night period (22-6h)",
+                title="Noise night",
+                description="Point locations with Laeq around buildings during the night period (22-6h)",
                 schema=Schema(
                     allOf=[
                         {"format": "geojson-feature-collection"},
@@ -659,8 +636,8 @@ class TrafficNoiseBuildings(BaseProcess):
                 ),
             ),
             "noise_den": ProcessOutput(
-                title="Noise isosurface day-evening-night",
-                description="Isosurface containing noise levels during the a 24 hour period",
+                title="Noise day-evening-night",
+                description="Point locations with Laeq around buildings during the a 24 hour period",
                 schema=Schema(
                     allOf=[
                         {"format": "geojson-feature-collection"},
@@ -671,8 +648,8 @@ class TrafficNoiseBuildings(BaseProcess):
         },
         keywords=["text", "processing"],
         metadata={
-            "created": "2024-02-19",
-            "updated": "2024-04-24",
+            "created": "2025-05-08",
+            "updated": "2025-05-08",
             "provider": "Agency for Geoinformation and Surveying Hamburg"
         },
     )
