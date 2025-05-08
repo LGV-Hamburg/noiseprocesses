@@ -42,8 +42,8 @@ class BuildingGridSettingsUser(BaseModel):
     distance_from_wall: float = Field(
         default=2.0, description="Distance of receivers from the wall (meters)", gt=0
     )  # Distance of receivers from the wall (meters)
-    height_between_levels_3d: float = Field(
-        default=2.5, description="Height between levels for 3D building grids", gt=0
+    height_between_levels_3d: float | None = Field(
+        default=None, description="Height between levels for 3D building grids", gt=0
     )  # Height between levels 3D grids
     receiver_distance: float = Field(
         default=10.0,
@@ -194,8 +194,7 @@ class BuildingGridConfig2d(BuildingGridConfig):
     receiver_height: float = Field(
         default=10.0,
         gt=0,
-        description="Spacing between receivers (meters)",
-        alias="calculation_height_2d",
+        description="Spacing between receivers (meters)"
     )  # Spacing between receivers (meters)
 
 
@@ -210,5 +209,4 @@ class BuildingGridConfig3d(BuildingGridConfig):
         default=2.5,
         gt=0,
         description="Height between levels for 3D building grids",
-        alias="height_between_levels_3d",
     )  # Height between levels 3D grids
