@@ -3,22 +3,25 @@ import logging
 from typing import Callable
 
 from noiseprocesses.calculation.road_propagation import RoadPropagationCalculator
-from noiseprocesses.core.java_bridge import JavaBridge
 from noiseprocesses.core.database import NoiseDatabase
-from noiseprocesses.models.grid_config import DelaunayGridConfig
-from noiseprocesses.models.immissions_buildings_config import ImmissionBuildingsCalculationConfig, OutputReceiversTables
+from noiseprocesses.core.java_bridge import JavaBridge
+from noiseprocesses.models.grid_config import BuildingGridConfig2d, BuildingGridConfig3d
+from noiseprocesses.models.immissions_buildings_config import (
+    ImmissionBuildingsCalculationConfig,
+    OutputReceiversTables,
+)
 from noiseprocesses.models.internal import (
     BuildingsFeatureCollectionInternal,
     GroundAbsorptionFeatureCollectionInternal,
     RoadsFeatureCollectionInternal,
 )
-from noiseprocesses.models.noise_calculation_config import (
-    NoiseCalculationUserInput,
-    OutputIsoSurfaces,
+from noiseprocesses.models.noise_calculation_config import NoiseCalculationUserInput
+from noiseprocesses.utils.buildings_grids import (
+    BuildingGridGenerator2d,
+    BuildingGridGenerator3d,
 )
 from noiseprocesses.utils.contouring import IsoSurfaceBezier
 from noiseprocesses.utils.dem import load_convert_save_dem
-from noiseprocesses.utils.grids import DelaunayGridGenerator
 
 logger = logging.getLogger(__name__)
 
@@ -30,8 +33,7 @@ class ImmissionsAroundBuildingsCalculator:
         self.config = config or ImmissionBuildingsCalculationConfig()  # defaults
 
         self.database = NoiseDatabase(
-            db_file=self.config.database.name,
-            in_memory=self.config.database.in_memory
+            db_file=self.config.database.name, in_memory=self.config.database.in_memory
         )
         # match output control and table names:
         self.match_oct = {
@@ -128,10 +130,8 @@ class ImmissionsAroundBuildingsCalculator:
         """
         # initialize redirecting java output
         java_bridge = JavaBridge.get_instance()
-        
-        java_bridge.redirect_java_output(
-            progress_callback=progress_callback
-        )
+
+        java_bridge.redirect_java_output(progress_callback=progress_callback)
 
         # config setup, take defaults if user did not provide any
         self.config.acoustic_params = (
@@ -141,8 +141,9 @@ class ImmissionsAroundBuildingsCalculator:
             user_input.propagation_settings or self.config.propagation_settings
         )
         self.config.output_controls = user_output or self.config.output_controls
-        self.config.receiver_grid_settings = (
-            user_input.receiver_grid_settings or self.config.receiver_grid_settings
+
+        self.config.building_grid_settings = (
+            user_input.building_grid_settings or self.config.building_grid_settings
         )
 
         # validate user inputs
@@ -202,7 +203,7 @@ class ImmissionsAroundBuildingsCalculator:
             user_input.crs,
         )
 
-        #make the roads 3D, set height to 0.05
+        # make the roads 3D, set height to 0.05
         # Ensure roads have Z-values
         self._ensure_roads_have_z(self.config.required_input.roads_table)
 
@@ -216,7 +217,6 @@ class ImmissionsAroundBuildingsCalculator:
                 dem_path,
                 self.config.optional_input.dem_table,
                 int(crs),
-
             )
 
         # - grounds -> geojson
@@ -229,43 +229,57 @@ class ImmissionsAroundBuildingsCalculator:
 
         if progress_callback:
             progress_callback(
-                4, "Importing into database complete. Generating receivers grid"
+                4, "Importing into database complete. Generating receivers grid."
             )
 
-        # generate receivers (using Delaunay with triangle creation)
-        # configure grid parameters
-        # !currently only DelaunayGridConfig is supported!
-        grid_config = DelaunayGridConfig(
+        # generate receivers near building facades
+        # - check if user provided building grid settings
+        if not user_input.building_grid_settings:
+            raise ValueError(
+                "Building grid settings are required for calculating "
+                "emissions on building facades."
+            )
+        # - translate user input to config
+        # - default: 2D
+        grid_generator = BuildingGridGenerator2d(noise_db)
+
+        grid_config = BuildingGridConfig2d(
             buildings_table=self.config.required_input.building_table,
             output_table=self.config.required_input.receivers_table,
             sources_table=self.config.required_input.roads_table,
+            distance_from_wall=user_input.building_grid_settings.distance_from_wall,
+            receiver_distance=user_input.building_grid_settings.receiver_distance,
+            receiver_height=user_input.building_grid_settings.receiver_height_2d,
         )
-        if user_input.receiver_grid_settings:
-            grid_config.height = self.config.receiver_grid_settings.calculation_height
-            grid_config.max_area = self.config.receiver_grid_settings.max_area
-            grid_config.max_cell_dist = self.config.receiver_grid_settings.max_cell_dist
-            grid_config.road_width = self.config.receiver_grid_settings.road_width
 
-        delauny_generator = DelaunayGridGenerator(noise_db)
+        if user_input.building_grid_settings.height_between_levels_3d:
+            grid_generator = BuildingGridGenerator3d(noise_db)
+            grid_config = BuildingGridConfig3d(
+                buildings_table=self.config.required_input.building_table,
+                output_table=self.config.required_input.receivers_table,
+                sources_table=self.config.required_input.roads_table,
+                distance_from_wall=user_input.building_grid_settings.distance_from_wall,
+                receiver_distance=user_input.building_grid_settings.receiver_distance,
+                height_between_levels=user_input.building_grid_settings.height_between_levels_3d,
+            )
+
+        grid_generator.generate_receivers(grid_config)
 
         if progress_callback:
-            progress_callback(5, "Generating receivers grid")
-
-        delauny_generator.generate_receivers(grid_config)
-
-        if progress_callback:
-            progress_callback(10, "Generating receivers grid complete. Calculating noise levels")
+            progress_callback(
+                10, "Receivers around buildings generated. Calculating noise levels..."
+            )
 
         # calculate propagation
         road_prop = RoadPropagationCalculator(noise_db)
         road_prop.calculate_propagation(
-            self.config,
-            True if dem_url else False,
-            True if grounds else False
+            self.config, True if dem_url else False, True if grounds else False
         )
 
         if progress_callback:
-            progress_callback(90, "Calculating noise levels complete. Generating isocontours")
+            progress_callback(
+                90, "Calculating noise levels complete. Generating isocontours"
+            )
 
         # finally: create isocontour
         surface_generator = IsoSurfaceBezier(noise_db)
