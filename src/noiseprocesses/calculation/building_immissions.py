@@ -6,10 +6,6 @@ from noiseprocesses.calculation.road_propagation import RoadPropagationCalculato
 from noiseprocesses.core.database import NoiseDatabase
 from noiseprocesses.core.java_bridge import JavaBridge
 from noiseprocesses.models.grid_config import BuildingGridConfig
-from noiseprocesses.models.immissions_buildings_config import (
-    ImmissionBuildingsCalculationConfig,
-    OutputReceiversTables,
-)
 from noiseprocesses.models.internal import (
     BuildingsFeatureCollectionInternal,
     GroundAbsorptionFeatureCollectionInternal,
@@ -20,7 +16,6 @@ from noiseprocesses.utils.buildings_grids import (
     BuildingGridGenerator2d,
     BuildingGridGenerator3d,
 )
-from noiseprocesses.utils.contouring import IsoSurfaceBezier
 from noiseprocesses.utils.dem import load_convert_save_dem
 
 logger = logging.getLogger(__name__)
