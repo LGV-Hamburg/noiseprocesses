@@ -8,15 +8,18 @@ from geojson_pydantic import (
 from pydantic import model_validator
 
 from noiseprocesses.models.building_properties import (
-    BuildingPropertiesInternal, BuildingsFeatureCollection
-)
-from noiseprocesses.models.ground_absorption import GroundAbsorptionInternal
-from noiseprocesses.models.roads_properties import (
-    CnossosTrafficFlow, RoadsFeatureCollection
+    BuildingPropertiesInternal,
+    BuildingsFeatureCollection,
 )
 from noiseprocesses.models.ground_absorption import (
-    GroundAbsorptionInternal, GroundAbsorptionFeatureCollection
+    GroundAbsorptionFeatureCollection,
+    GroundAbsorptionInternal,
 )
+from noiseprocesses.models.roads_properties import (
+    CnossosTrafficFlow,
+    RoadsFeatureCollection,
+)
+
 
 class RoadFeature(Feature[LineString | MultiLineString, CnossosTrafficFlow]):
     """A road feature with required traffic properties."""
@@ -47,7 +50,8 @@ class RoadsFeatureCollectionInternal(FeatureCollection[RoadFeature]):
                     type="Feature",
                 )
                 # skip features without properties, silently
-                for feature in user_collection.features if feature.properties
+                for feature in user_collection.features
+                if feature.properties
             ],
         )
 
@@ -72,11 +76,14 @@ class BuildingsFeatureCollectionInternal(
                     type="Feature",
                 )
                 # skip features without properties, silently
-                for feature in user_collection.features if feature.properties
+                for feature in user_collection.features
+                if feature.properties
             ],
         )
 
+
 GroundAbsorptionFeature = Feature[Polygon, GroundAbsorptionInternal]
+
 
 class GroundAbsorptionFeatureCollectionInternal(
     FeatureCollection[GroundAbsorptionFeature]
@@ -98,7 +105,7 @@ class GroundAbsorptionFeatureCollectionInternal(
                     type="Feature",
                 )
                 # skip features without properties, silently
-                for feature in user_collection.features if feature.properties
+                for feature in user_collection.features
+                if feature.properties
             ],
         )
-
