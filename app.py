@@ -600,7 +600,7 @@ class TrafficNoiseBuildings(BaseProcess):
                         },
                     },
                 ),
-                minOccurs=0,
+                minOccurs=1,
                 maxOccurs=1,
             ),
         },
