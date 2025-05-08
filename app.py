@@ -1,7 +1,6 @@
 import logging
 from typing import Any, Callable, Dict
 
-from pydantic import ValidationError
 import uvicorn
 from fastprocesses.api.server import OGCProcessesAPI
 from fastprocesses.core.base_process import BaseProcess
@@ -14,6 +13,7 @@ from fastprocesses.core.models import (
     Schema,
 )
 from fastprocesses.processes.process_registry import register_process
+from pydantic import ValidationError
 
 from noiseprocesses.calculation.road_noise import RoadNoiseModellingCalculator
 from noiseprocesses.models.noise_calculation_config import (
@@ -53,8 +53,7 @@ class TrafficNoiseProp(BaseProcess):
 
             raise ValueError(
                 validation_error.errors(
-                    include_input=False, include_url=False,
-                    include_context=False
+                    include_input=False, include_url=False, include_context=False
                 )
             )
         except ValueError as value_error:
@@ -260,7 +259,7 @@ class TrafficNoiseProp(BaseProcess):
                             "type": "number",
                             "minimum": 0,
                             "default": 2500.0,
-                            "maximum": 2500.
+                            "maximum": 2500.0,
                         },
                         "max_cell_dist": {
                             "type": "number",
@@ -272,7 +271,7 @@ class TrafficNoiseProp(BaseProcess):
                             "type": "number",
                             "minimum": 0,
                             "maximum": 50.0,
-                            "default": 2.0
+                            "default": 2.0,
                         },
                     },
                 ),
@@ -349,9 +348,10 @@ class TrafficNoiseProp(BaseProcess):
         metadata={
             "created": "2025-02-19",
             "updated": "2025-04-24",
-            "provider": "Agency for Geoinformation and Surveying Hamburg"
+            "provider": "Agency for Geoinformation and Surveying Hamburg",
         },
     )
+
 
 @register_process("traffic_noise_buildings")
 class TrafficNoiseBuildings(BaseProcess):
@@ -590,7 +590,7 @@ class TrafficNoiseBuildings(BaseProcess):
                             "type": "number",
                             "minimum": 0,
                             "maximum": 50.0,
-                            "default": 2.0
+                            "default": 2.0,
                         },
                         "height_between_levels_3d": {
                             "type": "number",
@@ -602,7 +602,7 @@ class TrafficNoiseBuildings(BaseProcess):
                 ),
                 minOccurs=0,
                 maxOccurs=1,
-            )
+            ),
         },
         outputs={
             "noise_day": ProcessOutput(
@@ -650,9 +650,10 @@ class TrafficNoiseBuildings(BaseProcess):
         metadata={
             "created": "2025-05-08",
             "updated": "2025-05-08",
-            "provider": "Agency for Geoinformation and Surveying Hamburg"
+            "provider": "Agency for Geoinformation and Surveying Hamburg",
         },
     )
+
 
 # Create the FastAPI app
 app = OGCProcessesAPI(
