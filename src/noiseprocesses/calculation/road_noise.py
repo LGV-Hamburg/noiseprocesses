@@ -3,8 +3,8 @@ import logging
 from typing import Callable
 
 from noiseprocesses.calculation.road_propagation import RoadPropagationCalculator
-from noiseprocesses.core.java_bridge import JavaBridge
 from noiseprocesses.core.database import NoiseDatabase
+from noiseprocesses.core.java_bridge import JavaBridge
 from noiseprocesses.models.grid_config import DelaunayGridConfig
 from noiseprocesses.models.internal import (
     BuildingsFeatureCollectionInternal,
@@ -14,7 +14,7 @@ from noiseprocesses.models.internal import (
 from noiseprocesses.models.noise_calculation_config import (
     NoiseCalculationConfig,
     NoiseCalculationUserInput,
-    OutputIsoSurfaces,
+    OutputDayTimeSoundLevels,
 )
 from noiseprocesses.utils.contouring import IsoSurfaceBezier
 from noiseprocesses.utils.dem import load_convert_save_dem
@@ -112,7 +112,7 @@ class RoadNoiseModellingCalculator:
     def calculate_noise_levels(
         self,
         user_input: NoiseCalculationUserInput,
-        user_output: dict[OutputIsoSurfaces, dict],
+        user_output: dict[OutputDayTimeSoundLevels, dict],
         progress_callback: Callable[[int, str], None] | None = None,
     ) -> dict:
         """
@@ -127,10 +127,8 @@ class RoadNoiseModellingCalculator:
         """
         # initialize redirecting java output
         java_bridge = JavaBridge.get_instance()
-        
-        java_bridge.redirect_java_output(
-            progress_callback=progress_callback
-        )
+
+        java_bridge.redirect_java_output(progress_callback=progress_callback)
 
         # config setup, take defaults if user did not provide any
         self.config.acoustic_params = (
@@ -201,7 +199,7 @@ class RoadNoiseModellingCalculator:
             user_input.crs,
         )
 
-        #make the roads 3D, set height to 0.05
+        # make the roads 3D, set height to 0.05
         # Ensure roads have Z-values
         self._ensure_roads_have_z(self.config.required_input.roads_table)
 
@@ -215,7 +213,6 @@ class RoadNoiseModellingCalculator:
                 dem_path,
                 self.config.optional_input.dem_table,
                 int(crs),
-
             )
 
         # - grounds -> geojson
@@ -253,18 +250,20 @@ class RoadNoiseModellingCalculator:
         delauny_generator.generate_receivers(grid_config)
 
         if progress_callback:
-            progress_callback(10, "Generating receivers grid complete. Calculating noise levels")
+            progress_callback(
+                10, "Generating receivers grid complete. Calculating noise levels"
+            )
 
         # calculate propagation
         road_prop = RoadPropagationCalculator(noise_db)
         road_prop.calculate_propagation(
-            self.config,
-            True if dem_url else False,
-            True if grounds else False
+            self.config, True if dem_url else False, True if grounds else False
         )
 
         if progress_callback:
-            progress_callback(90, "Calculating noise levels complete. Generating isocontours")
+            progress_callback(
+                90, "Calculating noise levels complete. Generating isocontours"
+            )
 
         # finally: create isocontour
         surface_generator = IsoSurfaceBezier(noise_db)

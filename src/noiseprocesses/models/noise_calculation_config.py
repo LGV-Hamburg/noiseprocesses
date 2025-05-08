@@ -15,10 +15,7 @@ from pydantic import (
 
 from noiseprocesses.models.building_properties import BuildingsFeatureCollection
 from noiseprocesses.models.dem_feature import BboxFeature
-from noiseprocesses.models.grid_config import (
-    BuildingGridSettingsUser,
-    GridSettingsUser,
-)
+from noiseprocesses.models.grid_config import BuildingGridSettingsUser, GridSettingsUser
 from noiseprocesses.models.ground_absorption import GroundAbsorptionFeatureCollection
 from noiseprocesses.models.isosurface_config import IsoSurfaceUserSettings
 from noiseprocesses.models.propagation_config import (
@@ -74,7 +71,7 @@ class PropagationSettings(BaseModel):
     )
 
 
-class OutputIsoSurfaces(StrEnum):
+class OutputDayTimeSoundLevels(StrEnum):
     noise_day = "noise_day"
     noise_evening = "noise_evening"
     noise_night = "noise_night"
@@ -121,8 +118,8 @@ class NoiseCalculationConfig(BaseModel):
     propagation_settings: PropagationSettings = (
         PropagationSettings()
     )  # internal defaults, user overridable
-    output_controls: dict[OutputIsoSurfaces, dict] = {
-        OutputIsoSurfaces.noise_den: {}
+    output_controls: dict[OutputDayTimeSoundLevels, dict] = {
+        OutputDayTimeSoundLevels.noise_den: {}
     }  # internal defaults, user overridable
     additional_output_controls: AdditionalDataOutputControls = (
         AdditionalDataOutputControls()
@@ -131,8 +128,8 @@ class NoiseCalculationConfig(BaseModel):
         GridSettingsUser()
     )  # internal defaults, user overridable
     building_grid_settings: BuildingGridSettingsUser | None = (
-        None
-    )  # internal defaults, user overridable
+        None  # internal defaults, user overridable
+    )
     performance: PerformanceSettings = PerformanceSettings()
 
 
@@ -202,9 +199,12 @@ class NoiseCalculationUserInput(BaseModel):
         # Validate ground absorption
         ground_absorption = values.get("ground_absorption")
         if ground_absorption and not ground_absorption["features"]:
-            raise ValueError("The 'ground_absorption' FeatureCollection contains no features.")
+            raise ValueError(
+                "The 'ground_absorption' FeatureCollection contains no features."
+            )
 
         return values
+
 
 if __name__ == "__main__":
     import json
