@@ -36,8 +36,14 @@ class GridSettingsUser(BaseModel):
 class BuildingGridSettingsUser(BaseModel):
     """Configuration for building grid generation"""
 
-    calculation_height_2d: float = Field(
-        default=4.0, gt=0, description="Height of receivers in meters"
+    grid_type: Literal[GridType.BUILDINGS_2D, GridType.BUILDINGS_3D] = Field(
+        default=GridType.BUILDINGS_2D,
+        description="Type of grid to generate",
+    )
+
+    receiver_height_2d: float = Field(
+        default=4.0, gt=0,
+        description="Height of receivers in meters"
     )
     distance_from_wall: float = Field(
         default=2.0, description="Distance of receivers from the wall (meters)", gt=0
@@ -158,14 +164,21 @@ class BuildingGridConfig(BaseModel):
         arbitrary_types_allowed = True
         populate_by_name = True
 
+    grid_type: Literal[GridType.BUILDINGS_2D, GridType.BUILDINGS_3D] = Field(
+        default=GridType.BUILDINGS_2D, description="Type of grid to generate"
+    )
+
+    receiver_height: float = Field(
+        default=10.0, gt=0, description="Spacing between receivers (meters)"
+    )  # Spacing between receivers (meters)
+
     # Required parameters
     buildings_table: str = Field(
         default="BUILDINGS",
-        description="Name of the Buildings table containing THE_GEOM"
+        description="Name of the Buildings table containing THE_GEOM",
     )
 
     # Common optional parameters with defaults
-
     output_table: str = Field(
         default="RECEIVERS_BUILDINGS", description="Name of the output receivers table"
     )
@@ -180,29 +193,6 @@ class BuildingGridConfig(BaseModel):
     )  # Distance of receivers from the wall (meters)
     receiver_distance: float = Field(
         default=10.0, gt=0, description="Spacing between receivers in meters"
-    )
-
-
-class BuildingGridConfig2d(BuildingGridConfig):
-    """Configuration for 2d building grid generation"""
-
-    grid_type: Literal[GridType.BUILDINGS_2D] = Field(
-        default=GridType.BUILDINGS_2D,
-        description="Type of grid to generate"
-    )
-
-    receiver_height: float = Field(
-        default=10.0,
-        gt=0,
-        description="Spacing between receivers (meters)"
-    )  # Spacing between receivers (meters)
-
-
-class BuildingGridConfig3d(BuildingGridConfig):
-    """Configuration for 3d building grid generation"""
-
-    grid_type: Literal[GridType.BUILDINGS_3D] = Field(
-        default=GridType.BUILDINGS_3D, description="Type of grid to generate"
     )
 
     height_between_levels: float = Field(

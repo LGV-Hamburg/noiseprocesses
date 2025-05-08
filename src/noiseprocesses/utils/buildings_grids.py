@@ -3,7 +3,7 @@ import math
 
 from noiseprocesses.core.database import NoiseDatabase, SQLBuilder
 from noiseprocesses.core.java_bridge import JavaBridge
-from noiseprocesses.models.grid_config import BuildingGridConfig2d, BuildingGridConfig3d
+from noiseprocesses.models.grid_config import BuildingGridConfig, BuildingGridConfig2d, BuildingGridConfig3d
 from noiseprocesses.utils import line_to_points as ltp
 from noiseprocesses.utils import srid
 
@@ -18,7 +18,7 @@ class BuildingGridGenerator2d:
         self.java_bridge = JavaBridge.get_instance()
         self.target_srid = 0
 
-    def generate_receivers(self, config: BuildingGridConfig2d) -> str:
+    def generate_receivers(self, config: BuildingGridConfig) -> str:
         """
         Generate a 2D grid of receivers around building facades.
 
@@ -206,7 +206,7 @@ class BuildingGridGenerator3d:
         self.java_bridge = JavaBridge.get_instance()
         self.target_srid = 0
 
-    def generate_receivers(self, config: BuildingGridConfig3d) -> str:
+    def generate_receivers(self, config: BuildingGridConfig) -> str:
         """
         Generate a 3D grid of receivers around building facades.
 
