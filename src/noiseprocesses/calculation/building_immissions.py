@@ -5,7 +5,7 @@ from typing import Callable
 from noiseprocesses.calculation.road_propagation import RoadPropagationCalculator
 from noiseprocesses.core.database import NoiseDatabase
 from noiseprocesses.core.java_bridge import JavaBridge
-from noiseprocesses.models.grid_config import BuildingGridConfig2d, BuildingGridConfig3d
+from noiseprocesses.models.grid_config import BuildingGridConfig
 from noiseprocesses.models.immissions_buildings_config import (
     ImmissionBuildingsCalculationConfig,
     OutputReceiversTables,
@@ -15,7 +15,7 @@ from noiseprocesses.models.internal import (
     GroundAbsorptionFeatureCollectionInternal,
     RoadsFeatureCollectionInternal,
 )
-from noiseprocesses.models.noise_calculation_config import NoiseCalculationUserInput
+from noiseprocesses.models.noise_calculation_config import NoiseCalculationConfig, NoiseCalculationUserInput, OutputDayTimeSoundLevels
 from noiseprocesses.utils.buildings_grids import (
     BuildingGridGenerator2d,
     BuildingGridGenerator3d,
@@ -29,8 +29,8 @@ logger = logging.getLogger(__name__)
 class ImmissionsAroundBuildingsCalculator:
     """Main class handling the complete noise calculation process"""
 
-    def __init__(self, config: ImmissionBuildingsCalculationConfig | None = None):
-        self.config = config or ImmissionBuildingsCalculationConfig()  # defaults
+    def __init__(self, config: NoiseCalculationConfig | None = None):
+        self.config = config or NoiseCalculationConfig()  # defaults
 
         self.database = NoiseDatabase(
             db_file=self.config.database.name, in_memory=self.config.database.in_memory
@@ -115,7 +115,7 @@ class ImmissionsAroundBuildingsCalculator:
     def calculate_noise_levels(
         self,
         user_input: NoiseCalculationUserInput,
-        user_output: dict[OutputReceiversTables, dict],
+        user_output: dict[OutputDayTimeSoundLevels, dict],
         progress_callback: Callable[[int, str], None] | None = None,
     ) -> dict:
         """
@@ -243,7 +243,7 @@ class ImmissionsAroundBuildingsCalculator:
         # - default: 2D
         grid_generator = BuildingGridGenerator2d(noise_db)
 
-        grid_config = BuildingGridConfig2d(
+        grid_config = BuildingGridConfig(
             buildings_table=self.config.required_input.building_table,
             output_table=self.config.required_input.receivers_table,
             sources_table=self.config.required_input.roads_table,
@@ -254,14 +254,6 @@ class ImmissionsAroundBuildingsCalculator:
 
         if user_input.building_grid_settings.height_between_levels_3d:
             grid_generator = BuildingGridGenerator3d(noise_db)
-            grid_config = BuildingGridConfig3d(
-                buildings_table=self.config.required_input.building_table,
-                output_table=self.config.required_input.receivers_table,
-                sources_table=self.config.required_input.roads_table,
-                distance_from_wall=user_input.building_grid_settings.distance_from_wall,
-                receiver_distance=user_input.building_grid_settings.receiver_distance,
-                height_between_levels=user_input.building_grid_settings.height_between_levels_3d,
-            )
 
         grid_generator.generate_receivers(grid_config)
 
@@ -273,7 +265,9 @@ class ImmissionsAroundBuildingsCalculator:
         # calculate propagation
         road_prop = RoadPropagationCalculator(noise_db)
         road_prop.calculate_propagation(
-            self.config, True if dem_url else False, True if grounds else False
+            self.config,
+            True if dem_url else False,
+            True if grounds else False
         )
 
         if progress_callback:
@@ -281,15 +275,12 @@ class ImmissionsAroundBuildingsCalculator:
                 90, "Calculating noise levels complete. Generating isocontours"
             )
 
-        # finally: create isocontour
-        surface_generator = IsoSurfaceBezier(noise_db)
+        # finally: export the results
 
         output: dict[str, dict] = {}
 
         for output_table, output_control in self.config.output_controls.items():
-            table_name = surface_generator.generate_iso_surface(
-                self.match_oct[output_table]
-            )
+            table_name = self.match_oct[output_table]
 
             # export to dict/geojson/FeatureCollection
             # H2 DB has no support for in-memory data export
@@ -301,6 +292,6 @@ class ImmissionsAroundBuildingsCalculator:
                 output[output_table] = json.load(stream)
 
         if progress_callback:
-            progress_callback(100, "Generating isocontours complete.")
+            progress_callback(100, "Calculating noise levels complete.")
         # ...and return it
         return output
