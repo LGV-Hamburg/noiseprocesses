@@ -5,7 +5,7 @@ from noiseprocesses.core.database import NoiseDatabase
 from noiseprocesses.core.java_bridge import JavaBridge
 from noiseprocesses.models.noise_calculation_config import (
     NoiseCalculationConfig,
-    OutputIsoSurfaces,
+    OutputDayTimeSoundLevels,
 )
 
 logger = logging.getLogger(__name__)
@@ -22,10 +22,11 @@ class RoadPropagationCalculator:
         self.java_bridge = JavaBridge.get_instance()
 
     def calculate_propagation(
-            self, config: NoiseCalculationConfig,
-            use_dem: bool = False,
-            use_grounds: bool = False,
-        ) -> None:
+        self,
+        config: NoiseCalculationConfig,
+        use_dem: bool = False,
+        use_grounds: bool = False,
+    ) -> None:
         """Calculate noise propagation using NoiseModelling.
 
         Args:
@@ -46,28 +47,28 @@ class RoadPropagationCalculator:
 
             # need to convert from dict to boolean values: presence means True
             output_controls = {
-                OutputIsoSurfaces.noise_day: OutputIsoSurfaces.noise_day
+                OutputDayTimeSoundLevels.noise_day: OutputDayTimeSoundLevels.noise_day
                 in config.output_controls,
-                OutputIsoSurfaces.noise_evening: OutputIsoSurfaces.noise_evening
+                OutputDayTimeSoundLevels.noise_evening: OutputDayTimeSoundLevels.noise_evening
                 in config.output_controls,
-                OutputIsoSurfaces.noise_night: OutputIsoSurfaces.noise_night
+                OutputDayTimeSoundLevels.noise_night: OutputDayTimeSoundLevels.noise_night
                 in config.output_controls,
-                OutputIsoSurfaces.noise_den: OutputIsoSurfaces.noise_den
+                OutputDayTimeSoundLevels.noise_den: OutputDayTimeSoundLevels.noise_den
                 in config.output_controls,
             }
 
             # Configure output tables
             lden_config.setComputeLDay(
-                output_controls.get(OutputIsoSurfaces.noise_day)
+                output_controls.get(OutputDayTimeSoundLevels.noise_day)
             )
             lden_config.setComputeLEvening(
-                output_controls.get(OutputIsoSurfaces.noise_evening)
+                output_controls.get(OutputDayTimeSoundLevels.noise_evening)
             )
             lden_config.setComputeLNight(
-                output_controls.get(OutputIsoSurfaces.noise_night)
+                output_controls.get(OutputDayTimeSoundLevels.noise_night)
             )
             lden_config.setComputeLDEN(
-                output_controls.get(OutputIsoSurfaces.noise_den)
+                output_controls.get(OutputDayTimeSoundLevels.noise_den)
             )
             lden_config.setMergeSources(
                 not config.additional_output_controls.export_source_id
@@ -96,7 +97,9 @@ class RoadPropagationCalculator:
             # Import table with Snow, Forest, Grass, Pasture field polygons.
             # Attribute G is associated with each polygon
             if use_grounds:
-                noise_map.setSoilTableName(config.optional_input.ground_absorption_table)
+                noise_map.setSoilTableName(
+                    config.optional_input.ground_absorption_table
+                )
             # Set DEM table if provided
             if use_dem:
                 noise_map.setDemTable(config.optional_input.dem_table)
