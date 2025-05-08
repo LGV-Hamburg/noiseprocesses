@@ -550,7 +550,7 @@ class TrafficNoiseBuildings(BaseProcess):
                 schema=Schema(
                     type="object",
                     properties={
-                        "vertical_diffraction": {"type": "boolean", "default": True},
+                        "vertical_diffraction": {"type": "boolean", "default": False},
                         "horizontal_diffraction": {"type": "boolean", "default": True},
                         "favorable_day": {
                             "type": "string",

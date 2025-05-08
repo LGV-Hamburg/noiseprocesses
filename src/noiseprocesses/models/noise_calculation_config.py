@@ -57,7 +57,7 @@ class PropagationSettings(BaseModel):
     model_config = ConfigDict(extra="ignore")
 
     vertical_diffraction: bool = Field(
-        default=True, description="Enable vertical edge diffraction"
+        default=False, description="Enable vertical edge diffraction"
     )
     horizontal_diffraction: bool = Field(
         default=True, description="Enable horizontal edge diffraction"
