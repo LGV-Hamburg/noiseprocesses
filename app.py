@@ -404,7 +404,7 @@ class TrafficNoiseBuildings(BaseProcess):
     process_description = ProcessDescription(
         id="traffic_noise_buildings",
         title="Traffic Noise Immission Calculation around building facades",
-        version="v4.0.5-1.0.1",
+        version="v4.0.5-1.0.0",
         description=(
             "A process for calculating traffic noise "
             "immission near buildings based on NoiseModelling 4.0.5"
