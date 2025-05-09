@@ -70,7 +70,7 @@ class BuildingGridGenerator2d:
             JOIN tmp_receivers_lines s
             ON ST_Intersects(b.the_geom, s.the_geom)
             WHERE b.pk != s.pk
-            AND b.building_height > {config.receiver_height}
+            AND b.height > {config.receiver_height}
             """
         )
 
@@ -235,7 +235,7 @@ class BuildingGridGenerator3d:
                     ST_ToMultiLine(ST_Buffer(b.the_geom, {config.distance_from_wall}, 'join=bevel')),
                     0.05
                 ) AS the_geom,
-                b.building_height AS building_height
+                b.height
             FROM {config.buildings_table} b
             """
         )
@@ -251,7 +251,7 @@ class BuildingGridGenerator3d:
                     ST_MakePoint(
                         ST_X(the_geom),
                         ST_Y(the_geom),
-                        generate_series(1.5, building_height, {config.height_between_levels})
+                        generate_series(1.5, height, {config.height_between_levels})
                     ),
                     {self.target_srid}
                 ) AS the_geom
