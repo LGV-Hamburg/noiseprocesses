@@ -15,6 +15,7 @@ from fastprocesses.core.models import (
 from fastprocesses.processes.process_registry import register_process
 from pydantic import ValidationError
 
+from noiseprocesses.calculation.building_immissions import ImmissionsAroundBuildingsCalculator
 from noiseprocesses.calculation.road_noise import RoadNoiseModellingCalculator
 from noiseprocesses.models.noise_calculation_config import (
     NoiseCalculationConfig,
@@ -365,8 +366,8 @@ class TrafficNoiseBuildings(BaseProcess):
         if job_progress_callback:
             job_progress_callback(0, f"Beginning calculations for {user_outputs}")
 
-        calculator = RoadNoiseModellingCalculator(
-            noise_calculation_config=NoiseCalculationConfig()
+        calculator = ImmissionsAroundBuildingsCalculator(
+            config=NoiseCalculationConfig()
         )
         try:
             user_input: NoiseCalculationUserInput = (
