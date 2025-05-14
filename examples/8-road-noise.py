@@ -62,6 +62,7 @@ if alternative_request_body:
 url = "https://ump-lgv.germanywestcentral.cloudapp.azure.com/api/processes/noise_v4:traffic_noise_propagation/execution"
 url = "http://localhost:8000/processes/traffic_noise_propagation/execution"
 url = "http://localhost:8000/processes/traffic_noise_buildings/execution"
+url = "https://ump-lgv.germanywestcentral.cloudapp.azure.com/api/processes/noise_v4:traffic_noise_buildings/execution"
 
 response = requests.post(
     url,
