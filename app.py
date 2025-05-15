@@ -21,6 +21,7 @@ from noiseprocesses.models.noise_calculation_config import (
     NoiseCalculationConfig,
     NoiseCalculationUserInput,
 )
+from noiseprocesses.models.output import NoiseCalculationOutput
 
 logger = logging.getLogger(__name__)
 
@@ -31,7 +32,7 @@ class TrafficNoiseProp(BaseProcess):
         self,
         exec_body: Dict[str, Any],
         job_progress_callback: Callable[[int, str], None] | None = None,
-    ) -> Dict[str, Any]:
+    ) -> NoiseCalculationOutput:
         user_outputs = exec_body["outputs"]
 
         if job_progress_callback:
@@ -66,9 +67,11 @@ class TrafficNoiseProp(BaseProcess):
 
             raise value_error
 
-        result = calculator.calculate_noise_levels(
+        result_raw = calculator.calculate_noise_levels(
             user_input, user_outputs, job_progress_callback
         )
+
+        result = NoiseCalculationOutput.model_validate(result_raw)
 
         if job_progress_callback:
             job_progress_callback(100, f"Done calculating {user_outputs}!")
@@ -360,7 +363,7 @@ class TrafficNoiseBuildings(BaseProcess):
         self,
         exec_body: Dict[str, Any],
         job_progress_callback: Callable[[int, str], None] | None = None,
-    ) -> Dict[str, Any]:
+    ) -> NoiseCalculationOutput:
         user_outputs = exec_body["outputs"]
 
         if job_progress_callback:
@@ -391,9 +394,11 @@ class TrafficNoiseBuildings(BaseProcess):
 
             raise value_error
 
-        result = calculator.calculate_noise_levels(
+        result_raw = calculator.calculate_noise_levels(
             user_input, user_outputs, job_progress_callback
         )
+
+        result = NoiseCalculationOutput.model_validate(result_raw)
 
         if job_progress_callback:
             job_progress_callback(100, f"Done calculating {user_outputs}!")
