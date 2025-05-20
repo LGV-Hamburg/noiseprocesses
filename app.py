@@ -578,7 +578,7 @@ class TrafficNoiseBuildings(BaseProcess):
                         "grid_type": {
                             "type": "string",
                             "enum": ["BUILDINGS_2D", "BUILDINGS_3D"],
-                            "default": "BUILDINGS",
+                            "default": "BUILDINGS_2D",
                         },
                         "receiver_height_2d": {
                             "type": "number",
