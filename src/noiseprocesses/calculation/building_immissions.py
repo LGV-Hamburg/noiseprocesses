@@ -5,7 +5,7 @@ from typing import Callable
 from noiseprocesses.calculation.road_propagation import RoadPropagationCalculator
 from noiseprocesses.core.database import NoiseDatabase
 from noiseprocesses.core.java_bridge import JavaBridge
-from noiseprocesses.models.grid_config import BuildingGridConfig
+from noiseprocesses.models.grid_config import BuildingGridConfig, GridType
 from noiseprocesses.models.internal import (
     BuildingsFeatureCollectionInternal,
     GroundAbsorptionFeatureCollectionInternal,
@@ -247,7 +247,7 @@ class ImmissionsAroundBuildingsCalculator:
             receiver_height=user_input.building_grid_settings.receiver_height_2d,
         )
 
-        if user_input.building_grid_settings.height_between_levels_3d:
+        if user_input.building_grid_settings.grid_type == GridType.BUILDINGS_3D:
             grid_generator = BuildingGridGenerator3d(noise_db)
 
         grid_generator.generate_receivers(grid_config)
