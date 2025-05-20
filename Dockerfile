@@ -69,7 +69,7 @@ ARG SOURCE_COMMIT
 
 LABEL com.lgv.uda.maintainer="Urban Data Analytics" \
     com.lgv.uda.name="analytics/noiseprocesses" \
-    com.lgv.uda.version="4.0.5-1.0.3" \
+    com.lgv.uda.version="4.0.5-1.0.4" \
     com.lgv.uda.source_commit=$SOURCE_COMMIT \
     org.opencontainers.image.source="https://github.com/UrbanDataAnalytics/noiseprocesses"
 
