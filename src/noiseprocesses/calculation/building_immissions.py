@@ -11,7 +11,11 @@ from noiseprocesses.models.internal import (
     GroundAbsorptionFeatureCollectionInternal,
     RoadsFeatureCollectionInternal,
 )
-from noiseprocesses.models.noise_calculation_config import NoiseCalculationConfig, NoiseCalculationUserInput, OutputDayTimeSoundLevels
+from noiseprocesses.models.noise_calculation_config import (
+    NoiseCalculationConfig,
+    NoiseCalculationUserInput,
+    OutputDayTimeSoundLevels
+)
 from noiseprocesses.utils.buildings_grids import (
     BuildingGridGenerator2d,
     BuildingGridGenerator3d,
