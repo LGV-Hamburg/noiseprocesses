@@ -235,7 +235,7 @@ class BuildingGridGenerator3d:
             f"""
             CREATE TABLE tmp_receivers_lines AS
             SELECT
-                b.pk AS building_pk,
+                b.pk AS pk_building,
                 ST_SimplifyPreserveTopology(
                     ST_ToMultiLine(
                         ST_Buffer(b.the_geom, {config.distance_from_wall}, 'join=bevel')
@@ -246,7 +246,7 @@ class BuildingGridGenerator3d:
             FROM {config.buildings_table} b
             """
         )
-        self.database.execute(SQLBuilder.create_spatial_index("tmp_receivers_lines"))
+        self.database.execute("CREATE SPATIAL INDEX ON tmp_receivers_lines(the_geom)")
 
         self.database.execute(SQLBuilder.drop_table("TMP_SCREENS_MERGE"))
         self.database.execute(
@@ -264,7 +264,12 @@ class BuildingGridGenerator3d:
             WHERE NOT ST_IsEmpty(s.the_geom);
             """
         )
-        self.database.execute("ALTER TABLE TMP_SCREENS_MERGE ADD PRIMARY KEY(pk)")
+        self.database.execute(
+            """
+            ALTER TABLE TMP_SCREENS_MERGE
+            ADD COLUMN PK INT NOT NULL AUTO_INCREMENT PRIMARY KEY
+            """
+        )
 
         self.database.execute(SQLBuilder.drop_table("TMP_SCREENS"))
         self.database.execute(
@@ -325,14 +330,66 @@ class BuildingGridGenerator3d:
             batch,
         )
 
+        # add a stack id to identify points at the same 2d location
+        logger.info("Extracting x,y,z coordinates from the geometry.")
+        self.database.execute(SQLBuilder.drop_table("TMP_SCREENS_XYZ"))
+        self.database.execute(
+            """
+            CREATE TABLE TMP_SCREENS_XYZ AS
+            SELECT
+                pk,
+                ST_X(the_geom) AS x,
+                ST_Y(the_geom) AS y,
+                ST_Z(the_geom) AS z,
+                level,
+                pk_building
+            FROM TMP_SCREENS;
+            """
+        )
+
+        logger.info("Assign a unique stack id to each x,y location.")
+        self.database.execute(SQLBuilder.drop_table("TMP_STACKS"))
+        self.database.execute(
+            """
+            CREATE TABLE TMP_STACKS AS
+            SELECT
+                ROW_NUMBER() OVER () AS stack_id,
+                x,
+                y
+            FROM (
+                SELECT DISTINCT x, y FROM TMP_SCREENS_XYZ
+            ) t;
+            """
+        )
+
+        logger.info("Join the stack id to the TMP_SCREENS_XYZ table.")
+        self.database.execute(SQLBuilder.drop_table("TMP_SCREENS_WITH_STACK"))
+        self.database.execute(
+            """
+            CREATE TABLE TMP_SCREENS_WITH_STACK AS
+            SELECT
+                s.pk,
+                s.x,
+                s.y,
+                s.z,
+                s.level,
+                s.pk_building,
+                t.stack_id
+            FROM TMP_SCREENS_XYZ s
+            JOIN TMP_STACKS t ON s.x = t.x AND s.y = t.y;
+            """
+        )
+
         logger.info("Finally, creating RECEIVERS table...")
+        self.database.execute(SQLBuilder.drop_table(config.receivers_table_name))
         self.database.execute(
             f"""
             CREATE TABLE {config.receivers_table_name}(
-                pk INT NOT NULL AUTO_INCREMENT,
+                pk INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
                 the_geom GEOMETRY,
                 level integer,
-                pk_building integer
+                pk_building integer,
+                stack_id integer
             )
             """
         )
@@ -342,12 +399,14 @@ class BuildingGridGenerator3d:
             INSERT INTO {config.receivers_table_name} (
                 the_geom,
                 level,
-                pk_building
+                pk_building,
+                stack_id
             ) SELECT
-                ST_SetSRID(the_geom, {self.target_srid}),
+                ST_SetSRID(ST_MakePoint(x, y, z), {self.target_srid}),
                 level,
-                pk_building
-            FROM TMP_SCREENS;
+                pk_building,
+                stack_id
+            FROM TMP_SCREENS_WITH_STACK;
             """
         )
         self.database.execute(
