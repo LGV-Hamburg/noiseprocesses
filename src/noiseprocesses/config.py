@@ -11,8 +11,7 @@ class AppConfig(BaseSettings):
 
     def print_settings(self):
         logger.info(
-            "Current %s settings:",
-            self.__class__.__name__
+            f"Current {self.__class__.__name__} settings:"
         )
         logger.info(vars(self))
 
