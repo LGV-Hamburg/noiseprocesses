@@ -169,13 +169,20 @@ class JavaBridge:
 
                     # Extract progress information
                     if match_pattern in line:
-                        current_cell, total_cells, progress_percentage = self.java_log_extractor(
+                        (
+                            current_cell,
+                            total_cells,
+                            progress_percentage
+                        ) = self.java_log_extractor(
                             line
                         )
 
                         # Invoke progress_callback
                         if progress_callback:
-                            progress_callback(progress_percentage, f"Begin processing of cell {current_cell} / {total_cells}")
+                            progress_callback(
+                                progress_percentage,
+                                f"Begin processing of cell {current_cell} / {total_cells}"
+                            )
             except Exception as e:
                 if "Pipe broken" in str(e):
                     logger.warning("Broken pipe detected. Attempting to resume reading...")
