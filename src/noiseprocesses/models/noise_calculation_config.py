@@ -9,7 +9,9 @@ from pydantic import (
     BaseModel,
     ConfigDict,
     Field,
+    HttpUrl,
     ValidationError,
+    field_validator,
     model_validator,
 )
 
@@ -134,7 +136,7 @@ class NoiseCalculationConfig(BaseModel):
 
 
 Crs = Annotated[
-    str | int,
+    HttpUrl | int,
     Field(
         description=(
             "Coordinate reference system (CRS) of the input data in "
@@ -159,6 +161,15 @@ class NoiseCalculationUserInput(BaseModel):
     receiver_grid_settings: GridSettingsUser | None = None
     building_grid_settings: BuildingGridSettingsUser | None = None
     isosurface_settings: IsoSurfaceUserSettings | None = None
+
+    @field_validator('crs')
+    def url_must_have_path(cls, v: HttpUrl):
+        if not v.path or v.path == '/':
+            raise ValueError(
+                'Crs must have a non-empty path: '
+                'e.g. "http://www.opengis.net/def/crs/EPSG/0/25832"'
+            )
+        return v
 
     @model_validator(mode="before")
     def validate_and_filter_roads(cls, values):

@@ -4,6 +4,8 @@ import logging
 from collections import defaultdict
 from typing import Callable
 
+from pydantic import HttpUrl
+
 from noiseprocesses.calculation.road_propagation import RoadPropagationCalculator
 from noiseprocesses.core.database import NoiseDatabase
 from noiseprocesses.core.java_bridge import JavaBridge
@@ -215,19 +217,25 @@ class ImmissionsAroundBuildingsCalculator:
 
         if progress_callback:
             progress_callback(3, "Importing into database")
+
+        # convert crs
+        crs: int = 0
+        if isinstance(user_input.crs, HttpUrl) and user_input.crs.path:
+            crs = int(user_input.crs.path.split("/")[-1])
+
         # import data
         # - buildings -> geojson import
         noise_db.import_geojson(
             buildings.model_dump(exclude_none=True),  # omit empty fields like bbox
             self.config.required_input.building_table,
-            user_input.crs,
+            crs,
         )
 
         # - roads -> geojson import
         noise_db.import_geojson(
             roads_traffic.model_dump(exclude_unset=True),  # omit empty fields like bbox
             self.config.required_input.roads_table,
-            user_input.crs,
+            crs,
         )
 
         # make the roads 3D, set height to 0.05
@@ -235,10 +243,6 @@ class ImmissionsAroundBuildingsCalculator:
         self._ensure_roads_have_z(self.config.required_input.roads_table)
 
         # - load dem -> tif
-        crs = user_input.crs
-        if isinstance(user_input.crs, str):
-            crs = user_input.crs.split("/")[-1]
-
         if dem_path:
             noise_db.import_raster(
                 dem_path,
@@ -251,7 +255,7 @@ class ImmissionsAroundBuildingsCalculator:
             noise_db.import_geojson(
                 grounds.model_dump(exclude_none=True),
                 self.config.optional_input.ground_absorption_table,
-                user_input.crs,
+                crs,
             )
 
         if progress_callback:
