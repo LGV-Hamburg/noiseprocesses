@@ -487,11 +487,10 @@ class TrafficNoiseBuildings(BaseProcess):
                 minOccurs=0,
                 maxOccurs=1,
                 schema=Schema(
-                    allOf=[{
-                        "format": "ogc-bbox"
-                        },{
-                        "$ref": "../../openapi/schemas/bbox.yaml"
-                    }]
+                    allOf=[
+                        {"format": "geojson-feature"},
+                        {"$ref": "https://geojson.org/schema/Polygon.json"},
+                    ]
                 ),
             ),
             "ground_absorption": ProcessInput(
