@@ -409,11 +409,13 @@ class TrafficNoiseBuildings(BaseProcess):
     process_description = ProcessDescription(
         id="traffic_noise_buildings",
         title="Traffic Noise Immission Calculation around building facades",
-        version="v4.0.5-1.0.2",
+        version="v4.0.5-1.1.0",
         description=(
             "A process for calculating traffic noise "
-            "immission near buildings based on NoiseModelling 4.0.5"
-            "(https://noise-planet.org/noisemodelling.html)"
+            "immission near buildings based on NoiseModelling 4.0.5 "
+            "(https://noise-planet.org/noisemodelling.html) "
+            "for one level (building_grid_settings.BUILDINGS_2D) "
+            "or multiple levels (building_grid_settings.BUILDINGS_3D)."
         ),
         jobControlOptions=[
             ProcessJobControlOptions.ASYNC_EXECUTE,
@@ -482,10 +484,11 @@ class TrafficNoiseBuildings(BaseProcess):
                 minOccurs=0,
                 maxOccurs=1,
                 schema=Schema(
-                    allOf=[
-                        {"format": "geojson-feature"},
-                        {"$ref": "https://geojson.org/schema/Polygon.json"},
-                    ]
+                    allOf=[{
+                        "format": "ogc-bbox"
+                        },{
+                        "$ref": "../../openapi/schemas/bbox.yaml"
+                    }]
                 ),
             ),
             "ground_absorption": ProcessInput(
