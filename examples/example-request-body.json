@@ -19,16 +19,9 @@
             "horizontal_diffraction": true,
             "vertical_diffraction": true
         },
-        "receiver_grid_settings": {
-            "calculation_height": 4,
-            "grid_type": "DELAUNAY",
-            "max_area": 2500,
-            "max_cell_dist": 600,
-            "road_width": 2
-        },
         "building_grid_settings": {
             "building_height": 10,
-            "grid_type": "BUILDINGS_2D",
+            "grid_type": "BUILDINGS_3D",
             "receiver_height_2d": 4,
             "distance_from_wall": 2,
             "receiver_distance": 10
