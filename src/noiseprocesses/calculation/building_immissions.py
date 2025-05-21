@@ -1,5 +1,7 @@
+import copy
 import json
 import logging
+from collections import defaultdict
 from typing import Callable
 
 from noiseprocesses.calculation.road_propagation import RoadPropagationCalculator
@@ -41,6 +43,32 @@ class ImmissionsAroundBuildingsCalculator:
             "noise_night": "LNIGHT_GEOM",
             "noise_den": "LDEN_GEOM",
         }
+
+    def _join_by_stack_id(self, feature_collection: dict) -> dict:
+        grouped = defaultdict(list)
+        for feature in feature_collection["features"]:
+            stack_id = feature["properties"]["STACK_ID"]
+            grouped[stack_id].append(feature)
+
+        joined_features = []
+        for stack_id, features in grouped.items():
+            # Use the geometry of the first feature (all have same x/y)
+            base_feature = copy.deepcopy(features[0])
+            base_feature["properties"] = {"STACK_ID": stack_id}
+            
+            # Remove z from geometry coordinates
+            coords = base_feature["geometry"]["coordinates"]
+            if len(coords) == 3:
+                base_feature["geometry"]["coordinates"] = coords[:2]
+            
+            for f in features:
+                z = f["geometry"]["coordinates"][2]
+                laeq = f["properties"]["LAEQ"]
+                base_feature["properties"][f"laeq_level_{z}"] = laeq
+            
+            joined_features.append(base_feature)
+
+        return {"type": "FeatureCollection", "features": joined_features}
 
     def _ensure_roads_have_z(self, roads_table: str, default_z: float = 0.05) -> None:
         """Ensure that roads have Z-values by updating 2D geometries to 3D.
@@ -251,8 +279,11 @@ class ImmissionsAroundBuildingsCalculator:
             receiver_height=user_input.building_grid_settings.receiver_height_2d,
         )
 
+        has_stack_id = False
+
         if user_input.building_grid_settings.grid_type == GridType.BUILDINGS_3D:
             grid_generator = BuildingGridGenerator3d(noise_db)
+            has_stack_id = True
 
         grid_generator.generate_receivers(grid_config)
 
@@ -264,7 +295,10 @@ class ImmissionsAroundBuildingsCalculator:
         # calculate propagation
         road_prop = RoadPropagationCalculator(noise_db)
         road_prop.calculate_propagation(
-            self.config, True if dem_url else False, True if grounds else False
+            self.config,
+            True if dem_url else False,
+            True if grounds else False,
+            has_stack_id,
         )
 
         if progress_callback:
@@ -287,6 +321,12 @@ class ImmissionsAroundBuildingsCalculator:
             # replace path with actual data
             with open(surface_file, "r") as stream:
                 output[output_table] = json.load(stream)
+
+                if has_stack_id:
+                    logger.info(
+                        f"Joining features by stack id in table '{output_table}'"
+                    )
+                    output[output_table] = self._join_by_stack_id(output[output_table])
 
         if progress_callback:
             progress_callback(100, "Calculating noise levels complete.")
