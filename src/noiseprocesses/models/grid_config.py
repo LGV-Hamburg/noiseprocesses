@@ -179,11 +179,11 @@ class BuildingGridConfig(BaseModel):
     )
 
     # Common optional parameters with defaults
-    output_table: str = Field(
+    receivers_table_name: str = Field(
         default="RECEIVERS_BUILDINGS", description="Name of the output receivers table"
     )
 
-    sources_table: Optional[str] = Field(
+    sources_table_name: Optional[str] = Field(
         default=None, description="Table name containing source geometries"
     )
 
@@ -191,6 +191,7 @@ class BuildingGridConfig(BaseModel):
         default=2.0,
         description="Distance of receivers from the wall (meters)",
     )  # Distance of receivers from the wall (meters)
+    
     receiver_distance: float = Field(
         default=10.0, gt=0, description="Spacing between receivers in meters"
     )

@@ -14,7 +14,7 @@ from noiseprocesses.models.internal import (
 from noiseprocesses.models.noise_calculation_config import (
     NoiseCalculationConfig,
     NoiseCalculationUserInput,
-    OutputDayTimeSoundLevels
+    OutputDayTimeSoundLevels,
 )
 from noiseprocesses.utils.buildings_grids import (
     BuildingGridGenerator2d,
@@ -244,8 +244,8 @@ class ImmissionsAroundBuildingsCalculator:
 
         grid_config = BuildingGridConfig(
             buildings_table=self.config.required_input.building_table,
-            output_table=self.config.required_input.receivers_table,
-            sources_table=self.config.required_input.roads_table,
+            receivers_table_name=self.config.required_input.receivers_table,
+            sources_table_name=self.config.required_input.roads_table,
             distance_from_wall=user_input.building_grid_settings.distance_from_wall,
             receiver_distance=user_input.building_grid_settings.receiver_distance,
             receiver_height=user_input.building_grid_settings.receiver_height_2d,
@@ -264,9 +264,7 @@ class ImmissionsAroundBuildingsCalculator:
         # calculate propagation
         road_prop = RoadPropagationCalculator(noise_db)
         road_prop.calculate_propagation(
-            self.config,
-            True if dem_url else False,
-            True if grounds else False
+            self.config, True if dem_url else False, True if grounds else False
         )
 
         if progress_callback:
