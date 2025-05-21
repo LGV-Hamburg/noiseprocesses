@@ -26,6 +26,7 @@ class RoadPropagationCalculator:
         config: NoiseCalculationConfig,
         use_dem: bool = False,
         use_grounds: bool = False,
+        has_stack_id: bool = False,
     ) -> None:
         """Calculate noise propagation using NoiseModelling.
 
@@ -180,7 +181,10 @@ class RoadPropagationCalculator:
 
             # Create final tables with geometry
             created_tables = self._create_result_tables(
-                lden_config, config.required_input.receivers_table, geom_fields[0][0]
+                lden_config,
+                config.required_input.receivers_table,
+                geom_fields[0][0],
+                has_stack_id=has_stack_id
             )
 
             logger.info(
@@ -282,7 +286,10 @@ class RoadPropagationCalculator:
             raise
 
     def _create_result_tables(
-        self, lden_config, receivers_table: str, receivers_geom_field: str
+        self, lden_config,
+        receivers_table: str,
+        receivers_geom_field: str,
+        has_stack_id: bool = False,
     ) -> list[str]:
         """Create final result tables with geometry.
 
@@ -290,6 +297,7 @@ class RoadPropagationCalculator:
             lden_config: LDEN configuration from NoiseModelling java class
             receivers_table: Name of receivers table
             receivers_geom_field: Name of geometry field in receivers table
+            has_stack_id: Whether the stack ID is included
 
         Returns:
             List of created table names
@@ -335,6 +343,10 @@ class RoadPropagationCalculator:
             # Add frequency and level columns to SELECT
             select_columns.extend([f"s.HZ{freq}" for freq in path_data.freq_lvl])
             select_columns.extend(["s.LAEQ", "s.LEQ"])
+
+            if has_stack_id:
+                select_columns.append("r.stack_id")
+                columns.append("stack_id BIGINT")
 
             # Create table with data
             self.database.execute(f"""
