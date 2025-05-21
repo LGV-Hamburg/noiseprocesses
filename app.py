@@ -15,7 +15,9 @@ from fastprocesses.core.models import (
 from fastprocesses.processes.process_registry import register_process
 from pydantic import ValidationError
 
-from noiseprocesses.calculation.building_immissions import ImmissionsAroundBuildingsCalculator
+from noiseprocesses.calculation.road_building_immissions import (
+    ImmissionsAroundBuildingsCalculator
+)
 from noiseprocesses.calculation.road_noise import RoadNoiseModellingCalculator
 from noiseprocesses.models.noise_calculation_config import (
     NoiseCalculationConfig,
@@ -50,7 +52,8 @@ class TrafficNoiseProp(BaseProcess):
             if job_progress_callback:
                 job_progress_callback(
                     0,
-                    f"Calculations failed. Reason: Invalid inputs ({validation_error}).",
+                    "Calculations failed. "
+                    f"Reason: Invalid inputs ({validation_error}).",
                 )
 
             raise ValueError(
