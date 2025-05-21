@@ -53,8 +53,8 @@ request_body = {
 }
 
 alternative_request_body = None
-# with open("examples/example-request-body.json") as f:
-#     alternative_request_body = json.load(f)
+with open("examples/example-request-body.json") as f:
+    alternative_request_body = json.load(f)
 
 if alternative_request_body:
     request_body = alternative_request_body
@@ -62,7 +62,7 @@ if alternative_request_body:
 url = "https://ump-lgv.germanywestcentral.cloudapp.azure.com/api/processes/noise_v4:traffic_noise_propagation/execution"
 url = "http://localhost:8000/processes/traffic_noise_propagation/execution"
 url = "http://localhost:8000/processes/traffic_noise_buildings/execution"
-url = "https://ump-lgv.germanywestcentral.cloudapp.azure.com/api/processes/noise_v4:traffic_noise_buildings/execution"
+# url = "https://ump-lgv.germanywestcentral.cloudapp.azure.com/api/processes/noise_v4:traffic_noise_buildings/execution"
 
 response = requests.post(
     url,
