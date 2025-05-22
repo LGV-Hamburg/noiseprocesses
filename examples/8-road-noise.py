@@ -36,7 +36,7 @@ request_body = {
             "max_source_distance": 147,
         },
         "building_grid_settings": {
-            "building_height": 10,
+            "height_between_levels_3d": 2.5,
             "grid_type": "BUILDINGS_3D",
             "receiver_height_2d": 4,
             "distance_from_wall": 2,
