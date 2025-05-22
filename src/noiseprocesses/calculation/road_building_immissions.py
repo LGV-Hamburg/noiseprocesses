@@ -326,9 +326,14 @@ class ImmissionsAroundBuildingsCalculator:
             with open(surface_file, "r") as stream:
                 output[output_table] = json.load(stream)
 
-                if has_stack_id:
+                if (
+                    has_stack_id
+                    and
+                    user_input.building_grid_settings.join_receivers_by_xy_location_3d
+                ):
                     logger.info(
-                        f"Joining features by stack id in table '{output_table}'"
+                        "Joining features by xy location "
+                        f"into one point for '{output_table}'"
                     )
                     output[output_table] = self._join_by_stack_id(output[output_table])
 
