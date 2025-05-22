@@ -112,7 +112,7 @@ class BuildingGridGenerator2d:
         self.database.execute("DROP TABLE IF EXISTS TMP_SCREENS_MERGE")
         self.database.execute(
             """
-            CREATE TABLE 63(
+            CREATE TABLE TMP_SCREENS_MERGE(
                 pk INT NOT NULL,
                 the_geom GEOMETRY
             ) AS
