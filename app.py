@@ -609,6 +609,10 @@ class TrafficNoiseBuildings(BaseProcess):
                             "maximum": 100.0,
                             "default": 4.0,
                         },
+                        "join_receivers_by_xy_location_3d": {
+                            "type": "boolean",
+                            "default": True,
+                        },
                     },
                 ),
                 minOccurs=1,
