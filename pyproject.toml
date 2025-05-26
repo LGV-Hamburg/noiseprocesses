@@ -33,7 +33,7 @@ dependencies = [
     "numpy (>=2.2.3,<3.0.0)",
     "geojson-pydantic (>=1.2.0,<2.0.0)",
     "shapely (>=2.0.7,<3.0.0)",
-    "fastprocesses (==0.13.0)",
+    "fastprocesses (==0.13.2)",
     "httpx (>=0.28.1,<0.29.0)",
     "gdal (==3.10.3)"
 ]
