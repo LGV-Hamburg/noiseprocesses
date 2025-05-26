@@ -231,9 +231,10 @@ class TrafficNoiseProp(BaseProcess):
                 description="Settings for noise propagation",
                 schema=Schema(
                     type="object",
+                    required=["vertical_diffraction", "horizontal_diffraction", "favorable_day"],
                     properties={
                         "vertical_diffraction": Schema.model_validate(
-                            {"type": "boolean", "default": True}
+                            {"type": "boolean", "default": False}
                         ),
                         "horizontal_diffraction": Schema.model_validate(
                             {"type": "boolean", "default": True}
