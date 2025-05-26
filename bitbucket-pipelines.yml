@@ -31,3 +31,14 @@ pipelines:
             - git add .
             - git commit -m "Add noise-modelling-api chart ${BITBUCKET_TAG}"
             - git push origin main
+
+  branches:
+    main:
+      - step:
+          name: Mirror to GitHub
+          image: atlassian/default-image:3
+          script:
+            - git config --global user.email "stefan.schuhart@gv.hamburg.de"
+            - git config --global user.name "Stefan Schuhart"
+            - git remote add github https://StefanSchuhart:$GITHUB_TOKEN@github.com/LGV-Hamburg/noiseprocesses.git
+            - git push --force github main:main
