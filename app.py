@@ -185,42 +185,42 @@ class TrafficNoiseProp(BaseProcess):
                 schema=Schema(
                     type="object",
                     properties={
-                        "wall_alpha": {
+                        "wall_alpha": Schema.model_validate({
                             "type": "number",
                             "minimum": 0.0,
                             "maximum": 1.0,
                             "default": 0.1,
-                        },
-                        "max_source_distance": {
+                        }),
+                        "max_source_distance": Schema.model_validate({
                             "type": "number",
                             "minimum": 0,
                             "maximum": 1000.0,
                             "default": 150.0,
-                        },
-                        "max_reflection_distance": {
+                        }),
+                        "max_reflection_distance": Schema.model_validate({
                             "type": "number",
                             "minimum": 0,
                             "maximum": 1000.0,
                             "default": 50.0,
-                        },
-                        "reflection_order": {
+                        }),
+                        "reflection_order": Schema.model_validate({
                             "type": "integer",
                             "minimum": 0,
                             "maximum": 2,
                             "default": 1,
-                        },
-                        "humidity": {
+                        }),
+                        "humidity": Schema.model_validate({
                             "type": "number",
                             "minimum": 0.0,
                             "maximum": 100.0,
                             "default": 70.0,
-                        },
-                        "temperature": {
+                        }),
+                        "temperature": Schema.model_validate({
                             "type": "number",
                             "minimum": -20.0,
                             "maximum": 50.0,
                             "default": 15.0,
-                        },
+                        }),
                     },
                 ),
                 minOccurs=0,
@@ -232,14 +232,22 @@ class TrafficNoiseProp(BaseProcess):
                 schema=Schema(
                     type="object",
                     properties={
-                        "vertical_diffraction": {"type": "boolean", "default": True},
-                        "horizontal_diffraction": {"type": "boolean", "default": True},
-                        "favorable_day": {
+                        "vertical_diffraction": Schema.model_validate(
+                            {"type": "boolean", "default": True}
+                        ),
+                        "horizontal_diffraction": Schema.model_validate(
+                            {"type": "boolean", "default": True}
+                        ),
+                        "favorable_day": Schema.model_validate({
                             "type": "string",
                             "default": "0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5",
-                        },
-                        "favorable_evening": {"type": "string", "default": None},
-                        "favorable_night": {"type": "string", "default": None},
+                        }),
+                        "favorable_evening": Schema.model_validate(
+                            {"type": "string", "default": None}
+                        ),
+                        "favorable_night": Schema.model_validate(
+                            {"type": "string", "default": None}
+                        ),
                     },
                 ),
                 minOccurs=0,
@@ -248,9 +256,9 @@ class TrafficNoiseProp(BaseProcess):
             "receiver_grid_settings": ProcessInput(
                 title="Receiver Grid Settings",
                 description="Settings for the receiver grid",
-                schema=Schema(
-                    type="object",
-                    properties={
+                schema=Schema.model_validate({
+                    "type": "object",
+                    "properties": {
                         "grid_type": {
                             "type": "string",
                             "enum": ["DELAUNAY"],
@@ -281,16 +289,16 @@ class TrafficNoiseProp(BaseProcess):
                             "default": 2.0,
                         },
                     },
-                ),
+                }),
                 minOccurs=0,
                 maxOccurs=1,
             ),
             "isosurface_settings": ProcessInput(
                 title="IsoSurface Settings",
                 description="Settings for isosurface generation",
-                schema=Schema(
-                    type="object",
-                    properties={
+                schema=Schema.model_validate({
+                    "type": "object",
+                    "properties": {
                         "iso_classes": {
                             "type": "string",
                             "default": (
@@ -304,7 +312,7 @@ class TrafficNoiseProp(BaseProcess):
                             "default": 0.5,
                         },
                     },
-                ),
+                }),
                 minOccurs=0,
                 maxOccurs=1,
             ),
@@ -433,7 +441,7 @@ class TrafficNoiseBuildings(BaseProcess):
                         {"format": "geojson-feature-collection"},
                         {"$ref": "https://geojson.org/schema/FeatureCollection.json"},
                         {
-                            "$ref": "https://bitbucket.org/geowerkstatt-hamburg/noiseprocesses/schemas/buildings-schema.json"
+                            "$ref": "https://bitbucket.org/geowerkstatt-hamburg/noiseprocesses/src/main/schemas/buildings-schema.json"
                         },
                     ]
                 ),
@@ -448,7 +456,7 @@ class TrafficNoiseBuildings(BaseProcess):
                         {"format": "geojson-feature-collection"},
                         {"$ref": "https://geojson.org/schema/FeatureCollection.json"},
                         {
-                            "$ref": "https://bitbucket.org/geowerkstatt-hamburg/noiseprocesses/schemas/roads-schema.json"
+                            "$ref": "https://bitbucket.org/geowerkstatt-hamburg/noiseprocesses/src/main/schemas/roads-schema.json"
                         },
                     ]
                 ),
@@ -511,9 +519,9 @@ class TrafficNoiseBuildings(BaseProcess):
             "acoustic_parameters": ProcessInput(
                 title="Acoustic Parameters",
                 description="Parameters for acoustic calculations",
-                schema=Schema(
-                    type="object",
-                    properties={
+                schema=Schema.model_validate({
+                    "type": "object",
+                    "properties": {
                         "wall_alpha": {
                             "type": "number",
                             "minimum": 0.0,
@@ -551,16 +559,16 @@ class TrafficNoiseBuildings(BaseProcess):
                             "default": 15.0,
                         },
                     },
-                ),
+                }),
                 minOccurs=0,
                 maxOccurs=1,
             ),
             "propagation_settings": ProcessInput(
                 title="Propagation Settings",
                 description="Settings for noise propagation",
-                schema=Schema(
-                    type="object",
-                    properties={
+                schema=Schema.model_validate({
+                    "type": "object",
+                    "properties": {
                         "vertical_diffraction": {"type": "boolean", "default": False},
                         "horizontal_diffraction": {"type": "boolean", "default": True},
                         "favorable_day": {
@@ -570,16 +578,16 @@ class TrafficNoiseBuildings(BaseProcess):
                         "favorable_evening": {"type": "string", "default": None},
                         "favorable_night": {"type": "string", "default": None},
                     },
-                ),
+                }),
                 minOccurs=0,
                 maxOccurs=1,
             ),
             "building_grid_settings": ProcessInput(
                 title="Receiver Grid Settings",
                 description="Settings for the receiver grid",
-                schema=Schema(
-                    type="object",
-                    properties={
+                schema=Schema.model_validate({
+                    "type": "object",
+                    "properties": {
                         "grid_type": {
                             "type": "string",
                             "enum": ["BUILDINGS_2D", "BUILDINGS_3D"],
@@ -614,7 +622,7 @@ class TrafficNoiseBuildings(BaseProcess):
                             "default": True,
                         },
                     },
-                ),
+                }),
                 minOccurs=1,
                 maxOccurs=1,
             ),
