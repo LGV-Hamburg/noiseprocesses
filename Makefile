@@ -29,6 +29,7 @@ build-image:
 		-f docker-compose-build.yaml \
 		build \
 		--build-arg SOURCE_COMMIT=$(GIT_COMMIT) \
+		--build-arg APP_VERSION=$(IMAGE_TAG) \
 		app
 
 push-registry:

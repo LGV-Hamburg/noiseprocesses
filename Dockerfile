@@ -66,10 +66,11 @@ ARG USER_UID=1000
 ARG USERNAME=ubuntu
 ARG USER_GID=1000
 ARG SOURCE_COMMIT
+ARG APP_VERSION=
 
 LABEL com.lgv.uda.maintainer="Urban Data Analytics" \
     com.lgv.uda.name="analytics/noiseprocesses" \
-    com.lgv.uda.version="4.0.5-1.0.5" \
+    com.lgv.uda.version=${APP_VERSION} \
     com.lgv.uda.source_commit=$SOURCE_COMMIT \
     org.opencontainers.image.source="https://github.com/UrbanDataAnalytics/noiseprocesses"
 
