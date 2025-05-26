@@ -104,7 +104,7 @@ class TrafficNoiseProp(BaseProcess):
                         {"format": "geojson-feature-collection"},
                         {"$ref": "https://geojson.org/schema/FeatureCollection.json"},
                         {
-                            "$ref": "https://github.com/LGV-Hamburg/noiseprocesses/blob/main/schemas/buildings-schema.json"
+                            "$ref": "https://raw.githubusercontent.com/LGV-Hamburg/noiseprocesses/refs/heads/main/schemas/buildings-schema.json"
                         },
                     ]
                 ),
@@ -119,7 +119,7 @@ class TrafficNoiseProp(BaseProcess):
                         {"format": "geojson-feature-collection"},
                         {"$ref": "https://geojson.org/schema/FeatureCollection.json"},
                         {
-                            "$ref": "https://github.com/LGV-Hamburg/noiseprocesses/blob/main/schemas/roads-schema.json"
+                            "$ref": "https://raw.githubusercontent.com/LGV-Hamburg/noiseprocesses/refs/heads/main/schemas/roads-schema.json"
                         },
                     ]
                 ),
@@ -172,7 +172,7 @@ class TrafficNoiseProp(BaseProcess):
                         {"format": "geojson-feature-collection"},
                         {"$ref": "https://geojson.org/schema/FeatureCollection.json"},
                         {
-                            "$ref": "https://github.com/LGV-Hamburg/noiseprocesses/blob/main/schemas/grounds-schema.json"
+                            "$ref": "https://raw.githubusercontent.com/LGV-Hamburg/noiseprocesses/refs/heads/main/schemas/grounds-schema.json"
                         },
                     ]
                 ),
@@ -441,7 +441,7 @@ class TrafficNoiseBuildings(BaseProcess):
                         {"format": "geojson-feature-collection"},
                         {"$ref": "https://geojson.org/schema/FeatureCollection.json"},
                         {
-                            "$ref": "https://github.com/LGV-Hamburg/noiseprocesses/blob/main/schemas/buildings-schema.json"
+                            "$ref": "https://raw.githubusercontent.com/LGV-Hamburg/noiseprocesses/refs/heads/main/schemas/buildings-schema.json"
                         },
                     ]
                 ),
@@ -456,7 +456,7 @@ class TrafficNoiseBuildings(BaseProcess):
                         {"format": "geojson-feature-collection"},
                         {"$ref": "https://geojson.org/schema/FeatureCollection.json"},
                         {
-                            "$ref": "https://github.com/LGV-Hamburg/noiseprocesses/blob/main/schemas/roads-schema.json"
+                            "$ref": "https://raw.githubusercontent.com/LGV-Hamburg/noiseprocesses/refs/heads/main/schemas/roads-schema.json"
                         },
                     ]
                 ),
@@ -509,7 +509,7 @@ class TrafficNoiseBuildings(BaseProcess):
                         {"format": "geojson-feature-collection"},
                         {"$ref": "https://geojson.org/schema/FeatureCollection.json"},
                         {
-                            "$ref": "https://github.com/LGV-Hamburg/noiseprocesses/blob/main/schemas/grounds-schema.json"
+                            "$ref": "https://raw.githubusercontent.com/LGV-Hamburg/noiseprocesses/refs/heads/main/schemas/grounds-schema.json"
                         },
                     ]
                 ),
