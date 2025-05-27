@@ -243,12 +243,20 @@ class TrafficNoiseProp(BaseProcess):
                             "type": "string",
                             "default": "0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5",
                         }),
-                        "favorable_evening": Schema.model_validate(
-                            {"type": "string", "default": None}
-                        ),
-                        "favorable_night": Schema.model_validate(
-                            {"type": "string", "default": None}
-                        ),
+                        "favorable_evening": Schema.model_validate({
+                            "default": None,
+                            "oneOf": [
+                                {"type": "string"},
+                                {"type": "null"}
+                            ]
+                        }),
+                        "favorable_night": Schema.model_validate({
+                            "default": None,
+                            "oneOf": [
+                                {"type": "string"},
+                                {"type": "null"}
+                            ]
+                        }),
                     },
                 ),
                 minOccurs=0,
@@ -569,6 +577,7 @@ class TrafficNoiseBuildings(BaseProcess):
                 description="Settings for noise propagation",
                 schema=Schema.model_validate({
                     "type": "object",
+                    "required": ["vertical_diffraction", "horizontal_diffraction", "favorable_day"],
                     "properties": {
                         "vertical_diffraction": {"type": "boolean", "default": False},
                         "horizontal_diffraction": {"type": "boolean", "default": True},
@@ -576,8 +585,20 @@ class TrafficNoiseBuildings(BaseProcess):
                             "type": "string",
                             "default": "0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5",
                         },
-                        "favorable_evening": {"type": "string", "default": None},
-                        "favorable_night": {"type": "string", "default": None},
+                        "favorable_evening": Schema.model_validate({
+                            "default": None,
+                            "oneOf": [
+                                {"type": "string"},
+                                {"type": "null"}
+                            ]
+                        }),
+                        "favorable_night": Schema.model_validate({
+                            "default": None,
+                            "oneOf": [
+                                {"type": "string"},
+                                {"type": "null"}
+                            ]
+                        }),
                     },
                 }),
                 minOccurs=0,
