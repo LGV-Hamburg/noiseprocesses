@@ -1,0 +1,25 @@
+{{- if .Values.autoscaling.worker.keda.enabled }}
+apiVersion: keda.sh/v1alpha1
+kind: ScaledObject
+metadata:
+  name: {{ include "noise-modelling-api.fullname" . }}-worker
+  labels:
+    {{- include "noise-modelling-api.labels" . | nindent 4 }}
+spec:
+  scaleTargetRef:
+    name: {{ include "noise-modelling-api.fullname" . }}-worker
+    kind: Deployment
+  minReplicaCount: {{ .Values.autoscaling.worker.keda.minReplicas }}
+  maxReplicaCount: {{ .Values.autoscaling.worker.keda.maxReplicas }}
+  pollingInterval: 3
+  cooldownPeriod: 10
+  maxReplicaCount: 10
+  minReplicaCount: 1
+  triggers:
+    - type: redis
+      metadata:
+        address: "{{ .Values.config.celeryBrokerHost }}:{{ .Values.config.celeryBrokerPort }}"
+        listName: "{{ .Values.autoscaling.worker.keda.queueName }}"
+        listLength: "{{ .Values.autoscaling.worker.keda.queueLength }}"
+        dbIndex: "{{ .Values.config.celeryBrokerDb }}"
+{{- end }}
