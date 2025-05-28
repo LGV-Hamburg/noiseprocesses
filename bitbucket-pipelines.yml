@@ -41,4 +41,7 @@ pipelines:
             - git config --global user.email "stefan.schuhart@gv.hamburg.de"
             - git config --global user.name "Stefan Schuhart"
             - git remote add github https://StefanSchuhart:$GITHUB_TOKEN@github.com/LGV-Hamburg/noiseprocesses.git
+            - git fetch --tags origin
             - git push --force github main:main
+            - git push --tags github
+
