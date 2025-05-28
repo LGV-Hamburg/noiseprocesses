@@ -938,19 +938,20 @@ devel = ["colorama", "json-spec", "jsonschema", "pylint", "pytest", "pytest-benc
 
 [[package]]
 name = "fastprocesses"
-version = "0.13.2"
+version = "0.14.0"
 description = "A library to create a FastAPI-based  OGC API Processes wrapper around existing projects."
 optional = false
 python-versions = ">=3.10"
 groups = ["main"]
 files = [
-    {file = "fastprocesses-0.13.2-py3-none-any.whl", hash = "sha256:51d50261059f50275fabcfa5dbc49a48162cc9d76aebabd1228f336a3cb592dc"},
-    {file = "fastprocesses-0.13.2.tar.gz", hash = "sha256:01de021fbd94ea0829c3c8dea6adb0e4dd1d3742ac907e81d6e81b712c15eeac"},
+    {file = "fastprocesses-0.14.0-py3-none-any.whl", hash = "sha256:387eafdd0acbbc5e9187697ebbe36ac3d9211f0d120f403118bf273a042024ec"},
+    {file = "fastprocesses-0.14.0.tar.gz", hash = "sha256:df781565ab01529138d61acab2f70f973381fe9fb5bc37704a7fe6f23a6d6bd9"},
 ]
 
 [package.dependencies]
 celery = ">=5.4.0,<6.0.0"
 fastapi = ">=0.115.8,<0.116.0"
+jinja2 = ">=3.1.6,<4.0.0"
 jsonschema = ">=4.23.0,<5.0.0"
 loguru = ">=0.7.3,<0.8.0"
 pydantic = ">=2.10.6,<3.0.0"
@@ -1394,14 +1395,14 @@ testing = ["Django", "attrs", "colorama", "docopt", "pytest (<9.0.0)"]
 
 [[package]]
 name = "jinja2"
-version = "3.1.5"
+version = "3.1.6"
 description = "A very fast and expressive template engine."
 optional = false
 python-versions = ">=3.7"
-groups = ["docs"]
+groups = ["main", "docs"]
 files = [
-    {file = "jinja2-3.1.5-py3-none-any.whl", hash = "sha256:aba0f4dc9ed8013c424088f68a5c226f7d6097ed89b246d7749c2ec4175c6adb"},
-    {file = "jinja2-3.1.5.tar.gz", hash = "sha256:8fefff8dc3034e27bb80d67c671eb8a9bc424c0ef4c0826edbff304cceff43bb"},
+    {file = "jinja2-3.1.6-py3-none-any.whl", hash = "sha256:85ece4451f492d0c13c5dd7c13a64681a86afae63a5f347908daf103ce6d2f67"},
+    {file = "jinja2-3.1.6.tar.gz", hash = "sha256:0137fb05990d35f1275a587e9aee6d56da821fc83491a0fb838183be43f66d6d"},
 ]
 
 [package.dependencies]
@@ -1726,7 +1727,7 @@ version = "3.0.2"
 description = "Safely add untrusted strings to HTML/XML markup."
 optional = false
 python-versions = ">=3.9"
-groups = ["docs"]
+groups = ["main", "docs"]
 files = [
     {file = "MarkupSafe-3.0.2-cp310-cp310-macosx_10_9_universal2.whl", hash = "sha256:7e94c425039cde14257288fd61dcfb01963e658efbc0ff54f5306b06054700f8"},
     {file = "MarkupSafe-3.0.2-cp310-cp310-macosx_11_0_arm64.whl", hash = "sha256:9e2d922824181480953426608b81967de705c3cef4d1af983af849d7bd619158"},
@@ -4157,4 +4158,4 @@ type = ["pytest-mypy"]
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.12,<4.0"
-content-hash = "d39150125230702d7b4b9658b9c0ca68e8c741af4a74cf4e7268131d0e73795c"
+content-hash = "c7a3a58c50231fd2a8bad131c943ba1c4785987f6d8bbadd63749f0e4652e1b8"
