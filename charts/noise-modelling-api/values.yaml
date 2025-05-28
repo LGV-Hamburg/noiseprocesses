@@ -1,6 +1,6 @@
 image:
   repository: lgvanalytics.azurecr.io/noiseprocesses
-  tag: "0.0.2"
+  tag: "4.0.5-1.0.9"
   pullPolicy: IfNotPresent
   pullSecrets: []    # e.g. - name: regcred
 
@@ -47,24 +47,27 @@ service:
   port: 8008
 
 config:
-  celery: 
-    host: redis
-    port: 6379
-    db: 0
-    existingSecret: ""
-    existingSecretKey: ""
-
-
-  logLevel: DEBUG
-  javaLibDir: /app/dist/lib
-
-  resultCache:
-    host: redis
-    port: 6379
-    db: 1
-    existingSecret: ""
-    existingSecretKey: ""
-    taskResultExpiresDays:
+  apiTitle: "Noise calculation - OGC API Processes"
+  apiDescription: "An OGC API Processes implementation for noise calculations."
+  resultCacheHost: "redis"
+  resultCachePort: 6379
+  resultCacheDb: 1
+#
+  celeryBrokerHost: "redis"
+  celeryBrokerPort: 6379
+  celeryBrokerDb: 0
+  celeryResultsTtlDays: 7
+  celeryTaskTlimitHard: 1800 # seconds
+  celeryTaskTlimitSoft: 1500 # seconds
+#
+  resultsTempTtlHours: 24
+  jobStatusTtlDays: 7
+  syncExecutionTimeoutSeconds: 10
+#
+  logLevel: "DEBUG"
+  javaLibDir: ""
+  javaMaxHeapSize: "4096m"
+  javaInitialHeapSize: "1024m"
 
 serviceAccount:
   create: true
@@ -75,17 +78,17 @@ resources:
   api:
     limits:
       cpu: 1
-      memory: 1024Mi
+      memory: 1Gi
     requests:
-      cpu: 200m
-      memory: 256Mi
+      cpu: 1
+      memory: 1Gi
   worker:
     limits:
       cpu: 2
-      memory: 2Gi
+      memory: 3Gi
     requests:
-      cpu: 500m
-      memory: 512Mi
+      cpu: 2
+      memory: 3Gi
 
 autoscaling:
   api:
@@ -108,3 +111,16 @@ autoscaling:
       minAllowedMemory: "256Mi"
       maxAllowedCPU: "4"
       maxAllowedMemory: "8Gi"
+    keda:
+      enabled: true
+      minReplicas: 0 # scale down to zero to spare resources
+      maxReplicas: 5
+      queueName: "celery"
+      triggerType: "redis"
+      triggers:
+        - type: redis
+          metadata:
+            address: "redis:6379"
+            listName: "celery"
+            listLength: "3" # Scale up if more than 3 tasks in queue
+            db: "0"
