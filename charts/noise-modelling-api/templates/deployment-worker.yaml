@@ -36,7 +36,12 @@ spec:
         - name: {{ .Chart.Name }}-worker
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
-          command: ["celery", "-A", "fastprocesses.worker.celery_app", "worker", "--loglevel=info"]
+          command: [
+            "celery", "-A",
+            "fastprocesses.worker.celery_app", "worker",
+            "--loglevel=info",
+            "--concurrency=1",
+          ]
           env:
             - name: CELERY_BROKER_PASSWORD
           {{- if .Values.config.celery.existingSecret }}
