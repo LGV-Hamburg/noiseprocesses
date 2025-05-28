@@ -49,19 +49,26 @@ service:
 config:
   apiTitle: "Noise calculation - OGC API Processes"
   apiDescription: "An OGC API Processes implementation for noise calculations."
-  resultCacheHost: "redis"
-  resultCachePort: 6379
-  resultCacheDb: 1
+  
+  resultCache:
+    host: "redis"
+    port: 6379
+    db: 1
+    existingSecret: ""
+    existingSecretKey: ""
+    resultsTempTtlHours: 24
 #
-  celeryBrokerHost: "redis"
-  celeryBrokerPort: 6379
-  celeryBrokerDb: 0
-  celeryResultsTtlDays: 7
-  celeryTaskTlimitHard: 1800 # seconds
-  celeryTaskTlimitSoft: 1500 # seconds
+  celery:
+    brokerHost: "redis"
+    brokerPort: 6379
+    brokerDb: 0
+    resultsTtlDays: 7
+    taskTlimitHard: 1800 # seconds
+    taskTlimitSoft: 1500 # seconds
+    jobStatusTtlDays: 7
+    existingSecret: ""
+    existingSecretKey: ""
 #
-  resultsTempTtlHours: 24
-  jobStatusTtlDays: 7
   syncExecutionTimeoutSeconds: 10
 #
   logLevel: "DEBUG"

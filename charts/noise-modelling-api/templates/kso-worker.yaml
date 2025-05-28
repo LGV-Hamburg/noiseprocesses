@@ -18,8 +18,24 @@ spec:
   triggers:
     - type: redis
       metadata:
-        address: "{{ .Values.config.celeryBrokerHost }}:{{ .Values.config.celeryBrokerPort }}"
+        address: "{{ .Values.config.celery.brokerHost }}:{{ .Values.config.celery.brokerPort }}"
         listName: "{{ .Values.autoscaling.worker.keda.queueName }}"
         listLength: "{{ .Values.autoscaling.worker.keda.queueLength }}"
-        dbIndex: "{{ .Values.config.celeryBrokerDb }}"
+        dbIndex: "{{ .Values.config.celery.brokerDb }}"
+        {{ if .Values.config.celery.existingSecret }}
+        authenticationRef:
+          name: {{ include "noise-modelling-api.fullname" . }}-redis--trigger-auth
+        {{- end }}
+---
+{{ if .Values.config.celery.existingSecret }}
+apiVersion: keda.k8s.io/v1alpha1
+kind: TriggerAuthentication
+metadata:
+  name: {{ include "noise-modelling-api.fullname" . }}-redis--trigger-auth
+spec:
+  secretTargetRef:
+  - parameter: password
+    name: {{ .Values.config.celery.existingSecret }}
+    key: {{ .Values.config.celery.existingSecretKey }}
+{{- end }}
 {{- end }}
