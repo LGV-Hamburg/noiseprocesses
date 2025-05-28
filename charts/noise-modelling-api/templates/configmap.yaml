@@ -5,14 +5,23 @@ metadata:
   labels:
     {{- include "noise-modelling-api.labels" . | nindent 4 }}
 data:
-  LOG_LEVEL: "{{ .Values.config.logLevel }}"
-  JAVA_LIB_DIR: "{{ .Values.config.javaLibDir }}"
+  FP_API_TITLE: "{{ .Values.config.apiTitle }}"
+  FP_API_DESCRIPTION: "{{ .Values.config.apiDescription }}"
+  FP_RESULT_CACHE_HOST: "{{ .Values.config.resultCacheHost }}"
+  FP_RESULT_CACHE_PORT: "{{ .Values.config.resultCachePort }}"
+  FP_RESULT_CACHE_DB: "{{ .Values.config.resultCacheDb }}"
+  FP_CELERY_BROKER_HOST: "{{ .Values.config.celeryBrokerHost }}"
+  FP_CELERY_BROKER_PORT: "{{ .Values.config.celeryBrokerPort }}"
+  FP_CELERY_BROKER_DB: "{{ .Values.config.celeryBrokerDb }}"
+  FP_CELERY_RESULTS_TTL_DAYS: "{{ .Values.config.celeryResultsTtlDays }}"
+  FP_CELERY_TASK_TLIMIT_HARD: "{{ .Values.config.celeryTaskTlimitHard }}"
+  FP_CELERY_TASK_TLIMIT_SOFT: "{{ .Values.config.celeryTaskTlimitSoft }}"
+  FP_RESULTS_TEMP_TTL_HOURS: "{{ .Values.config.resultsTempTtlHours }}"
+  FP_JOB_STATUS_TTL_DAYS: "{{ .Values.config.jobStatusTtlDays }}"
+  FP_SYNC_EXECUTION_TIMEOUT_SECONDS: "{{ .Values.config.syncExecutionTimeoutSeconds }}"
+  FP_LOG_LEVEL: "{{ .Values.config.logLevel }}"
 
-  RESULTS_CACHE_TTL: {{ .Values.config.resultCache.taskResultExpiresDays | quote }}
-  RESULT_CACHE_HOST: {{ .Values.config.resultCache.host | quote }}
-  RESULT_CACHE_PORT: {{ .Values.config.resultCache.port | quote }}
-  RESULT_CACHE_DB: {{ .Values.config.resultCache.db | quote }}
-  
-  CELERY_BROKER_HOST: {{ .Values.config.celery.host | quote }}
-  CELERY_BROKER_PORT: {{ .Values.config.celery.port | quote }}
-  CELERY_BROKER_DB: {{ .Values.config.celery.db | quote }}
+  NP_JAVA_LIB_DIR: "{{ .Values.config.javaLibDir }}"
+  NP_LOG_LEVEL: "{{ .Values.config.logLevel }}"
+  NP_JAVA_MAX_HEAP_SIZE: "{{ .Values.config.javaMaxHeapSize }}"
+  NP_JAVA_INITIAL_HEAP_SIZE: "{{ .Values.config.javaInitialHeapSize }}"
