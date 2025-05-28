@@ -702,9 +702,16 @@ class TrafficNoiseBuildings(BaseProcess):
 
 # Create the FastAPI app
 app = OGCProcessesAPI(
-    title="Noise Processes API",
-    version="1.0.3",
-    description="Calculate traffic noise propagation and create isosurfaces",
+    contact={
+        "name": "Agency for Geoinformation and Surveying Hamburg",
+        "url": "https://www.hamburg.de/politik-und-verwaltung/behoerden/behoerde-fuer-stadtentwicklung-und-wohnen/aemter-und-landesbetrieb/landesbetrieb-geoinformation-und-vermessung",
+        "email": "info@gv.hamburg.de"
+    },
+    license={
+        "name": "GNU General Public License v3.0",
+        "url": "https://github.com/LGV-Hamburg/noiseprocesses/blob/main/LICENSE",
+    },
+    terms_of_service=""
 ).get_app()
 
 if __name__ == "__main__":
