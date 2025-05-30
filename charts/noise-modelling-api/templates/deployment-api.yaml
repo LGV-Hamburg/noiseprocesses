@@ -10,7 +10,6 @@ metadata:
     {{- end }}
 
 spec:
-  replicas: {{ .Values.replicaCount.api }}
   selector:
     matchLabels:
       {{- include "noise-modelling-api.selectorLabels" . | nindent 6 }}

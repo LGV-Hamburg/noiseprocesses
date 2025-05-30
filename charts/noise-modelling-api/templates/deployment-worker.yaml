@@ -9,7 +9,6 @@ metadata:
     {{- toYaml . | nindent 8 }}
     {{- end }}
 spec:
-  replicas: {{ .Values.replicaCount.worker }}
   selector:
     matchLabels:
       {{- include "noise-modelling-api.selectorLabels" . | nindent 6 }}

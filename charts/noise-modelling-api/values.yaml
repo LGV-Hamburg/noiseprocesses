@@ -7,10 +7,6 @@ image:
 nameOverride: ""
 fullnameOverride: ""
 
-replicaCount:
-  api: 1
-  worker: 1
-
 podLabels:
   api: {}    # e.g. environment: prod
   worker: {} # e.g. type: background
