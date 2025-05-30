@@ -119,11 +119,5 @@ autoscaling:
       minReplicas: 0 # scale down to zero to spare resources
       maxReplicas: 5
       queueName: "celery"
-      triggerType: "redis"
-      triggers:
-        - type: redis
-          metadata:
-            address: "redis:6379"
-            listName: "celery"
-            listLength: "3" # Scale up if more than 3 tasks in queue
-            db: "0"
+      queueLenght: 3
+  
