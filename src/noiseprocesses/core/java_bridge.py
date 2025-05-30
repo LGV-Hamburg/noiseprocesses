@@ -26,8 +26,8 @@ class JavaBridge:
 
         # Get path to NoiseModelling libraries
 
-        if config.JAVA_LIB_DIR:
-            lib_dir = Path(config.JAVA_LIB_DIR).resolve()
+        if config.NP_JAVA_LIB_DIR:
+            lib_dir = Path(config.NP_JAVA_LIB_DIR).resolve()
         else:
             current_dir = Path(__file__).parent
             logger.debug(f"Current directory: {current_dir}")
