@@ -1,6 +1,6 @@
 image:
   repository: lgvanalytics.azurecr.io/noiseprocesses
-  tag: "4.0.5-1.0.9"
+  tag: "4.0.5-1.0.10"
   pullPolicy: IfNotPresent
   pullSecrets: []    # e.g. - name: regcred
 
