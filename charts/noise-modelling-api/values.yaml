@@ -40,7 +40,8 @@ tolerations:
 
 service:
   type: ClusterIP
-  port: 8008
+  port: 8000
+  targetPort: 8000
 
 config:
   apiTitle: "Noise calculation - OGC API Processes"
