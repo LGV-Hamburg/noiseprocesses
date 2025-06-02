@@ -277,7 +277,7 @@ class TrafficNoiseProp(BaseProcess):
                             "type": "number",
                             "minimum": 0,
                             "maximum": 100.0,
-                            "default": 4.0,
+                            "default": 3.0,
                         },
                         "max_area": {
                             "type": "number",
@@ -619,7 +619,7 @@ class TrafficNoiseBuildings(BaseProcess):
                             "type": "number",
                             "minimum": 0,
                             "maximum": 100.0,
-                            "default": 4.0,
+                            "default": 3.0,
                         },
                         "receiver_distance": {
                             "type": "number",
@@ -637,7 +637,7 @@ class TrafficNoiseBuildings(BaseProcess):
                             "type": "number",
                             "minimum": 0,
                             "maximum": 100.0,
-                            "default": 4.0,
+                            "default": 3.0,
                         },
                         "join_receivers_by_xy_location_3d": {
                             "type": "boolean",
