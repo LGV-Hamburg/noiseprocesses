@@ -18,7 +18,7 @@ class GridType(StrEnum):
 class GridSettingsUser(BaseModel):
     grid_type: GridType = Field(default=GridType.DELAUNAY)
     calculation_height: float = Field(
-        default=4.0, gt=0, description="Height of receivers in meters"
+        default=3.0, gt=0, description="Height of receivers in meters"
     )
     max_area: float = Field(
         default=2500.0, gt=0, description="Maximum triangle area (m²)"
@@ -42,7 +42,7 @@ class BuildingGridSettingsUser(BaseModel):
     )
 
     receiver_height_2d: float = Field(
-        default=4.0, gt=0,
+        default=3.0, gt=0,
         description="Height of receivers in meters"
     )
     distance_from_wall: float = Field(
@@ -81,7 +81,7 @@ class GridConfig(BaseModel):
 
     # Common optional parameters with defaults
     height: float = Field(
-        default=4.0,
+        default=3.0,
         alias="calculation_height",
         gt=0,
         description="Height of receivers in meters",
@@ -205,7 +205,7 @@ class BuildingGridConfig(BaseModel):
     )
 
     height_between_levels: float = Field(
-        default=2.5,
+        default=3,
         gt=0,
         description="Height between levels for 3D building grids",
     )  # Height between levels 3D grids
