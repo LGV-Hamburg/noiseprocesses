@@ -30,6 +30,20 @@ build-image:
 		build \
 		--build-arg SOURCE_COMMIT=$(GIT_COMMIT) \
 		--build-arg APP_VERSION=$(IMAGE_TAG) \
+		--build-arg POETRY_VERSION=$(POETRY_VERSION) \
+		app
+
+build-image-debug:
+	@echo 'Building release ${CONTAINER_REGISTRY}/$(IMAGE_NAME):$(IMAGE_TAG)'
+# build your image
+	DOCKER_BUILDKIT=1 docker compose \
+		-f docker-compose-build.yaml \
+		build \
+		--build-arg SOURCE_COMMIT=$(GIT_COMMIT) \
+		--build-arg APP_VERSION=$(IMAGE_TAG) \
+		--build-arg POETRY_VERSION=$(POETRY_VERSION) \
+		--progress=plain \
+		--no-cache \
 		app
 
 push-registry:
