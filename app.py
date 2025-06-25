@@ -4,6 +4,8 @@ from typing import Any, Callable, Dict
 import uvicorn
 from fastprocesses.api.server import OGCProcessesAPI
 from fastprocesses.core.base_process import BaseProcess
+# from fastprocesses.core.logging import logger
+from fastprocesses.common import settings
 from fastprocesses.core.models import (
     ProcessDescription,
     ProcessInput,
@@ -25,7 +27,7 @@ from noiseprocesses.models.noise_calculation_config import (
 )
 from noiseprocesses.models.output import NoiseCalculationOutput
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger("uvicorn.error")
 
 
 @register_process("traffic_noise_propagation")
@@ -35,6 +37,7 @@ class TrafficNoiseProp(BaseProcess):
         exec_body: Dict[str, Any],
         job_progress_callback: Callable[[int, str], None] | None = None,
     ) -> NoiseCalculationOutput:
+        logger.info("Executing traffic noise propagation process")
         user_outputs = exec_body["outputs"]
 
         if job_progress_callback:
@@ -720,5 +723,5 @@ if __name__ == "__main__":
         host="0.0.0.0",
         port=8000,
         log_config=None,
-        log_level=None,
+        log_level=settings.FP_LOG_LEVEL,
     )
