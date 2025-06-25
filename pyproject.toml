@@ -7,7 +7,7 @@ name = "noiseprocesses"
 description = "A python wrapper for NoiseModelling"
 authors = [{name = "Stefan Schuhart", email = "stefan.schuhart@gv.hamburg.de"}]
 readme = "README.md"
-requires-python = ">=3.10"
+requires-python = ">=3.12"
 keywords = []
 dynamic = ["version"]
 classifiers = [
@@ -16,8 +16,6 @@ classifiers = [
     "Programming Language :: Python",
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3 :: Only",
-    "Programming Language :: Python :: 3.10",
-    "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
     "Topic :: Analytics",
     "Topic :: Software Development",
@@ -33,7 +31,7 @@ dependencies = [
     "numpy (>=2.2.3,<3.0.0)",
     "geojson-pydantic (>=1.2.0,<2.0.0)",
     "shapely (>=2.0.7,<3.0.0)",
-    "fastprocesses (==0.14.0)",
+    "fastprocesses (==0.14.4)",
     "httpx (>=0.28.1,<0.29.0)",
     "gdal (==3.10.3)"
 ]
@@ -81,7 +79,7 @@ exclude = [
 
 [tool.poetry]
 name = "noiseprocesses"
-version = "1.0.11"
+version = "1.0.12"
 description = "A python wrapper for NoiseModelling"
 authors = ["Stefan Schuhart <stefan.schuhart@gv.hamburg.de>"]
 readme = "README.md"
