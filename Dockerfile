@@ -19,6 +19,8 @@ RUN git clone --depth 1 --branch v4.0.5 https://github.com/Universite-Gustave-Ei
 
 FROM ghcr.io/osgeo/gdal:ubuntu-small-3.10.3 AS python-builder
 
+ARG POETRY_VERSION=2.1.2
+
 ENV CACHE_DIR=/app/cache \
     POETRY_NO_INTERACTION=1 \
     POETRY_VIRTUALENVS_IN_PROJECT=1 \
@@ -43,7 +45,7 @@ ENV POETRY_ENV=/poetry
 # Install Poetry using the system-wide Python and a dedicated virtual environment
 RUN python3 -m venv $POETRY_ENV \
     && ${POETRY_ENV}/bin/pip install -U pip setuptools \
-    && ${POETRY_ENV}/bin/pip install poetry
+    && ${POETRY_ENV}/bin/pip install poetry==${POETRY_VERSION}
 
 # Create a virtual environment using the system-wide Python
 # for the application
@@ -52,6 +54,7 @@ RUN python3.12 -m venv /app/.venv
 # Activate the virtual environment and install dependencies with Poetry
 ENV PATH="/app/.venv/bin:$PATH"
 COPY pyproject.toml poetry.lock ./
+RUN ${POETRY_ENV}/bin/poetry version
 RUN ${POETRY_ENV}/bin/poetry install --without=dev --no-root
 
 COPY src ./src
