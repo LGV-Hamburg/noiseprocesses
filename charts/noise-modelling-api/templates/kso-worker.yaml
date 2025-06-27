@@ -12,7 +12,7 @@ spec:
   minReplicaCount: {{ .Values.autoscaling.worker.keda.minReplicas }}
   maxReplicaCount: {{ .Values.autoscaling.worker.keda.maxReplicas }}
   pollingInterval: 3
-  cooldownPeriod: 10
+  cooldownPeriod: {{ .Values.autoscaling.worker.keda.cooldownSeconds }}
   triggers:
     - type: redis
       metadata:
