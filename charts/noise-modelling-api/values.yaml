@@ -120,5 +120,5 @@ autoscaling:
       minReplicas: 0 # scale down to zero to spare resources
       maxReplicas: 5
       queueName: "celery"
-      queueLenght: 3
-  
+      queueLength: 3
+      cooldownSeconds: 120 # seconds
