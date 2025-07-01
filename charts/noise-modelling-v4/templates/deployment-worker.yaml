@@ -47,7 +47,7 @@ spec:
               valueFrom:
                 secretKeyRef:
                   name: {{ .Values.config.celery.existingSecret }}
-                  key: {{ .Values.config.celery.existingSecret }}
+                  key: {{ .Values.config.celery.existingSecretKey }}
           {{- else }}
               value: ""
           {{- end }}
@@ -56,7 +56,7 @@ spec:
               valueFrom:
                 secretKeyRef:
                   name: {{ .Values.config.resultCache.existingSecret }}
-                  key: {{ .Values.config.resultCache.existingSecret }}
+                  key: {{ .Values.config.resultCache.existingSecretKey }}
           {{- else }}
               value: ""
           {{- end }}
