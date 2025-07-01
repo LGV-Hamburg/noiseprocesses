@@ -94,7 +94,6 @@ class AdditionalDataOutputControls(BaseModel):
 
 
 class PerformanceSettings(BaseModel):
-    model_config = ConfigDict(frozen=True)
 
     thread_count: int = Field(
         default=0, ge=0, description="Number of computation threads (0 = auto)"
@@ -102,14 +101,20 @@ class PerformanceSettings(BaseModel):
 
 
 class DatabaseConfig(BaseModel):
-    model_config = ConfigDict(frozen=True)
+    model_config = ConfigDict(
+        frozen=False,
+        extra="forbid"
+    )
 
     name: str = "Noise"
     in_memory: bool = False
 
 
 class NoiseCalculationConfig(BaseModel):
-    model_config = ConfigDict(extra="ignore")
+    model_config = ConfigDict(
+        extra="ignore",
+        frozen=True,
+    )
 
     database: DatabaseConfig = DatabaseConfig()
     required_input: InputRequiredTables = InputRequiredTables()
