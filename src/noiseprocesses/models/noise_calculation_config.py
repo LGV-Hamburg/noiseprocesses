@@ -113,7 +113,7 @@ class DatabaseConfig(BaseModel):
 class NoiseCalculationConfig(BaseModel):
     model_config = ConfigDict(
         extra="ignore",
-        frozen=True,
+        frozen=False,
     )
 
     database: DatabaseConfig = DatabaseConfig()
