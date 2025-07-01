@@ -1,0 +1,102 @@
+{{- if and .Values.autoscaling.worker.keda.enabled .Values.autoscaling.worker.keda.useScaledJob }}
+apiVersion: keda.sh/v1alpha1
+kind: ScaledJob
+metadata:
+  name: {{ include "noise-modelling-api.fullname" . }}-worker
+  labels:
+    {{- include "noise-modelling-api.labels" . | nindent 4 }}
+spec:
+  jobTargetRef:
+    parallelism: 1
+    completions: 1
+    template:
+      metadata:
+        labels:
+          {{- include "noise-modelling-api.selectorLabels" . | nindent 10 }}
+          component: worker
+      spec:
+        {{- with .Values.image.pullSecrets }}
+        imagePullSecrets:
+          {{- toYaml . | nindent 10 }}
+        {{- end }}
+        {{- with .Values.nodeSelector.worker }}
+        nodeSelector:
+          {{- toYaml . | nindent 10 }}
+        {{- end }}
+        {{- with .Values.tolerations.worker }}
+        tolerations:
+          {{- toYaml . | nindent 10 }}
+        {{- end }}
+        containers:
+          - name: {{ .Chart.Name }}-worker
+            image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+            imagePullPolicy: {{ .Values.image.pullPolicy }}
+            command: [
+              "celery", "-A",
+              "fastprocesses.worker.celery_app", "worker",
+              "--loglevel=info",
+              "--concurrency=1",
+            ]
+            env:
+              - name: CELERY_BROKER_PASSWORD
+            {{- if .Values.config.celery.existingSecret }}
+                  valueFrom:
+                    secretKeyRef:
+                      name: {{ .Values.config.celery.existingSecret }}
+                      key: {{ .Values.config.celery.existingSecret }}
+            {{- else }}
+                  value: ""
+            {{- end }}
+              - name: RESULT_CACHE_PASSWORD
+            {{- if .Values.config.celery.existingSecret }}
+                  valueFrom:
+                    secretKeyRef:
+                      name: {{ .Values.config.resultCache.existingSecret }}
+                      key: {{ .Values.config.resultCache.existingSecret }}
+            {{- else }}
+                  value: ""
+            {{- end }}
+            envFrom:
+              - configMapRef:
+                  name: {{ include "noise-modelling-api.fullname" . }}
+            resources:
+              {{- toYaml .Values.resources.worker | nindent 14 }}
+            volumeMounts:
+              - name: memory-volume
+                mountPath: /tmp
+        restartPolicy: Never
+        volumes:
+          - name: memory-volume
+            emptyDir:
+              medium: Memory
+              sizeLimit: 500Mi
+  pollingInterval: 3
+  successfulJobsHistoryLimit: 5
+  failedJobsHistoryLimit: 5
+  maxReplicaCount: {{ .Values.autoscaling.worker.keda.maxReplicas }}
+  minReplicaCount: {{ .Values.autoscaling.worker.keda.minReplicas }}
+  cooldownPeriod: {{ .Values.autoscaling.worker.keda.cooldownSeconds }}
+  triggers:
+    - type: redis
+      metadata:
+        address: "{{ .Values.config.celery.brokerHost }}:{{ .Values.config.celery.brokerPort }}"
+        listName: "{{ .Values.autoscaling.worker.keda.queueName }}"
+        listLength: "{{ .Values.autoscaling.worker.keda.queueLength }}"
+        dbIndex: "{{ .Values.config.celery.brokerDb }}"
+        {{ if .Values.config.celery.existingSecret }}
+        authenticationRef:
+          name: {{ include "noise-modelling-api.fullname" . }}-redis--trigger-auth
+        {{- end }}
+---
+{{ if .Values.config.celery.existingSecret }}
+apiVersion: keda.k8s.io/v1alpha1
+kind: TriggerAuthentication
+metadata:
+  name: {{ include "noise-modelling-api.fullname" . }}-redis--trigger-auth
+spec:
+  secretTargetRef:
+  - parameter: password
+    name: {{ .Values.config.celery.existingSecret }}
+    key: {{ .Values.config.celery.existingSecretKey }}
+{{- end }}
+{{- end }}
