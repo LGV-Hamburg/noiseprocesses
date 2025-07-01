@@ -106,7 +106,7 @@ class NoiseDatabase:
 
         jdbc_url = f"jdbc:h2:{db_path};AUTO_SERVER=TRUE"
         if self.in_memory:
-            jdbc_url = f"jdbc:h2:mem:{db_path};DB_CLOSE_DELAY=-1"  # DB_CLOSE_DELAY=-1" creates a potential memory leak!
+            jdbc_url = f"jdbc:h2:mem:{self.db_file};DB_CLOSE_DELAY=-1"  # DB_CLOSE_DELAY=-1" creates a potential memory leak!
 
         props = self.java_bridge.Properties()
         props.setProperty("user", "sa")
