@@ -57,7 +57,7 @@ class BuildingGridSettingsUser(BaseModel):
         description="Spacing between receivers (meters)",
     )  # Spacing between receivers (meters)
     join_receivers_by_xy_location_3d: bool = Field(
-        default=True,
+        default=False,
         description=(
             "Wether to join receivers by XY location for 3D building grids. "
             "Output will be a single receiver for each XY location with LAeq "

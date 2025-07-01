@@ -644,7 +644,7 @@ class TrafficNoiseBuildings(BaseProcess):
                         },
                         "join_receivers_by_xy_location_3d": {
                             "type": "boolean",
-                            "default": True,
+                            "default": False,
                         },
                     },
                 }),
