@@ -26,6 +26,7 @@ from noiseprocesses.models.noise_calculation_config import (
     NoiseCalculationUserInput,
 )
 from noiseprocesses.models.output import NoiseCalculationOutput
+from noiseprocesses.config import config as app_settings
 
 logger = logging.getLogger("uvicorn.error")
 
@@ -43,8 +44,11 @@ class TrafficNoiseProp(BaseProcess):
         if job_progress_callback:
             job_progress_callback(0, f"Beginning calculations for {user_outputs}")
 
+        config = NoiseCalculationConfig()
+        config.database.in_memory = app_settings.NP_DATABASE_IN_MEMORY
+
         calculator = RoadNoiseModellingCalculator(
-            noise_calculation_config=NoiseCalculationConfig()
+            noise_calculation_config=config
         )
         try:
             user_input: NoiseCalculationUserInput = (
@@ -392,8 +396,11 @@ class TrafficNoiseBuildings(BaseProcess):
         if job_progress_callback:
             job_progress_callback(0, f"Beginning calculations for {user_outputs}")
 
+        config = NoiseCalculationConfig()
+        config.database.in_memory = app_settings.NP_DATABASE_IN_MEMORY
+
         calculator = ImmissionsAroundBuildingsCalculator(
-            config=NoiseCalculationConfig()
+            config=config
         )
         try:
             user_input: NoiseCalculationUserInput = (
