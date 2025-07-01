@@ -42,7 +42,7 @@ spec:
             command: [
               "celery", "-A",
               "fastprocesses.worker.celery_app", "worker",
-              "--loglevel={{ .Values.config.celery.logLevel | quote }}",
+              "--loglevel={{ .Values.config.celery.logLevel }}",
               "--concurrency=1",
             ]
             env:
