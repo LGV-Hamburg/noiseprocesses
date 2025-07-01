@@ -186,11 +186,6 @@ class RoadNoiseModellingCalculator:
         if dem_url:
             dem_path = load_convert_save_dem(dem_url)
 
-        # setup the database
-        noise_db = NoiseDatabase(
-            self.config.database.name, self.config.database.in_memory
-        )
-
         if progress_callback:
             progress_callback(3, "Importing into database")
 
@@ -201,14 +196,14 @@ class RoadNoiseModellingCalculator:
         
         # import data
         # - buildings -> geojson import
-        noise_db.import_geojson(
+        self.database.import_geojson(
             buildings.model_dump(exclude_none=True),  # omit empty fields like bbox
             self.config.required_input.building_table,
             crs,
         )
 
         # - roads -> geojson import
-        noise_db.import_geojson(
+        self.database.import_geojson(
             roads_traffic.model_dump(exclude_unset=True),  # omit empty fields like bbox
             self.config.required_input.roads_table,
             crs,
@@ -219,7 +214,7 @@ class RoadNoiseModellingCalculator:
         self._ensure_roads_have_z(self.config.required_input.roads_table)
 
         if dem_path:
-            noise_db.import_raster(
+            self.database.import_raster(
                 dem_path,
                 self.config.optional_input.dem_table,
                 crs,
@@ -227,7 +222,7 @@ class RoadNoiseModellingCalculator:
 
         # - grounds -> geojson
         if grounds:
-            noise_db.import_geojson(
+            self.database.import_geojson(
                 grounds.model_dump(exclude_none=True),
                 self.config.optional_input.ground_absorption_table,
                 crs,
@@ -252,7 +247,7 @@ class RoadNoiseModellingCalculator:
             grid_config.max_cell_dist = self.config.receiver_grid_settings.max_cell_dist
             grid_config.road_width = self.config.receiver_grid_settings.road_width
 
-        delauny_generator = DelaunayGridGenerator(noise_db)
+        delauny_generator = DelaunayGridGenerator(self.database)
 
         if progress_callback:
             progress_callback(5, "Generating receivers grid")
@@ -265,7 +260,7 @@ class RoadNoiseModellingCalculator:
             )
 
         # calculate propagation
-        road_prop = RoadPropagationCalculator(noise_db)
+        road_prop = RoadPropagationCalculator(self.database)
         road_prop.calculate_propagation(
             self.config, True if dem_url else False, True if grounds else False
         )
@@ -276,7 +271,7 @@ class RoadNoiseModellingCalculator:
             )
 
         # finally: create isocontour
-        surface_generator = IsoSurfaceBezier(noise_db)
+        surface_generator = IsoSurfaceBezier(self.database)
 
         output: dict[str, dict] = {}
 
@@ -287,7 +282,7 @@ class RoadNoiseModellingCalculator:
 
             # export to dict/geojson/FeatureCollection
             # H2 DB has no support for in-memory data export
-            surface_file = noise_db.export_data(table_name)
+            surface_file = self.database.export_data(table_name)
 
             # read the data...
             # replace path with actual data
