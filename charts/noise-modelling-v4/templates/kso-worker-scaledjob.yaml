@@ -40,21 +40,21 @@ spec:
             env:
               - name: CELERY_BROKER_PASSWORD
             {{- if .Values.config.celery.existingSecret }}
-                  valueFrom:
-                    secretKeyRef:
-                      name: {{ .Values.config.celery.existingSecret }}
-                      key: {{ .Values.config.celery.existingSecret }}
+                valueFrom:
+                  secretKeyRef:
+                    name: {{ .Values.config.celery.existingSecret }}
+                    key: {{ .Values.config.celery.existingSecretKey }}
             {{- else }}
-                  value: ""
+                value: ""
             {{- end }}
               - name: RESULT_CACHE_PASSWORD
             {{- if .Values.config.celery.existingSecret }}
-                  valueFrom:
-                    secretKeyRef:
-                      name: {{ .Values.config.resultCache.existingSecret }}
-                      key: {{ .Values.config.resultCache.existingSecret }}
+                valueFrom:
+                  secretKeyRef:
+                    name: {{ .Values.config.resultCache.existingSecret }}
+                    key: {{ .Values.config.resultCache.existingSecretKey }}
             {{- else }}
-                  value: ""
+                value: ""
             {{- end }}
             envFrom:
               - configMapRef:
