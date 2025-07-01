@@ -65,6 +65,7 @@ config:
     jobStatusTtlDays: 7
     existingSecret: ""
     existingSecretKey: ""
+    logLevel: "info"
 #
   syncExecutionTimeoutSeconds: 10
 #
