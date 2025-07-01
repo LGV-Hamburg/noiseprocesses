@@ -1,6 +1,9 @@
 import copy
 import json
 import logging
+import random
+import string
+
 from collections import defaultdict
 from typing import Callable
 
@@ -32,11 +35,20 @@ logger = logging.getLogger(__name__)
 class ImmissionsAroundBuildingsCalculator:
     """Main class handling the complete noise calculation process"""
 
-    def __init__(self, config: NoiseCalculationConfig | None = None):
+    def __init__(
+            self,
+            config: NoiseCalculationConfig | None = None,
+    ):
         self.config = config or NoiseCalculationConfig()  # defaults
+        self.database_suffix = ''.join(
+            random.choices(
+                string.ascii_letters + string.digits, k=3
+            )
+        )
 
         self.database = NoiseDatabase(
-            db_file=self.config.database.name, in_memory=self.config.database.in_memory
+            db_file=f"{self.config.database.name}_{self.database_suffix}",
+            in_memory=self.config.database.in_memory
         )
         # match output control and table names:
         self.match_oct = {
