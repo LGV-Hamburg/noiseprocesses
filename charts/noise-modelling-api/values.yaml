@@ -122,3 +122,4 @@ autoscaling:
       queueName: "celery"
       queueLength: 3
       cooldownSeconds: 120 # seconds
+      useScaledJob: false # If true, use KEDA ScaledJob+Job for worker, else use ScaledObject+Deployment
