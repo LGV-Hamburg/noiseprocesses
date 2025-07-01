@@ -1,3 +1,4 @@
+{{- if and .Values.autoscaling.worker.keda.enabled (not .Values.autoscaling.worker.keda.useScaledJob) }}
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -73,3 +74,4 @@ spec:
           emptyDir:
             medium: Memory  # Use memory-based storage
             sizeLimit: 500Mi
+{{- end }}
