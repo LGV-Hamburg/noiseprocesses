@@ -74,7 +74,7 @@ ARG APP_VERSION=
 LABEL com.lgv.uda.maintainer="Urban Data Analytics" \
     com.lgv.uda.name="analytics/noiseprocesses" \
     com.lgv.uda.version=${APP_VERSION} \
-    com.lgv.uda.source_commit=$SOURCE_COMMIT \
+    com.lgv.uda.source_commit=${SOURCE_COMMIT} \
     org.opencontainers.image.source="https://github.com/UrbanDataAnalytics/noiseprocesses"
 
 # # add user and group
