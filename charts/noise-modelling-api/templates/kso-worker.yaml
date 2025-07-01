@@ -1,4 +1,4 @@
-{{- if .Values.autoscaling.worker.keda.enabled }}
+{{- if and .Values.autoscaling.worker.keda.enabled (not .Values.autoscaling.worker.keda.useScaledJob) }}
 apiVersion: keda.sh/v1alpha1
 kind: ScaledObject
 metadata:
