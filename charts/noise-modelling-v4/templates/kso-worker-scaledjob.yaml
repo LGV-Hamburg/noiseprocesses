@@ -6,6 +6,14 @@ metadata:
   labels:
     {{- include "noise-modelling-api.labels" . | nindent 4 }}
 spec:
+  pollingInterval: 10
+  successfulJobsHistoryLimit: 5
+  failedJobsHistoryLimit: 5
+  maxReplicaCount: {{ .Values.autoscaling.worker.keda.maxReplicas }}
+  minReplicaCount: {{ .Values.autoscaling.worker.keda.minReplicas }}
+  rollout:
+    strategy: gradual                         # Optional. Default: default. Which Rollout Strategy KEDA will use.
+    propagationPolicy: foreground             # Optional. Default: background. Kubernetes propagation policy for cleaning up existing jobs during 
   jobTargetRef:
     parallelism: 1
     completions: 1
@@ -34,7 +42,7 @@ spec:
             command: [
               "celery", "-A",
               "fastprocesses.worker.celery_app", "worker",
-              "--loglevel=info",
+              "--loglevel={{ .Values.config.celery.logLevel | quote }}",
               "--concurrency=1",
             ]
             env:
@@ -70,12 +78,6 @@ spec:
             emptyDir:
               medium: Memory
               sizeLimit: 500Mi
-  pollingInterval: 10
-  successfulJobsHistoryLimit: 5
-  failedJobsHistoryLimit: 5
-  maxReplicaCount: {{ .Values.autoscaling.worker.keda.maxReplicas }}
-  minReplicaCount: {{ .Values.autoscaling.worker.keda.minReplicas }}
-  cooldownPeriod: {{ .Values.autoscaling.worker.keda.cooldownSeconds }}
   triggers:
     - type: redis
       metadata:
