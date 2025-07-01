@@ -13,6 +13,21 @@ spec:
   maxReplicaCount: {{ .Values.autoscaling.worker.keda.maxReplicas }}
   pollingInterval: 3
   cooldownPeriod: {{ .Values.autoscaling.worker.keda.cooldownSeconds }}
+  advanced:
+    horizontalPodAutoscalerConfig:
+      behavior:
+        scaleUp:
+          stabilizationWindowSeconds: 60
+          policies:
+            - type: Percent
+              value: 100
+              periodSeconds: 15
+        scaleDown:
+          stabilizationWindowSeconds: 300
+          policies:
+            - type: Percent
+              value: 100
+              periodSeconds: 15
   triggers:
     - type: redis
       metadata:
