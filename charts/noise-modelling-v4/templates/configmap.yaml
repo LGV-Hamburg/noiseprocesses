@@ -20,7 +20,7 @@ data:
   FP_JOB_STATUS_TTL_DAYS: "{{ .Values.config.celery.jobStatusTtlDays }}"
   FP_SYNC_EXECUTION_TIMEOUT_SECONDS: "{{ .Values.config.syncExecutionTimeoutSeconds }}"
   FP_LOG_LEVEL: "{{ .Values.config.logLevel }}"
-
+  FP_CELERY_JOB_MODE: "{{ (or .Values.autoscaling.worker.keda.useScaledJob .Values.config.celery.jobMode) }}"
   NP_JAVA_LIB_DIR: "{{ .Values.config.javaLibDir }}"
   NP_LOG_LEVEL: "{{ .Values.config.logLevel }}"
   NP_JAVA_MAX_HEAP_SIZE: "{{ .Values.config.javaMaxHeapSize }}"

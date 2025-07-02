@@ -66,6 +66,7 @@ config:
     existingSecret: ""
     existingSecretKey: ""
     logLevel: "info"
+    jobMode: false
 #
   syncExecutionTimeoutSeconds: 10
 #
@@ -123,6 +124,6 @@ autoscaling:
       queueName: "celery"
       queueLength: 3
       cooldownSeconds: 120 # seconds
-      useScaledJob: false # If true, use KEDA ScaledJob+Job for worker, else use ScaledObject+Deployment
+      useScaledJob: true # If true, use KEDA ScaledJob+Job for worker, else use ScaledObject+Deployment
       jobActiveDeadlineSeconds: 900 # 15 minutes
       jobRetries: 3 # Number of retries for the job
