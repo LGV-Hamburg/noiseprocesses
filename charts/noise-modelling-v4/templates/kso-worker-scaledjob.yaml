@@ -17,6 +17,8 @@ spec:
   jobTargetRef:
     parallelism: 1
     completions: 1
+    activeDeadlineSeconds: {{ .Values.autoscaling.worker.keda.jobActiveDeadlineSeconds }}
+    backoffLimit: {{ .Values.autoscaling.worker.keda.jobRetries }}
     template:
       metadata:
         labels:
