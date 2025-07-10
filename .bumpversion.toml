@@ -33,15 +33,15 @@ bumpable = true
 bumpable = true
 
 # File-specific configurations
-[[tool.bumpversion.file]]
-filename = "Dockerfile"
-search = 'com.lgv.uda.version="{current_version}"'
-replace = 'com.lgv.uda.version="{new_version}"'
+# [[tool.bumpversion.file]]
+# filename = "Dockerfile"
+# search = 'com.lgv.uda.version="{current_version}"'
+# replace = 'com.lgv.uda.version="{new_version}"'
 
-[[tool.bumpversion.file]]
-filename = ".env"
-search = "IMAGE_TAG={current_version}"
-replace = "IMAGE_TAG={new_version}"
+# [[tool.bumpversion.file]]
+# filename = ".env"
+# search = "IMAGE_TAG={current_version}"
+# replace = "IMAGE_TAG={new_version}"
 
 [[tool.bumpversion.file]]
 filename = "pyproject.toml"
