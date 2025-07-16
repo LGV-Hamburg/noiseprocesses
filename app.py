@@ -634,19 +634,19 @@ class TrafficNoiseBuildings(BaseProcess):
                         "receiver_distance": {
                             "type": "number",
                             "minimum": 1,
-                            "maximum": 1000.0,
+                            "maximum": 25.0,
                             "default": 10.0,
                         },
                         "distance_from_wall": {
                             "type": "number",
                             "minimum": 0,
-                            "maximum": 50.0,
+                            "maximum": 25.0,
                             "default": 2.0,
                         },
                         "height_between_levels_3d": {
                             "type": "number",
                             "minimum": 0,
-                            "maximum": 100.0,
+                            "maximum": 20.0,
                             "default": 3.0,
                         },
                         "join_receivers_by_xy_location_3d": {
