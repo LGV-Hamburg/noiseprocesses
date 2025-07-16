@@ -1,3 +1,5 @@
+# This code is entirely based on https://github.com/Universite-Gustave-Eiffel/NoiseModelling/tree/main/wps_scripts/src/main/groovy/org/noise_planet/noisemodelling/wps/Receivers/Building_Grid.groovy
+# from DECIDE team from the Lab-STICC (CNRS) and by the Mixt Research Unit in Environmental Acoustics (Université Gustave Eiffel)
 import math
 from typing import Any
 
