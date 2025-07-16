@@ -42,18 +42,25 @@ class BuildingGridSettingsUser(BaseModel):
     )
 
     receiver_height_2d: float = Field(
-        default=3.0, gt=0,
+        default=3.0, gt=0, lt=100,
         description="Height of receivers in meters"
     )
     distance_from_wall: float = Field(
-        default=2.0, description="Distance of receivers from the wall (meters)", gt=0
+        default=2.0,
+        description="Distance of receivers from the wall (meters)",
+        gt=0,
+        lt=20,
     )  # Distance of receivers from the wall (meters)
     height_between_levels_3d: float | None = Field(
-        default=None, description="Height between levels for 3D building grids", gt=0
+        default=None,
+        description="Height between levels for 3D building grids",
+        gt=0,
+        lt=20,
     )  # Height between levels 3D grids
     receiver_distance: float = Field(
         default=10.0,
         gt=0,
+        lt=25,
         description="Spacing between receivers (meters)",
     )  # Spacing between receivers (meters)
     join_receivers_by_xy_location_3d: bool = Field(
@@ -177,8 +184,8 @@ class BuildingGridConfig(BaseModel):
     )
 
     receiver_height: float = Field(
-        default=10.0, gt=0, description="Spacing between receivers (meters)"
-    )  # Spacing between receivers (meters)
+        default=10.0, gt=0, description="Height of receivers above ground (meters)"
+    )
 
     # Required parameters
     buildings_table: str = Field(
