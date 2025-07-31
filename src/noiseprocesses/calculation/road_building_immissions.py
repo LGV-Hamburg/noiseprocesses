@@ -346,5 +346,7 @@ class ImmissionsAroundBuildingsCalculator:
 
         if progress_callback:
             progress_callback(100, "Calculating noise levels complete.")
+        
+        JavaBridge.shutdown()
         # ...and return it
         return output

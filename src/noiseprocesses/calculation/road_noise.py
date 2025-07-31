@@ -291,5 +291,8 @@ class RoadNoiseModellingCalculator:
 
         if progress_callback:
             progress_callback(100, "Generating isocontours complete.")
+
+        JavaBridge.shutdown()
+
         # ...and return it
         return output
