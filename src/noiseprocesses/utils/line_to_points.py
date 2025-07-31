@@ -7,8 +7,6 @@ from shapely.geometry import Point
 
 from noiseprocesses.core.java_bridge import JavaBridge
 
-java_bridge = JavaBridge.get_instance()
-
 class Coordinate:
     """A class to represent a 3D coordinate, mimicking the Java Coordinate object."""
     def __init__(self, x: float, y: float, z: float = 0.0):
@@ -42,6 +40,7 @@ def split_line_to_points(geometry, delta):
     Returns:
         List[Point]: A list of points along the geometry.
     """
+    java_bridge = JavaBridge.get_instance()
 
     points = []
     if isinstance(geometry, java_bridge.LineString):
