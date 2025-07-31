@@ -3,6 +3,7 @@ import logging
 import random
 import string
 from typing import Callable
+import gc
 
 from pydantic import HttpUrl
 
@@ -32,14 +33,12 @@ class RoadNoiseModellingCalculator:
 
     def __init__(self, noise_calculation_config: NoiseCalculationConfig | None = None):
         self.config = noise_calculation_config or NoiseCalculationConfig()  # defaults
-        self.database_suffix = ''.join(
-            random.choices(
-                string.ascii_letters + string.digits, k=3
-            )
+        self.database_suffix = "".join(
+            random.choices(string.ascii_letters + string.digits, k=3)
         )
         self.database = NoiseDatabase(
             db_file=f"{self.config.database.name}_{self.database_suffix}",
-            in_memory=self.config.database.in_memory
+            in_memory=self.config.database.in_memory,
         )
         # match output control and table names:
         self.match_oct = {
@@ -137,6 +136,9 @@ class RoadNoiseModellingCalculator:
         # initialize redirecting java output
         java_bridge = JavaBridge.get_instance()
 
+        logger.info("Starting noise calculation process: config setup")
+        java_bridge.log_jvm_memory()
+
         java_bridge.redirect_java_output(progress_callback=progress_callback)
 
         # config setup, take defaults if user did not provide any
@@ -153,6 +155,8 @@ class RoadNoiseModellingCalculator:
 
         # validate user inputs
         # - buildings user input -> buildings internal
+        logger.info("Validating user input.")
+        java_bridge.log_jvm_memory()
         if progress_callback:
             progress_callback(1, "Validating user input")
 
@@ -193,8 +197,10 @@ class RoadNoiseModellingCalculator:
         crs: int = 0
         if isinstance(user_input.crs, HttpUrl) and user_input.crs.path:
             crs = int(user_input.crs.path.split("/")[-1])
-        
+
         # import data
+        logger.info("Importing data into H2 DB.")
+        java_bridge.log_jvm_memory()
         # - buildings -> geojson import
         self.database.import_geojson(
             buildings.model_dump(exclude_none=True),  # omit empty fields like bbox
@@ -234,6 +240,8 @@ class RoadNoiseModellingCalculator:
             )
 
         # generate receivers (using Delaunay with triangle creation)
+        logger.info("Starting receivers grid generation.")
+        java_bridge.log_jvm_memory()
         # configure grid parameters
         # !currently only DelaunayGridConfig is supported!
         grid_config = DelaunayGridConfig(
@@ -265,12 +273,18 @@ class RoadNoiseModellingCalculator:
             self.config, True if dem_url else False, True if grounds else False
         )
 
+        # manually cleanup
+        gc.collect()
+
         if progress_callback:
             progress_callback(
                 90, "Calculating noise levels complete. Generating isocontours"
             )
 
         # finally: create isocontour
+        logger.info("Generating isocontours.")
+        java_bridge.log_jvm_memory()
+
         surface_generator = IsoSurfaceBezier(self.database)
 
         output: dict[str, dict] = {}
@@ -292,7 +306,11 @@ class RoadNoiseModellingCalculator:
         if progress_callback:
             progress_callback(100, "Generating isocontours complete.")
 
-        JavaBridge.shutdown()
+        # manually cleanup
+        gc.collect()
+        java_bridge.log_jvm_memory()
+
+        # JavaBridge.shutdown()
 
         # ...and return it
         return output

@@ -3,6 +3,7 @@ import json
 import logging
 import random
 import string
+import gc
 
 from collections import defaultdict
 from typing import Callable
@@ -265,6 +266,9 @@ class ImmissionsAroundBuildingsCalculator:
                 crs,
             )
 
+        # manually cleanup
+        gc.collect()
+
         if progress_callback:
             progress_callback(
                 4, "Importing into database complete. Generating receivers grid."
@@ -312,6 +316,9 @@ class ImmissionsAroundBuildingsCalculator:
             has_stack_id,
         )
 
+        # manually clean up
+        gc.collect()
+
         if progress_callback:
             progress_callback(
                 90, "Calculating noise levels complete. Generating isocontours"
@@ -347,6 +354,10 @@ class ImmissionsAroundBuildingsCalculator:
         if progress_callback:
             progress_callback(100, "Calculating noise levels complete.")
         
-        JavaBridge.shutdown()
+        # manually cleanup
+        gc.collect()
+        java_bridge.log_jvm_memory()
+
+        # JavaBridge.shutdown()
         # ...and return it
         return output

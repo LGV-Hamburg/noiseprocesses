@@ -39,6 +39,7 @@ class RoadPropagationCalculator:
             None
         """
         logger.info("Starting propagation calculation")
+        self.java_bridge.log_jvm_memory()
 
         try:
             # Initialize LDEN factory with config
@@ -146,6 +147,9 @@ class RoadPropagationCalculator:
             noise_map.initialize(self.database.connection, empty_visitor)
 
             # Run calculation with progress tracking
+            logger.info("Start processing.")
+            self.java_bridge.log_jvm_memory()
+
             progress_visitor = self.java_bridge.RootProgressVisitor(1, True, 1)
             receivers = self.java_bridge.HashSet()  # Track processed receivers
 
@@ -169,6 +173,9 @@ class RoadPropagationCalculator:
             finally:
                 lden_processor.stop()
 
+                logger.info("Finished processing.")
+                self.java_bridge.log_jvm_memory()
+
             # Get receiver geometry field
             geom_fields = self.database.query(f"""
                 SELECT f_geometry_column 
@@ -184,7 +191,7 @@ class RoadPropagationCalculator:
                 lden_config,
                 config.required_input.receivers_table,
                 geom_fields[0][0],
-                has_stack_id=has_stack_id
+                has_stack_id=has_stack_id,
             )
 
             logger.info(
@@ -286,7 +293,8 @@ class RoadPropagationCalculator:
             raise
 
     def _create_result_tables(
-        self, lden_config,
+        self,
+        lden_config,
         receivers_table: str,
         receivers_geom_field: str,
         has_stack_id: bool = False,
