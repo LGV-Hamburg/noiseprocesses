@@ -232,6 +232,28 @@ class JavaBridge:
             jpype.shutdownJVM()
         cls._instance = None
 
+    @classmethod
+    def log_jvm_memory(cls):
+        # Ensure JVM is started
+        if not jpype.isJVMStarted():
+            jpype.startJVM()
+
+        # Import the Java class
+        JVMMemoryMetric = jpype.JClass("org.noise_planet.noisemodelling.core.JVMMemoryMetric")
+
+        # Create an instance
+        metric = JVMMemoryMetric()
+
+        # Get memory stats
+        used_memory = metric.getUsedMemory()
+        max_memory = metric.getMaxMemory()
+        free_memory = metric.getFreeMemory()
+
+        # Print or log the results
+        logger.debug(f"JVM Used Memory: {used_memory / (1024**2):.2f} MB")
+        logger.debug(f"JVM Max Memory: {max_memory / (1024**2):.2f} MB")
+        logger.debug(f"JVM Free Memory: {free_memory / (1024**2):.2f} MB")
+
     def _init_classes(self):
         """Initialize commonly used Java classes."""
         # Using JPype's import style
