@@ -45,8 +45,8 @@ class JavaBridge:
             jpype.startJVM(
                 jpype.getDefaultJVMPath(),
                 # Memory configuration
-                "-Xmx4096m",  # Maximum heap size
-                "-Xms1024m",  # Initial heap size
+                f"-Xmx{config.NP_JAVA_MAX_HEAP_SIZE}m",  # Maximum heap size
+                f"-Xms{config.NP_JAVA_INITIAL_HEAP_SIZE}m",  # Initial heap size
                 # GC optimization
                 "-XX:+UseG1GC",  # Use G1 garbage collector
                 "-XX:MaxGCPauseMillis=200",  # Target max GC pause time
