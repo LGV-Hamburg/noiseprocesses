@@ -6,13 +6,13 @@ set -e
 echo "Installing Java 11 and Maven..."
 
 # Update package list
-sudo apt-get update
+apt-get update
 
 # Install Java 11
-sudo apt-get install -y openjdk-11-jdk
+apt-get install -y openjdk-11-jdk
 
 # Install Maven
-sudo apt-get install -y maven
+apt-get install -y maven
 
 # Verify installations
 echo "Verifying installations..."
@@ -30,7 +30,7 @@ if [ -z "$JAVA_HOME" ]; then
 fi
 
 # install jniues depdenencies
-sudo apt-get install -y \
+apt-get install -y \
     python3-dev \
     build-essential \
     openjdk-11-jdk
