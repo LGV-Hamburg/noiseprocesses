@@ -17,6 +17,7 @@ from pydantic import (
 
 from noiseprocesses.models.building_properties import BuildingsFeatureCollection
 from noiseprocesses.models.dem_feature import BboxFeature
+from noiseprocesses.models.emission_config import CoefficientsProfile
 from noiseprocesses.models.grid_config import BuildingGridSettingsUser, GridSettingsUser
 from noiseprocesses.models.ground_absorption import GroundAbsorptionFeatureCollection
 from noiseprocesses.models.isosurface_config import IsoSurfaceUserSettings
@@ -27,7 +28,6 @@ from noiseprocesses.models.propagation_config import (
 from noiseprocesses.models.roads_properties import RoadsFeature, RoadsFeatureCollection
 
 logger = logging.getLogger(__name__)
-
 
 class AcousticParameters(BaseModel):
     model_config = ConfigDict(extra="ignore")
@@ -119,6 +119,13 @@ class NoiseCalculationConfig(BaseModel):
     database: DatabaseConfig = DatabaseConfig()
     required_input: InputRequiredTables = InputRequiredTables()
     optional_input: InputOptionalTables = InputOptionalTables()
+    emission_coefficients_profile: CoefficientsProfile = Field(
+        default=CoefficientsProfile.cnossos2020,
+        description=(
+            "Emission coefficients for vehicles and road surfaces to use for noise calculations according to CNOSSOS. "
+            "Options: 'cnossos2015', 'cnossos2020', 'hh'."
+        ),
+    )
     acoustic_params: AcousticParameters = (
         AcousticParameters()
     )  # internal defaults, user overridable
@@ -161,6 +168,7 @@ class NoiseCalculationUserInput(BaseModel):
     dem_url: AnyUrl | None = None
     dem_bbox_feature: BboxFeature | None = None
     ground_absorption: GroundAbsorptionFeatureCollection | None = None
+    emission_coefficients_profile: CoefficientsProfile | None = None
     acoustic_parameters: AcousticParameters | None = None
     propagation_settings: PropagationSettings | None = None
     receiver_grid_settings: GridSettingsUser | None = None

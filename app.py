@@ -186,6 +186,21 @@ class TrafficNoiseProp(BaseProcess):
                 minOccurs=0,
                 maxOccurs=1,
             ),
+            "emission_coefficients_profile": ProcessInput(
+                title="Emission Coefficients Profile",
+                description=(
+                    "The emission coefficients profile to use. "
+                    "Default is cnossos2020 which defines the core "
+                    "emission parameters for the CNOSSOS-EU (Common Noise Assessment "
+                    "Methods in Europe) road traffic noise model, "
+                    "specifically the 2020 amendments."
+                ),
+                schema=Schema(
+                    type="string",
+                    enum=["cnossos2015", "cnossos2020", "hh"],
+                    default="cnossos2020",
+                ),
+            ),
             "acoustic_parameters": ProcessInput(
                 title="Acoustic Parameters",
                 description="Parameters for acoustic calculations",
@@ -428,6 +443,10 @@ class TrafficNoiseBuildings(BaseProcess):
             user_input, user_outputs, job_progress_callback
         )
 
+        import objgraph
+        objgraph.show_growth()
+        objgraph.show_most_common_types()
+
         result = NoiseCalculationOutput.model_validate(result_raw)
 
         if job_progress_callback:
@@ -498,7 +517,7 @@ class TrafficNoiseBuildings(BaseProcess):
                 description=(
                     "A URL to the Digital Elevation Model."
                     "The URL must point to a COG file and"
-                    "must have abounding box. If the bbox"
+                    "must have a bounding box. If the bbox"
                     "is omitted polygon feature can be submitted instead."
                 ),
                 schema=Schema(type="string", format="uri"),
@@ -534,6 +553,21 @@ class TrafficNoiseBuildings(BaseProcess):
                 ),
                 minOccurs=0,
                 maxOccurs=1,
+            ),
+            "emission_coefficients_profile": ProcessInput(
+                title="Emission Coefficients Profile",
+                description=(
+                    "The emission coefficients profile to use. "
+                    "Default is cnossos2020 which defines the core "
+                    "emission parameters for the CNOSSOS-EU (Common Noise Assessment "
+                    "Methods in Europe) road traffic noise model, "
+                    "specifically the 2020 amendments."
+                ),
+                schema=Schema(
+                    type="string",
+                    enum=["cnossos2015", "cnossos2020", "hh"],
+                    default="cnossos2020",
+                ),
             ),
             "acoustic_parameters": ProcessInput(
                 title="Acoustic Parameters",
