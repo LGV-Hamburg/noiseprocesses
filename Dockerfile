@@ -12,7 +12,7 @@ RUN --mount=type=cache,target=$CACHE_DIR apt-get update && apt-get install -y --
 
 COPY Makefile .env ./
 # Copy the NoiseModelling source code
-RUN git clone --depth 1 --branch v4.0.5 https://github.com/Universite-Gustave-Eiffel/NoiseModelling.git NoiseModelling \
+RUN git clone --depth 1 --branch 4.0.5-custom-coefficients https://github.com/LGV-Hamburg/NoiseModelling.git NoiseModelling \
     && cd NoiseModelling \
 # Build the NoiseModelling library
     && cd .. && make check-java && make dist
