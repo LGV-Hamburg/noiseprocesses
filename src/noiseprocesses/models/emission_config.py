@@ -1,6 +1,6 @@
 from pydantic import BaseModel, Field, ConfigDict
 from typing import List
-from enum import Enum, StrEnum
+from enum import Enum, StrEnum, auto
 
 class FrequencyBands(Enum):
     """Standard frequency bands used in acoustic calculations"""
@@ -16,9 +16,9 @@ class TimePeriod(str, Enum):
     NIGHT = "N"
 
 class CoefficientsProfile(StrEnum):
-    cnossos2015 = "cnossos2015"
-    cnossos2020 = "cnossos2020"
-    hh = "hh"
+    cnossos2015 = auto()
+    cnossos2020 = auto()
+    hh = auto()
 
 class NoiseCoefficientConfig(BaseModel):
     """Base configuration for NoiseModelling calculations"""
