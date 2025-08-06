@@ -74,16 +74,16 @@ class RoadNoiseModellingCalculator:
             # copy, as in-place update did not work
             copy_query = f"""
                 DROP TABLE IF EXISTS ROADS_TRAFFIC_3D;
-                CREATE TABLE ROADS_TRAFFIC_3D AS 
-                SELECT 
+                CREATE TABLE ROADS_TRAFFIC_3D AS
+                SELECT
                 ST_Force3D(THE_GEOM) AS THE_GEOM,
                 -- List all other columns here
-                PK, LV_D, LV_E, LV_N, MV_D, MV_E, MV_N, 
-                HGV_D, HGV_E, HGV_N, WAV_D, WAV_E, WAV_N, 
-                WBV_D, WBV_E, WBV_N, LV_SPD_D, LV_SPD_E, LV_SPD_N, 
-                MV_SPD_D, MV_SPD_E, MV_SPD_N, HGV_SPD_D, HGV_SPD_E, HGV_SPD_N, 
-                WAV_SPD_D, WAV_SPD_E, WAV_SPD_N, WBV_SPD_D, WBV_SPD_E, WBV_SPD_N, 
-                PVMT, TEMP_D, TEMP_E, TEMP_N, TS_STUD, PM_STUD, 
+                PK, LV_D, LV_E, LV_N, MV_D, MV_E, MV_N,
+                HGV_D, HGV_E, HGV_N, WAV_D, WAV_E, WAV_N,
+                WBV_D, WBV_E, WBV_N, LV_SPD_D, LV_SPD_E, LV_SPD_N,
+                MV_SPD_D, MV_SPD_E, MV_SPD_N, HGV_SPD_D, HGV_SPD_E, HGV_SPD_N,
+                WAV_SPD_D, WAV_SPD_E, WAV_SPD_N, WBV_SPD_D, WBV_SPD_E, WBV_SPD_N,
+                PVMT, TEMP_D, TEMP_E, TEMP_N, TS_STUD, PM_STUD,
                 JUNC_DIST, JUNC_TYPE, SLOPE
                 FROM {roads_table};
             """
@@ -99,7 +99,7 @@ class RoadNoiseModellingCalculator:
 
             # update geometry metadata
             update_metadata_query = """
-                ALTER TABLE ROADS_TRAFFIC_3D 
+                ALTER TABLE ROADS_TRAFFIC_3D
                 ADD CONSTRAINT enforce_srid_the_geom CHECK (ST_SRID(THE_GEOM) = 25832);
             """
             self.database.execute(update_metadata_query)
@@ -142,6 +142,9 @@ class RoadNoiseModellingCalculator:
         java_bridge.redirect_java_output(progress_callback=progress_callback)
 
         # config setup, take defaults if user did not provide any
+        self.config.emission_coefficients_profile = (
+            user_input.emission_coefficients_profile or self.config.emission_coefficients_profile
+        )
         self.config.acoustic_params = (
             user_input.acoustic_parameters or self.config.acoustic_params
         )
