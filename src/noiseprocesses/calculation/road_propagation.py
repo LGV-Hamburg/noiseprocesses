@@ -47,6 +47,8 @@ class RoadPropagationCalculator:
                 self.java_bridge.LDENConfig.INPUT_MODE.INPUT_MODE_TRAFFIC_FLOW
             )
 
+            lden_config.setCoefficientVersion(config.emission_coefficients_profile)
+
             # need to convert from dict to boolean values: presence means True
             output_controls = {
                 OutputDayTimeSoundLevels.noise_day: OutputDayTimeSoundLevels.noise_day
@@ -178,8 +180,8 @@ class RoadPropagationCalculator:
 
             # Get receiver geometry field
             geom_fields = self.database.query(f"""
-                SELECT f_geometry_column 
-                FROM geometry_columns 
+                SELECT f_geometry_column
+                FROM geometry_columns
                 WHERE f_table_name = '{config.required_input.receivers_table.upper()}'
             """)
 
@@ -360,10 +362,10 @@ class RoadPropagationCalculator:
             self.database.execute(f"""
                 CREATE TABLE {name} (
                     {", ".join(columns)}
-                ) AS 
+                ) AS
                 SELECT {", ".join(select_columns)}
                 FROM {receivers_table} r
-                {"LEFT" if lden_config.isMergeSources() else ""} JOIN {source_table} s 
+                {"LEFT" if lden_config.isMergeSources() else ""} JOIN {source_table} s
                 ON r.PK = s.IDRECEIVER
             """)
 
