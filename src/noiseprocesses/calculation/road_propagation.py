@@ -47,7 +47,7 @@ class RoadPropagationCalculator:
                 self.java_bridge.LDENConfig.INPUT_MODE.INPUT_MODE_TRAFFIC_FLOW
             )
 
-            lden_config.setCoefficientVersion(config.emission_coefficients_profile)
+            lden_config.setCoefficientVersion(config.emission_coefficients_profile.value)
 
             # need to convert from dict to boolean values: presence means True
             output_controls = {
@@ -149,7 +149,7 @@ class RoadPropagationCalculator:
             noise_map.initialize(self.database.connection, empty_visitor)
 
             # Run calculation with progress tracking
-            logger.info("Start processing.")
+            logger.info("Starting processing of noise levels.")
             self.java_bridge.log_jvm_memory()
 
             progress_visitor = self.java_bridge.RootProgressVisitor(1, True, 1)
