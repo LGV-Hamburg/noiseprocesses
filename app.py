@@ -443,10 +443,6 @@ class TrafficNoiseBuildings(BaseProcess):
             user_input, user_outputs, job_progress_callback
         )
 
-        import objgraph
-        objgraph.show_growth()
-        objgraph.show_most_common_types()
-
         result = NoiseCalculationOutput.model_validate(result_raw)
 
         if job_progress_callback:
