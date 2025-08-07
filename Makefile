@@ -46,7 +46,7 @@ build-image-debug:
 		--no-cache \
 		app
 
-push-registry:
+push-image:
 # login into our azure registry
 	az acr login -n ${CONTAINER_REGISTRY}
 # push image to the registry
