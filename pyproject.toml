@@ -79,7 +79,7 @@ exclude = [
 
 [tool.poetry]
 name = "noiseprocesses"
-version = "1.2.0+v4.0.5custom-coefficients"
+version = "1.2.1+v4.0.5custom-coefficients"
 description = "A python wrapper for NoiseModelling"
 authors = ["Stefan Schuhart <stefan.schuhart@gv.hamburg.de>"]
 readme = "README.md"
