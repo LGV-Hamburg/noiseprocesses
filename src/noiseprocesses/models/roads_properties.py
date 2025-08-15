@@ -252,7 +252,6 @@ class CnossosTrafficFlow(BaseModel):
     PVMT: str = Field(
         default="NL08",
         description="CNOSSOS road surface type",
-        pattern=r"^(NL(0[1-9]|1[0-4])|DEF)$",
         alias="pavement"
     )
     
@@ -541,7 +540,7 @@ class TrafficFlow(BaseModel):
     pavement: str = Field(
         default="NL08",
         description="CNOSSOS road surface type (e.g. NL08)",
-        pattern=r"^(NL(0[1-9]|1[0-4])|DEF)$",
+        pattern=r"^(NL\d{2}|DEF|DEF_CNOSSOS|FR_R2|SMA_\d{2}_\d{2,3}|AC11_\d{2}_\d{2,3}|PA11_\d{2}_\d{2,3}|Pflaster)$",
     )
     
     temperature_day: float = Field(
