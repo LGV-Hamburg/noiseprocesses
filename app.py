@@ -90,7 +90,7 @@ class TrafficNoiseProp(BaseProcess):
 
     # Define process description as a class variable
     process_description = ProcessDescription(
-        id="traffic_noise_propagation_cnossos",
+        id="traffic_noise_propagation",
         title="Traffic Noise Propagation Calculation",
         version="v4.0.5custom-coefficients-1.1.1",
         description=(
@@ -452,7 +452,7 @@ class TrafficNoiseBuildings(BaseProcess):
 
     # Define process description as a class variable
     process_description = ProcessDescription(
-        id="traffic_noise_buildings_cnossos",
+        id="traffic_noise_buildings",
         title="Traffic Noise Immission Calculation around building facades",
         version="v4.0.5custom-coefficients-1.2.1",
         description=(
