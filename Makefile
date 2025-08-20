@@ -52,6 +52,8 @@ push-image:
 # push image to the registry
 	docker push  ${CONTAINER_REGISTRY}/$(IMAGE_NAME):$(IMAGE_TAG)
 
+update-image: build-image push-image
+
 run-local:
 # run container in foreground
 	docker compose -f docker-compose-dev.yaml up
