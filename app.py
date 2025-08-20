@@ -31,8 +31,8 @@ from noiseprocesses.config import config as app_settings
 logger = logging.getLogger("uvicorn.error")
 
 
-@register_process("traffic_noise_propagation_cnossos")
-class TrafficNoisePropC(BaseProcess):
+@register_process("traffic_noise_propagation")
+class TrafficNoiseProp(BaseProcess):
     async def execute(
         self,
         exec_body: Dict[str, Any],
@@ -399,8 +399,8 @@ class TrafficNoisePropC(BaseProcess):
     )
 
 
-@register_process("traffic_noise_buildings_cnossos")
-class TrafficNoiseBuildingsC(BaseProcess):
+@register_process("traffic_noise_buildings")
+class TrafficNoiseBuildings(BaseProcess):
     async def execute(
         self,
         exec_body: Dict[str, Any],
