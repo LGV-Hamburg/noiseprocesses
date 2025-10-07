@@ -290,6 +290,9 @@ class JavaBridge:
             LineString,
             MultiLineString,
         )
+        from org.locationtech.jts.linearref import (  # type: ignore
+            LengthIndexedLine,
+        )
         from org.noise_planet.noisemodelling.jdbc import (  # type: ignore
             BezierContouring,
             LDENConfig,
@@ -372,6 +375,8 @@ class JavaBridge:
         self.Coordinate = Coordinate
         self.LineString = LineString
         self.MultiLineString = MultiLineString
+        self.LengthIndexedLine = LengthIndexedLine
+
         self.RootProgressVisitor = RootProgressVisitor
 
         self.ProgressMetric = ProgressMetric

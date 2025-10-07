@@ -7,27 +7,25 @@ from shapely.geometry import Point
 
 from noiseprocesses.core.java_bridge import JavaBridge
 
+
 class Coordinate:
     """A class to represent a 3D coordinate, mimicking the Java Coordinate object."""
+
     def __init__(self, x: float, y: float, z: float = 0.0):
         self.x = x
         self.y = y
         self.z = z
 
-    def distance3D(self, other: 'Coordinate') -> float:
+    def distance3D(self, other: "Coordinate") -> float:
         """Calculate the 3D distance to another coordinate."""
         return math.sqrt(
-            (self.x - other.x) ** 2 +
-            (self.y - other.y) ** 2 +
-            (self.z - other.z) ** 2
+            (self.x - other.x) ** 2 + (self.y - other.y) ** 2 + (self.z - other.z) ** 2
         )
 
-    def distance(self, other: 'Coordinate') -> float:
+    def distance(self, other: "Coordinate") -> float:
         """Calculate the 2D distance to another coordinate."""
-        return math.sqrt(
-            (self.x - other.x) ** 2 +
-            (self.y - other.y) ** 2
-        )
+        return math.sqrt((self.x - other.x) ** 2 + (self.y - other.y) ** 2)
+
 
 def split_line_to_points(geometry, delta):
     """
@@ -44,15 +42,15 @@ def split_line_to_points(geometry, delta):
 
     points = []
     if isinstance(geometry, java_bridge.LineString):
-        points.extend(split_line_string(geometry, delta))
+        points.extend(split_line_string_simple(geometry, delta))
     elif isinstance(geometry, java_bridge.MultiLineString):
         for index in range(geometry.getNumGeometries()):
             line = geometry.getGeometryN(index)
-            points.extend(split_line_string(line, delta))
+            points.extend(split_line_string_simple(line, delta))
     return points
 
 
-def split_line_string(geom, segment_size_constraint):
+def split_line_string(geom, max_point_spacing ):
     """
     Splits a LineString into points at regular intervals, preserving the functionality
     of the Groovy script's splitLineStringIntoPoints function.
@@ -65,83 +63,120 @@ def split_line_string(geom, segment_size_constraint):
         List[Point]: A list of Shapely Point objects.
     """
     points = []
-    geom_length = geom.getLength()  # Use JTS's getLength() method
+    geom_length = geom.getLength()  # Total length of the input line
 
-    # Handle short geometries
-    if geom_length < segment_size_constraint:
-        coords = geom.getCoordinates()  # Use JTS's getCoordinates() method
-        segment_length = 0
-        target_segment_size = geom_length / 2.0
-        for i in range(len(coords) - 1):
-            point_a: Any = coords[i]
-            point_b: Any = coords[i + 1]
-            length = point_a.distance3D(point_b)  # Use JTS's distance3D() method
-            if length + segment_length > target_segment_size:
+    # If the geometry is shorter than the constraint, just place a midpoint
+    if geom_length < max_point_spacing :
+        coordinates = geom.getCoordinates()
+        accumulated_length = 0
+        actual_segment_length = geom_length / 2.0  # Place midpoint
+        for i in range(len(coordinates) - 1):
+            start_coord: Any = coordinates[i]
+            next_coord: Any = coordinates[i + 1]
+            segment_length = start_coord.distance3D(next_coord)
+            # Fallback to 2D if 3D distance is not available
+            if math.isnan(segment_length):
+                segment_length = start_coord.distance(next_coord)
+            # If we've reached the midpoint, calculate and add it
+            if segment_length + accumulated_length > actual_segment_length:
                 segment_length_fraction = (
-                    target_segment_size - segment_length
-                ) / length
+                    actual_segment_length - accumulated_length
+                ) / segment_length
                 mid_point = Coordinate(
-                    point_a.x + segment_length_fraction * (point_b.x - point_a.x),
-                    point_a.y + segment_length_fraction * (point_b.y - point_a.y),
-                    point_a.z + segment_length_fraction * (point_b.z - point_a.z),
+                    start_coord.x + segment_length_fraction * (next_coord.x - start_coord.x),
+                    start_coord.y + segment_length_fraction * (next_coord.y - start_coord.y),
+                    start_coord.z + segment_length_fraction * (next_coord.z - start_coord.z),
                 )
                 points.append(Point(mid_point.x, mid_point.y, mid_point.z))
-                break
-            segment_length += length
+                break  # Only one midpoint needed for short lines
+            accumulated_length += segment_length
         return points
 
-    # Handle longer geometries
-    target_segment_size = geom_length / math.ceil(geom_length / segment_size_constraint)
-    coords = geom.getCoordinates()
-    segment_length = 0.0
-    mid_point = None
+    # For longer geometries, split into segments as close as possible to the constraint
+    # Calculate the actual segment size so that all segments are nearly equal and <= constraint
+    actual_segment_length = geom_length / math.ceil(geom_length / max_point_spacing )
+    coordinates = geom.getCoordinates()
+    accumulated_length = 0.0  # Tracks distance along the current segment
+    mid_point = None  # Will hold the midpoint if needed
 
-    for i in range(len(coords) - 1):
-        point_a = coords[i]
-        point_b = coords[i + 1]
+    # Iterate over each segment between coordinates
+    for i in range(len(coordinates) - 1):
+        start_coord = coordinates[i]
+        next_coord = coordinates[i + 1]
 
-        length = point_a.distance3D(point_b)
+        # Calculate 3D segment length, fallback to 2D if needed
+        segment_length = start_coord.distance3D(next_coord)
+        if math.isnan(segment_length):
+            segment_length = start_coord.distance(next_coord)
 
-        # fall back to 2d distance
-        if math.isnan(length):
-            length = point_a.distance(point_b)
-
-        while length + segment_length > target_segment_size:
-            segment_length_fraction = (target_segment_size - segment_length) / length
+        # Place points at every actual_segment_length interval within this segment
+        while segment_length + accumulated_length > actual_segment_length:
+            # Compute where along the segment the next point should be
+            segment_length_fraction = (actual_segment_length - accumulated_length) / segment_length
             split_point = Coordinate(
-                point_a.x + segment_length_fraction * (point_b.x - point_a.x),
-                point_a.y + segment_length_fraction * (point_b.y - point_a.y),
-                point_a.z + segment_length_fraction * (point_b.z - point_a.z),
+                start_coord.x + segment_length_fraction * (next_coord.x - start_coord.x),
+                start_coord.y + segment_length_fraction * (next_coord.y - start_coord.y),
+                start_coord.z + segment_length_fraction * (next_coord.z - start_coord.z),
             )
+            # Optionally, compute and store the midpoint for later use
             if mid_point is None and (
-                (length + segment_length) > (target_segment_size / 2)
+                (segment_length + accumulated_length) > (actual_segment_length / 2)
             ):
                 segment_length_fraction = (
-                    target_segment_size / 2.0 - segment_length
-                ) / length
+                    actual_segment_length / 2.0 - accumulated_length
+                ) / segment_length
                 mid_point = (
-                    point_a.x + segment_length_fraction * (point_b.x - point_a.x),
-                    point_a.y + segment_length_fraction * (point_b.y - point_a.y),
-                    point_a.z + segment_length_fraction * (point_b.z - point_a.z),
+                    start_coord.x + segment_length_fraction * (next_coord.x - start_coord.x),
+                    start_coord.y + segment_length_fraction * (next_coord.y - start_coord.y),
+                    start_coord.z + segment_length_fraction * (next_coord.z - start_coord.z),
                 )
+            # Add the split point to the result
             points.append(Point(split_point.x, split_point.y, split_point.z))
-            point_a = split_point
-            length = point_a.distance3D(point_b)
-            segment_length = 0
+
+            # Move point_a to the new split point and recalculate remaining length
+            start_coord = split_point
+            segment_length = start_coord.distance3D(next_coord)
+            if math.isnan(segment_length):
+                segment_length = start_coord.distance(next_coord)
+
+            accumulated_length = 0  # Reset for next segment
             mid_point = None
 
-        if mid_point is None and length + segment_length > target_segment_size / 2:
+        # If midpoint hasn't been set, check if we should set it now
+        if mid_point is None and segment_length + accumulated_length > actual_segment_length / 2:
             segment_length_fraction = (
-                target_segment_size / 2.0 - segment_length
-            ) / length
+                actual_segment_length / 2.0 - accumulated_length
+            ) / segment_length
             mid_point = (
-                point_a.x + segment_length_fraction * (point_b.x - point_a.x),
-                point_a.y + segment_length_fraction * (point_b.y - point_a.y),
-                point_a.z + segment_length_fraction * (point_b.z - point_a.z),
+                start_coord.x + segment_length_fraction * (next_coord.x - start_coord.x),
+                start_coord.y + segment_length_fraction * (next_coord.y - start_coord.y),
+                start_coord.z + segment_length_fraction * (next_coord.z - start_coord.z),
             )
-        segment_length += length
 
+        accumulated_length += segment_length  # Accumulate distance for next iteration
+
+    # If a midpoint was found, add it to the result
     if mid_point is not None:
         points.append(Point(mid_point))
+
+    return points
+
+def split_line_string_simple(geom, max_point_spacing):
+    java_bridge = JavaBridge.get_instance()
+
+    LengthIndexedLine = java_bridge.LengthIndexedLine
+    length_indexed_line = LengthIndexedLine(geom)
+
+    geom_length = geom.getLength()
+    distance = 0.0
+    points = []
+    while distance < geom_length:
+        pt = length_indexed_line.extractPoint(distance)
+        # pt is a Coordinate, so use pt.x, pt.y, pt.z
+        points.append(Point(pt.x, pt.y, getattr(pt, 'z', 0.0)))
+        distance += max_point_spacing
+    # Optionally add the endpoint
+    pt_end = length_indexed_line.extractPoint(geom_length)
+    points.append(Point(pt_end.x, pt_end.y, getattr(pt_end, 'z', 0.0)))
 
     return points

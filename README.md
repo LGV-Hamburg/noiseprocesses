@@ -58,5 +58,40 @@ make check-java
 make dist
 ```
 
+## Notes
+
+### Calculation of receivers along building facades
+
+```mermaid
+flowchart TD
+    A[Start: Building Polygon]
+    B{Isolated or Surrounded?}
+    C1[Isolated: No nearby buildings]
+    C2[Surrounded: Overlaps with other buildings]
+    D1[tmp_receivers_lines: Create receiver line]
+    D2[tmp_receivers_lines: Create receiver line]
+    E1[tmp_relation_screen_building: No intersection with other buildings]
+    E2[tmp_relation_screen_building: Intersects with other buildings]
+    F1[TMP_SCREENS_MERGE: Use original receiver line]
+    F2[tmp_screen_truncated: Truncate receiver line]
+    G2[TMP_SCREENS_MERGE: Use truncated receiver line]
+    H[TMP_SCREENS: Split line into points]
+    I[RECEIVERS: Store receiver points]
+
+    A --> B
+    B --> C1
+    B --> C2
+    C1 --> D1
+    C2 --> D2
+    D1 --> E1
+    D2 --> E2
+    E1 --> F1
+    E2 --> F2
+    F2 --> G2
+    F1 --> H
+    G2 --> H
+    H --> I
+```
+
 # LICENSE
 This software is based on and uses components from [NoiseModelling](https://github.com/Universite-Gustave-Eiffel/NoiseModelling/) and is licenced under GPLv3.
