@@ -51,6 +51,9 @@ class ImmissionsAroundBuildingsCalculator:
             db_file=f"{self.config.database.name}_{self.database_suffix}",
             in_memory=self.config.database.in_memory
         )
+        logger.info(
+            f"H2 Database initialized: {self.database.db_file}"
+        )
         # match output control and table names:
         self.match_oct = {
             "noise_day": "LDAY_GEOM",
