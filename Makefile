@@ -25,7 +25,9 @@ lock:
 build-image:
 	@echo 'Building release ${CONTAINER_REGISTRY}/$(IMAGE_NAME):$(IMAGE_TAG)'
 # build your image
-	DOCKER_BUILDKIT=1 docker compose \
+	DOCKER_BUILDKIT=1 \
+	COMPOSE_BAKE=true \
+	docker compose \
 		-f docker-compose-build.yaml \
 		build \
 		--build-arg SOURCE_COMMIT=$(GIT_COMMIT) \
