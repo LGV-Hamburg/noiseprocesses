@@ -39,7 +39,7 @@ class BuildingGridGenerator2d:
         self.database.execute(SQLBuilder.drop_table(config.receivers_table_name))
 
         # Create temporary table for receiver lines
-        logger.info("Creating receiver lines")
+        logger.info("Creating buffered polylines around buildings.")
         self.database.execute(SQLBuilder.drop_table("tmp_receivers_lines"))
         self.database.execute(
             f"""
@@ -55,10 +55,10 @@ class BuildingGridGenerator2d:
         )
         self.database.execute("CREATE SPATIAL INDEX ON tmp_receivers_lines(the_geom)")
 
-        # identify buildings whose heights exceed the
-        # receiver height (overlapping buildings)
+        # identify buildings that overlapp with a buffered polyline from above
+        # and filter out buildigs smaller than the receiver height
         logger.info(
-            "Identifying buildings that intersect "
+            "Identifying buffered buildings that intersect "
             "receiver lines and are taller than the receiver height"
         )
         self.database.execute(SQLBuilder.drop_table("tmp_relation_screen_building"))
@@ -170,7 +170,7 @@ class BuildingGridGenerator2d:
             batch,
         )
 
-        logger.info("Finally, creating RECEIVERS table...")
+        logger.info("Finally, creating RECEIVERS table and adding data...")
         # Create the RECEIVERS table
         self.database.execute(
             f"""
