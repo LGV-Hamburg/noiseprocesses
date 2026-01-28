@@ -1,0 +1,36 @@
+name: Release Helm Chart
+
+on:
+  push:
+    tags:
+      - 'chart-v*'
+
+jobs:
+  package-and-upload:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Helm
+        uses: azure/setup-helm@v3
+        with:
+          version: v3.14.0
+
+      - name: Package Helm chart
+        run: |
+          cd charts/noise-modelling-v4
+          helm dependency update
+          helm package . -d ../../
+      - name: Upload Helm chart to GitLab Helm registry
+        env:
+          GITLAB_HELM_USERNAME: ${{ secrets.GITLAB_HELM_USERNAME }}
+          GITLAB_HELM_TOKEN: ${{ secrets.GITLAB_HELM_TOKEN }}
+          GITLAB_HELM_URL: https://gitlab.opencode.de/api/v4/projects/8655/packages/helm/stable
+        run: |
+          ls -1 noise-modelling-v4-*.tgz
+          CHART_FILE="$(ls -1 noise-modelling-v4-*.tgz | head -n 1)"
+          curl --fail-with-body --request POST \
+               --form "chart=@${CHART_FILE}" \
+               --user "${GITLAB_HELM_USERNAME}:${GITLAB_HELM_TOKEN}" \
+               "${GITLAB_HELM_URL}/api/stable/charts"
