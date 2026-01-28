@@ -77,8 +77,8 @@ config:
 #
   logLevel: "DEBUG"
   javaLibDir: ""
-  javaMaxHeapSize: "3Gi"
-  javaInitialHeapSize: "1Gi"
+  javaMaxHeapSize: "4096" # MiB
+  javaInitialHeapSize: "1024" # MiB
 
 serviceAccount:
   create: true

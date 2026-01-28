@@ -31,7 +31,7 @@ dependencies = [
     "numpy (>=2.2.3,<3.0.0)",
     "geojson-pydantic (>=1.2.0,<2.0.0)",
     "shapely (>=2.0.7,<3.0.0)",
-    "fastprocesses (==0.15.4)",
+    "fastprocesses (==0.15.6)",
     "httpx (>=0.28.1,<0.29.0)",
     "gdal (==3.10.3)"
 ]
@@ -79,7 +79,7 @@ exclude = [
 
 [tool.poetry]
 name = "noiseprocesses"
-version = "1.2.5+v4.0.5custom-coefficients"
+version = "1.2.6+v4.0.5custom-coefficients"
 description = "A python wrapper for NoiseModelling"
 authors = ["Stefan Schuhart <stefan.schuhart@gv.hamburg.de>"]
 readme = "README.md"
