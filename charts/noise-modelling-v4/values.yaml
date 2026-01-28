@@ -43,6 +43,11 @@ service:
   port: 8000
   targetPort: 8000
 
+probes:
+  api:
+    liveness:
+      enabled: true
+
 config:
   apiTitle: "Noise calculation - OGC API Processes"
   apiDescription: "An OGC API Processes implementation for noise calculations."
