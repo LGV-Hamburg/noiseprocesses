@@ -3,9 +3,10 @@ from typing import Any, Callable, Dict
 
 import uvicorn
 from fastprocesses.api.server import OGCProcessesAPI
-from fastprocesses.core.base_process import BaseProcess
+
 # from fastprocesses.core.logging import logger
 from fastprocesses.common import settings
+from fastprocesses.core.base_process import BaseProcess
 from fastprocesses.core.models import (
     ProcessDescription,
     ProcessInput,
@@ -18,15 +19,15 @@ from fastprocesses.processes.process_registry import register_process
 from pydantic import ValidationError
 
 from noiseprocesses.calculation.road_building_immissions import (
-    ImmissionsAroundBuildingsCalculator
+    ImmissionsAroundBuildingsCalculator,
 )
 from noiseprocesses.calculation.road_noise import RoadNoiseModellingCalculator
+from noiseprocesses.config import config as app_settings
 from noiseprocesses.models.noise_calculation_config import (
     NoiseCalculationConfig,
     NoiseCalculationUserInput,
 )
 from noiseprocesses.models.output import NoiseCalculationOutput
-from noiseprocesses.config import config as app_settings
 
 logger = logging.getLogger("uvicorn.error")
 
@@ -47,9 +48,7 @@ class TrafficNoiseProp(BaseProcess):
         config = NoiseCalculationConfig()
         config.database.in_memory = app_settings.NP_DATABASE_IN_MEMORY
 
-        calculator = RoadNoiseModellingCalculator(
-            noise_calculation_config=config
-        )
+        calculator = RoadNoiseModellingCalculator(noise_calculation_config=config)
         try:
             user_input: NoiseCalculationUserInput = (
                 NoiseCalculationUserInput.model_validate(exec_body["inputs"])
@@ -104,16 +103,53 @@ class TrafficNoiseProp(BaseProcess):
         outputTransmission=[ProcessOutputTransmission.VALUE],
         inputs={
             "buildings": ProcessInput(
-                title="Buildings Feature Collection",
-                description="A GeoJSON FeatureCollection representing buildings",
-                schema=Schema(
-                    allOf=[
-                        {"format": "geojson-feature-collection"},
-                        {"$ref": "https://geojson.org/schema/FeatureCollection.json"},
-                        {
-                            "$ref": "https://raw.githubusercontent.com/LGV-Hamburg/noiseprocesses/refs/heads/main/schemas/buildings-schema.json"
-                        },
-                    ]
+                title="Buildings",
+                description=(
+                    "Buildings as a GeoJSON FeatureCollection or a CityJSON document "
+                    "(version 1.0, 1.1, or 2.0). "
+                    "GeoJSON: must conform to the buildings schema. "
+                    "CityJSON: footprints and heights are extracted automatically "
+                    "from Building and BuildingPart city objects (LoD0–LoD2). "
+                    "CityJSON schemas: https://3d.bk.tudelft.nl/schemas/cityjson/"
+                ),
+                schema=Schema.model_validate(
+                    {
+                        "oneOf": [
+                            {
+                                "title": "GeoJSON FeatureCollection",
+                                "allOf": [
+                                    {"format": "geojson-feature-collection"},
+                                    {
+                                        "$ref": "https://geojson.org/schema/FeatureCollection.json"
+                                    },
+                                    {
+                                        "$ref": "https://raw.githubusercontent.com/LGV-Hamburg/noiseprocesses/refs/heads/main/schemas/buildings-schema.json"
+                                    },
+                                ],
+                            },
+                            {
+                                "title": "CityJSON 1.x / 2.0",
+                                "type": "object",
+                                "required": [
+                                    "type",
+                                    "version",
+                                    "CityObjects",
+                                    "vertices",
+                                ],
+                                "properties": {
+                                    "type": {"const": "CityJSON"},
+                                    "version": {
+                                        "type": "string",
+                                        "enum": ["1.0", "1.1", "2.0"],
+                                        "description": (
+                                            "CityJSON spec version. Supported: 1.0, 1.1, 2.0. "
+                                            "See https://3d.bk.tudelft.nl/schemas/cityjson/"
+                                        ),
+                                    },
+                                },
+                            },
+                        ]
+                    }
                 ),
                 minOccurs=1,
                 maxOccurs=1,
@@ -207,42 +243,54 @@ class TrafficNoiseProp(BaseProcess):
                 schema=Schema(
                     type="object",
                     properties={
-                        "wall_alpha": Schema.model_validate({
-                            "type": "number",
-                            "minimum": 0.0,
-                            "maximum": 1.0,
-                            "default": 0.1,
-                        }),
-                        "max_source_distance": Schema.model_validate({
-                            "type": "number",
-                            "minimum": 0,
-                            "maximum": 1000.0,
-                            "default": 150.0,
-                        }),
-                        "max_reflection_distance": Schema.model_validate({
-                            "type": "number",
-                            "minimum": 0,
-                            "maximum": 1000.0,
-                            "default": 50.0,
-                        }),
-                        "reflection_order": Schema.model_validate({
-                            "type": "integer",
-                            "minimum": 0,
-                            "maximum": 2,
-                            "default": 1,
-                        }),
-                        "humidity": Schema.model_validate({
-                            "type": "number",
-                            "minimum": 0.0,
-                            "maximum": 100.0,
-                            "default": 70.0,
-                        }),
-                        "temperature": Schema.model_validate({
-                            "type": "number",
-                            "minimum": -20.0,
-                            "maximum": 50.0,
-                            "default": 15.0,
-                        }),
+                        "wall_alpha": Schema.model_validate(
+                            {
+                                "type": "number",
+                                "minimum": 0.0,
+                                "maximum": 1.0,
+                                "default": 0.1,
+                            }
+                        ),
+                        "max_source_distance": Schema.model_validate(
+                            {
+                                "type": "number",
+                                "minimum": 0,
+                                "maximum": 1000.0,
+                                "default": 150.0,
+                            }
+                        ),
+                        "max_reflection_distance": Schema.model_validate(
+                            {
+                                "type": "number",
+                                "minimum": 0,
+                                "maximum": 1000.0,
+                                "default": 50.0,
+                            }
+                        ),
+                        "reflection_order": Schema.model_validate(
+                            {
+                                "type": "integer",
+                                "minimum": 0,
+                                "maximum": 2,
+                                "default": 1,
+                            }
+                        ),
+                        "humidity": Schema.model_validate(
+                            {
+                                "type": "number",
+                                "minimum": 0.0,
+                                "maximum": 100.0,
+                                "default": 70.0,
+                            }
+                        ),
+                        "temperature": Schema.model_validate(
+                            {
+                                "type": "number",
+                                "minimum": -20.0,
+                                "maximum": 50.0,
+                                "default": 15.0,
+                            }
+                        ),
                     },
                 ),
                 minOccurs=0,
@@ -253,7 +301,6 @@ class TrafficNoiseProp(BaseProcess):
                 description="Settings for noise propagation",
                 schema=Schema(
                     type="object",
-                    required=["vertical_diffraction", "horizontal_diffraction", "favorable_day"],
                     properties={
                         "vertical_diffraction": Schema.model_validate(
                             {"type": "boolean", "default": False}
@@ -261,24 +308,24 @@ class TrafficNoiseProp(BaseProcess):
                         "horizontal_diffraction": Schema.model_validate(
                             {"type": "boolean", "default": True}
                         ),
-                        "favorable_day": Schema.model_validate({
-                            "type": "string",
-                            "default": "0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5",
-                        }),
-                        "favorable_evening": Schema.model_validate({
-                            "default": None,
-                            "oneOf": [
-                                {"type": "string"},
-                                {"type": "null"}
-                            ]
-                        }),
-                        "favorable_night": Schema.model_validate({
-                            "default": None,
-                            "oneOf": [
-                                {"type": "string"},
-                                {"type": "null"}
-                            ]
-                        }),
+                        "favorable_day": Schema.model_validate(
+                            {
+                                "type": "string",
+                                "default": "0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5",
+                            }
+                        ),
+                        "favorable_evening": Schema.model_validate(
+                            {
+                                "default": None,
+                                "oneOf": [{"type": "string"}, {"type": "null"}],
+                            }
+                        ),
+                        "favorable_night": Schema.model_validate(
+                            {
+                                "default": None,
+                                "oneOf": [{"type": "string"}, {"type": "null"}],
+                            }
+                        ),
                     },
                 ),
                 minOccurs=0,
@@ -287,63 +334,67 @@ class TrafficNoiseProp(BaseProcess):
             "receiver_grid_settings": ProcessInput(
                 title="Receiver Grid Settings",
                 description="Settings for the receiver grid",
-                schema=Schema.model_validate({
-                    "type": "object",
-                    "properties": {
-                        "grid_type": {
-                            "type": "string",
-                            "enum": ["DELAUNAY"],
-                            "default": "DELAUNAY",
+                schema=Schema.model_validate(
+                    {
+                        "type": "object",
+                        "properties": {
+                            "grid_type": {
+                                "type": "string",
+                                "enum": ["DELAUNAY"],
+                                "default": "DELAUNAY",
+                            },
+                            "calculation_height": {
+                                "type": "number",
+                                "minimum": 0,
+                                "maximum": 100.0,
+                                "default": 3.0,
+                            },
+                            "max_area": {
+                                "type": "number",
+                                "minimum": 0,
+                                "default": 2500.0,
+                                "maximum": 2500.0,
+                            },
+                            "max_cell_dist": {
+                                "type": "number",
+                                "minimum": 0,
+                                "maximum": 10000.0,
+                                "default": 600.0,
+                            },
+                            "road_width": {
+                                "type": "number",
+                                "minimum": 0,
+                                "maximum": 50.0,
+                                "default": 2.0,
+                            },
                         },
-                        "calculation_height": {
-                            "type": "number",
-                            "minimum": 0,
-                            "maximum": 100.0,
-                            "default": 3.0,
-                        },
-                        "max_area": {
-                            "type": "number",
-                            "minimum": 0,
-                            "default": 2500.0,
-                            "maximum": 2500.0,
-                        },
-                        "max_cell_dist": {
-                            "type": "number",
-                            "minimum": 0,
-                            "maximum": 10000.0,
-                            "default": 600.0,
-                        },
-                        "road_width": {
-                            "type": "number",
-                            "minimum": 0,
-                            "maximum": 50.0,
-                            "default": 2.0,
-                        },
-                    },
-                }),
+                    }
+                ),
                 minOccurs=0,
                 maxOccurs=1,
             ),
             "isosurface_settings": ProcessInput(
                 title="IsoSurface Settings",
                 description="Settings for isosurface generation",
-                schema=Schema.model_validate({
-                    "type": "object",
-                    "properties": {
-                        "iso_classes": {
-                            "type": "string",
-                            "default": (
-                                "35.0,40.0,45.0,50.0,55.0,60.0,65.0,70.0,75.0,80.0,200.0"
-                            ),
+                schema=Schema.model_validate(
+                    {
+                        "type": "object",
+                        "properties": {
+                            "iso_classes": {
+                                "type": "string",
+                                "default": (
+                                    "35.0,40.0,45.0,50.0,55.0,60.0,65.0,70.0,75.0,80.0,200.0"
+                                ),
+                            },
+                            "smooth_coefficient": {
+                                "type": "number",
+                                "minimum": 0.0,
+                                "maximum": 100.0,
+                                "default": 0.5,
+                            },
                         },
-                        "smooth_coefficient": {
-                            "type": "number",
-                            "minimum": 0.0,
-                            "maximum": 100.0,
-                            "default": 0.5,
-                        },
-                    },
-                }),
+                    }
+                ),
                 minOccurs=0,
                 maxOccurs=1,
             ),
@@ -414,9 +465,7 @@ class TrafficNoiseBuildings(BaseProcess):
         config = NoiseCalculationConfig()
         config.database.in_memory = app_settings.NP_DATABASE_IN_MEMORY
 
-        calculator = ImmissionsAroundBuildingsCalculator(
-            config=config
-        )
+        calculator = ImmissionsAroundBuildingsCalculator(config=config)
         try:
             user_input: NoiseCalculationUserInput = (
                 NoiseCalculationUserInput.model_validate(exec_body["inputs"])
@@ -468,16 +517,53 @@ class TrafficNoiseBuildings(BaseProcess):
         outputTransmission=[ProcessOutputTransmission.VALUE],
         inputs={
             "buildings": ProcessInput(
-                title="Buildings Feature Collection",
-                description="A GeoJSON FeatureCollection representing buildings",
-                schema=Schema(
-                    allOf=[
-                        {"format": "geojson-feature-collection"},
-                        {"$ref": "https://geojson.org/schema/FeatureCollection.json"},
-                        {
-                            "$ref": "https://raw.githubusercontent.com/LGV-Hamburg/noiseprocesses/refs/heads/main/schemas/buildings-schema.json"
-                        },
-                    ]
+                title="Buildings",
+                description=(
+                    "Buildings as a GeoJSON FeatureCollection or a CityJSON document "
+                    "(version 1.0, 1.1, or 2.0). "
+                    "GeoJSON: must conform to the buildings schema. "
+                    "CityJSON: footprints and heights are extracted automatically "
+                    "from Building and BuildingPart city objects (LoD0–LoD2). "
+                    "CityJSON schemas: https://3d.bk.tudelft.nl/schemas/cityjson/"
+                ),
+                schema=Schema.model_validate(
+                    {
+                        "oneOf": [
+                            {
+                                "title": "GeoJSON FeatureCollection",
+                                "allOf": [
+                                    {"format": "geojson-feature-collection"},
+                                    {
+                                        "$ref": "https://geojson.org/schema/FeatureCollection.json"
+                                    },
+                                    {
+                                        "$ref": "https://raw.githubusercontent.com/LGV-Hamburg/noiseprocesses/refs/heads/main/schemas/buildings-schema.json"
+                                    },
+                                ],
+                            },
+                            {
+                                "title": "CityJSON 1.x / 2.0",
+                                "type": "object",
+                                "required": [
+                                    "type",
+                                    "version",
+                                    "CityObjects",
+                                    "vertices",
+                                ],
+                                "properties": {
+                                    "type": {"const": "CityJSON"},
+                                    "version": {
+                                        "type": "string",
+                                        "enum": ["1.0", "1.1", "2.0"],
+                                        "description": (
+                                            "CityJSON spec version. Supported: 1.0, 1.1, 2.0. "
+                                            "See https://3d.bk.tudelft.nl/schemas/cityjson/"
+                                        ),
+                                    },
+                                },
+                            },
+                        ]
+                    }
                 ),
                 minOccurs=1,
                 maxOccurs=1,
@@ -568,123 +654,137 @@ class TrafficNoiseBuildings(BaseProcess):
             "acoustic_parameters": ProcessInput(
                 title="Acoustic Parameters",
                 description="Parameters for acoustic calculations",
-                schema=Schema.model_validate({
-                    "type": "object",
-                    "properties": {
-                        "wall_alpha": {
-                            "type": "number",
-                            "minimum": 0.0,
-                            "maximum": 1.0,
-                            "default": 0.1,
+                schema=Schema.model_validate(
+                    {
+                        "type": "object",
+                        "properties": {
+                            "wall_alpha": {
+                                "type": "number",
+                                "minimum": 0.0,
+                                "maximum": 1.0,
+                                "default": 0.1,
+                            },
+                            "max_source_distance": {
+                                "type": "number",
+                                "minimum": 0,
+                                "maximum": 1000.0,
+                                "default": 150.0,
+                            },
+                            "max_reflection_distance": {
+                                "type": "number",
+                                "minimum": 0,
+                                "maximum": 1000.0,
+                                "default": 50.0,
+                            },
+                            "reflection_order": {
+                                "type": "integer",
+                                "minimum": 0,
+                                "maximum": 2,
+                                "default": 1,
+                            },
+                            "humidity": {
+                                "type": "number",
+                                "minimum": 0.0,
+                                "maximum": 100.0,
+                                "default": 70.0,
+                            },
+                            "temperature": {
+                                "type": "number",
+                                "minimum": -20.0,
+                                "maximum": 50.0,
+                                "default": 15.0,
+                            },
                         },
-                        "max_source_distance": {
-                            "type": "number",
-                            "minimum": 0,
-                            "maximum": 1000.0,
-                            "default": 150.0,
-                        },
-                        "max_reflection_distance": {
-                            "type": "number",
-                            "minimum": 0,
-                            "maximum": 1000.0,
-                            "default": 50.0,
-                        },
-                        "reflection_order": {
-                            "type": "integer",
-                            "minimum": 0,
-                            "maximum": 2,
-                            "default": 1,
-                        },
-                        "humidity": {
-                            "type": "number",
-                            "minimum": 0.0,
-                            "maximum": 100.0,
-                            "default": 70.0,
-                        },
-                        "temperature": {
-                            "type": "number",
-                            "minimum": -20.0,
-                            "maximum": 50.0,
-                            "default": 15.0,
-                        },
-                    },
-                }),
+                    }
+                ),
                 minOccurs=0,
                 maxOccurs=1,
             ),
             "propagation_settings": ProcessInput(
                 title="Propagation Settings",
                 description="Settings for noise propagation",
-                schema=Schema.model_validate({
-                    "type": "object",
-                    "required": ["vertical_diffraction", "horizontal_diffraction", "favorable_day"],
-                    "properties": {
-                        "vertical_diffraction": {"type": "boolean", "default": False},
-                        "horizontal_diffraction": {"type": "boolean", "default": True},
-                        "favorable_day": {
-                            "type": "string",
-                            "default": "0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5",
+                schema=Schema.model_validate(
+                    {
+                        "type": "object",
+                        "required": [
+                            "vertical_diffraction",
+                            "horizontal_diffraction",
+                            "favorable_day",
+                        ],
+                        "properties": {
+                            "vertical_diffraction": {
+                                "type": "boolean",
+                                "default": False,
+                            },
+                            "horizontal_diffraction": {
+                                "type": "boolean",
+                                "default": True,
+                            },
+                            "favorable_day": {
+                                "type": "string",
+                                "default": "0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5",
+                            },
+                            "favorable_evening": Schema.model_validate(
+                                {
+                                    "default": None,
+                                    "oneOf": [{"type": "string"}, {"type": "null"}],
+                                }
+                            ),
+                            "favorable_night": Schema.model_validate(
+                                {
+                                    "default": None,
+                                    "oneOf": [{"type": "string"}, {"type": "null"}],
+                                }
+                            ),
                         },
-                        "favorable_evening": Schema.model_validate({
-                            "default": None,
-                            "oneOf": [
-                                {"type": "string"},
-                                {"type": "null"}
-                            ]
-                        }),
-                        "favorable_night": Schema.model_validate({
-                            "default": None,
-                            "oneOf": [
-                                {"type": "string"},
-                                {"type": "null"}
-                            ]
-                        }),
-                    },
-                }),
+                    }
+                ),
                 minOccurs=0,
                 maxOccurs=1,
             ),
             "building_grid_settings": ProcessInput(
                 title="Receiver Grid Settings",
                 description="Settings for the receiver grid",
-                schema=Schema.model_validate({
-                    "type": "object",
-                    "properties": {
-                        "grid_type": {
-                            "type": "string",
-                            "enum": ["BUILDINGS_2D", "BUILDINGS_3D"],
-                            "default": "BUILDINGS_2D",
+                schema=Schema.model_validate(
+                    {
+                        "type": "object",
+                        "properties": {
+                            "grid_type": {
+                                "type": "string",
+                                "enum": ["BUILDINGS_2D", "BUILDINGS_3D"],
+                                "default": "BUILDINGS_2D",
+                            },
+                            "receiver_height_2d": {
+                                "type": "number",
+                                "minimum": 0,
+                                "maximum": 100.0,
+                                "default": 3.0,
+                            },
+                            "receiver_distance": {
+                                "type": "number",
+                                "minimum": 1,
+                                "maximum": 25.0,
+                                "default": 10.0,
+                            },
+                            "distance_from_wall": {
+                                "type": "number",
+                                "minimum": 0,
+                                "maximum": 25.0,
+                                "default": 2.0,
+                            },
+                            "height_between_levels_3d": {
+                                "type": "number",
+                                "minimum": 0,
+                                "maximum": 20.0,
+                                "default": 3.0,
+                            },
+                            "join_receivers_by_xy_location_3d": {
+                                "type": "boolean",
+                                "default": False,
+                            },
                         },
-                        "receiver_height_2d": {
-                            "type": "number",
-                            "minimum": 0,
-                            "maximum": 100.0,
-                            "default": 3.0,
-                        },
-                        "receiver_distance": {
-                            "type": "number",
-                            "minimum": 1,
-                            "maximum": 25.0,
-                            "default": 10.0,
-                        },
-                        "distance_from_wall": {
-                            "type": "number",
-                            "minimum": 0,
-                            "maximum": 25.0,
-                            "default": 2.0,
-                        },
-                        "height_between_levels_3d": {
-                            "type": "number",
-                            "minimum": 0,
-                            "maximum": 20.0,
-                            "default": 3.0,
-                        },
-                        "join_receivers_by_xy_location_3d": {
-                            "type": "boolean",
-                            "default": False,
-                        },
-                    },
-                }),
+                    }
+                ),
                 minOccurs=1,
                 maxOccurs=1,
             ),
@@ -756,9 +856,7 @@ class TrafficNoisePropHh(BaseProcess):
         config = NoiseCalculationConfig()
         config.database.in_memory = app_settings.NP_DATABASE_IN_MEMORY
 
-        calculator = RoadNoiseModellingCalculator(
-            noise_calculation_config=config
-        )
+        calculator = RoadNoiseModellingCalculator(noise_calculation_config=config)
         try:
             user_input: NoiseCalculationUserInput = (
                 NoiseCalculationUserInput.model_validate(exec_body["inputs"])
@@ -814,16 +912,53 @@ class TrafficNoisePropHh(BaseProcess):
         outputTransmission=[ProcessOutputTransmission.VALUE],
         inputs={
             "buildings": ProcessInput(
-                title="Buildings Feature Collection",
-                description="A GeoJSON FeatureCollection representing buildings",
-                schema=Schema(
-                    allOf=[
-                        {"format": "geojson-feature-collection"},
-                        {"$ref": "https://geojson.org/schema/FeatureCollection.json"},
-                        {
-                            "$ref": "https://raw.githubusercontent.com/LGV-Hamburg/noiseprocesses/refs/heads/main/schemas/buildings-schema.json"
-                        },
-                    ]
+                title="Buildings",
+                description=(
+                    "Buildings as a GeoJSON FeatureCollection or a CityJSON document "
+                    "(version 1.0, 1.1, or 2.0). "
+                    "GeoJSON: must conform to the buildings schema. "
+                    "CityJSON: footprints and heights are extracted automatically "
+                    "from Building and BuildingPart city objects (LoD0–LoD2). "
+                    "CityJSON schemas: https://3d.bk.tudelft.nl/schemas/cityjson/"
+                ),
+                schema=Schema.model_validate(
+                    {
+                        "oneOf": [
+                            {
+                                "title": "GeoJSON FeatureCollection",
+                                "allOf": [
+                                    {"format": "geojson-feature-collection"},
+                                    {
+                                        "$ref": "https://geojson.org/schema/FeatureCollection.json"
+                                    },
+                                    {
+                                        "$ref": "https://raw.githubusercontent.com/LGV-Hamburg/noiseprocesses/refs/heads/main/schemas/buildings-schema.json"
+                                    },
+                                ],
+                            },
+                            {
+                                "title": "CityJSON 1.x / 2.0",
+                                "type": "object",
+                                "required": [
+                                    "type",
+                                    "version",
+                                    "CityObjects",
+                                    "vertices",
+                                ],
+                                "properties": {
+                                    "type": {"const": "CityJSON"},
+                                    "version": {
+                                        "type": "string",
+                                        "enum": ["1.0", "1.1", "2.0"],
+                                        "description": (
+                                            "CityJSON spec version. Supported: 1.0, 1.1, 2.0. "
+                                            "See https://3d.bk.tudelft.nl/schemas/cityjson/"
+                                        ),
+                                    },
+                                },
+                            },
+                        ]
+                    }
                 ),
                 minOccurs=1,
                 maxOccurs=1,
@@ -918,42 +1053,54 @@ class TrafficNoisePropHh(BaseProcess):
                 schema=Schema(
                     type="object",
                     properties={
-                        "wall_alpha": Schema.model_validate({
-                            "type": "number",
-                            "minimum": 0.0,
-                            "maximum": 1.0,
-                            "default": 0.1,
-                        }),
-                        "max_source_distance": Schema.model_validate({
-                            "type": "number",
-                            "minimum": 0,
-                            "maximum": 1000.0,
-                            "default": 150.0,
-                        }),
-                        "max_reflection_distance": Schema.model_validate({
-                            "type": "number",
-                            "minimum": 0,
-                            "maximum": 1000.0,
-                            "default": 50.0,
-                        }),
-                        "reflection_order": Schema.model_validate({
-                            "type": "integer",
-                            "minimum": 0,
-                            "maximum": 2,
-                            "default": 1,
-                        }),
-                        "humidity": Schema.model_validate({
-                            "type": "number",
-                            "minimum": 0.0,
-                            "maximum": 100.0,
-                            "default": 70.0,
-                        }),
-                        "temperature": Schema.model_validate({
-                            "type": "number",
-                            "minimum": -20.0,
-                            "maximum": 50.0,
-                            "default": 15.0,
-                        }),
+                        "wall_alpha": Schema.model_validate(
+                            {
+                                "type": "number",
+                                "minimum": 0.0,
+                                "maximum": 1.0,
+                                "default": 0.1,
+                            }
+                        ),
+                        "max_source_distance": Schema.model_validate(
+                            {
+                                "type": "number",
+                                "minimum": 0,
+                                "maximum": 1000.0,
+                                "default": 150.0,
+                            }
+                        ),
+                        "max_reflection_distance": Schema.model_validate(
+                            {
+                                "type": "number",
+                                "minimum": 0,
+                                "maximum": 1000.0,
+                                "default": 50.0,
+                            }
+                        ),
+                        "reflection_order": Schema.model_validate(
+                            {
+                                "type": "integer",
+                                "minimum": 0,
+                                "maximum": 2,
+                                "default": 1,
+                            }
+                        ),
+                        "humidity": Schema.model_validate(
+                            {
+                                "type": "number",
+                                "minimum": 0.0,
+                                "maximum": 100.0,
+                                "default": 70.0,
+                            }
+                        ),
+                        "temperature": Schema.model_validate(
+                            {
+                                "type": "number",
+                                "minimum": -20.0,
+                                "maximum": 50.0,
+                                "default": 15.0,
+                            }
+                        ),
                     },
                 ),
                 minOccurs=0,
@@ -964,7 +1111,11 @@ class TrafficNoisePropHh(BaseProcess):
                 description="Settings for noise propagation",
                 schema=Schema(
                     type="object",
-                    required=["vertical_diffraction", "horizontal_diffraction", "favorable_day"],
+                    required=[
+                        "vertical_diffraction",
+                        "horizontal_diffraction",
+                        "favorable_day",
+                    ],
                     properties={
                         "vertical_diffraction": Schema.model_validate(
                             {"type": "boolean", "default": False}
@@ -972,24 +1123,24 @@ class TrafficNoisePropHh(BaseProcess):
                         "horizontal_diffraction": Schema.model_validate(
                             {"type": "boolean", "default": True}
                         ),
-                        "favorable_day": Schema.model_validate({
-                            "type": "string",
-                            "default": "0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5",
-                        }),
-                        "favorable_evening": Schema.model_validate({
-                            "default": None,
-                            "oneOf": [
-                                {"type": "string"},
-                                {"type": "null"}
-                            ]
-                        }),
-                        "favorable_night": Schema.model_validate({
-                            "default": None,
-                            "oneOf": [
-                                {"type": "string"},
-                                {"type": "null"}
-                            ]
-                        }),
+                        "favorable_day": Schema.model_validate(
+                            {
+                                "type": "string",
+                                "default": "0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5",
+                            }
+                        ),
+                        "favorable_evening": Schema.model_validate(
+                            {
+                                "default": None,
+                                "oneOf": [{"type": "string"}, {"type": "null"}],
+                            }
+                        ),
+                        "favorable_night": Schema.model_validate(
+                            {
+                                "default": None,
+                                "oneOf": [{"type": "string"}, {"type": "null"}],
+                            }
+                        ),
                     },
                 ),
                 minOccurs=0,
@@ -998,63 +1149,67 @@ class TrafficNoisePropHh(BaseProcess):
             "receiver_grid_settings": ProcessInput(
                 title="Receiver Grid Settings",
                 description="Settings for the receiver grid",
-                schema=Schema.model_validate({
-                    "type": "object",
-                    "properties": {
-                        "grid_type": {
-                            "type": "string",
-                            "enum": ["DELAUNAY"],
-                            "default": "DELAUNAY",
+                schema=Schema.model_validate(
+                    {
+                        "type": "object",
+                        "properties": {
+                            "grid_type": {
+                                "type": "string",
+                                "enum": ["DELAUNAY"],
+                                "default": "DELAUNAY",
+                            },
+                            "calculation_height": {
+                                "type": "number",
+                                "minimum": 0,
+                                "maximum": 100.0,
+                                "default": 3.0,
+                            },
+                            "max_area": {
+                                "type": "number",
+                                "minimum": 0,
+                                "default": 2500.0,
+                                "maximum": 2500.0,
+                            },
+                            "max_cell_dist": {
+                                "type": "number",
+                                "minimum": 0,
+                                "maximum": 10000.0,
+                                "default": 600.0,
+                            },
+                            "road_width": {
+                                "type": "number",
+                                "minimum": 0,
+                                "maximum": 50.0,
+                                "default": 2.0,
+                            },
                         },
-                        "calculation_height": {
-                            "type": "number",
-                            "minimum": 0,
-                            "maximum": 100.0,
-                            "default": 3.0,
-                        },
-                        "max_area": {
-                            "type": "number",
-                            "minimum": 0,
-                            "default": 2500.0,
-                            "maximum": 2500.0,
-                        },
-                        "max_cell_dist": {
-                            "type": "number",
-                            "minimum": 0,
-                            "maximum": 10000.0,
-                            "default": 600.0,
-                        },
-                        "road_width": {
-                            "type": "number",
-                            "minimum": 0,
-                            "maximum": 50.0,
-                            "default": 2.0,
-                        },
-                    },
-                }),
+                    }
+                ),
                 minOccurs=0,
                 maxOccurs=1,
             ),
             "isosurface_settings": ProcessInput(
                 title="IsoSurface Settings",
                 description="Settings for isosurface generation",
-                schema=Schema.model_validate({
-                    "type": "object",
-                    "properties": {
-                        "iso_classes": {
-                            "type": "string",
-                            "default": (
-                                "35.0,40.0,45.0,50.0,55.0,60.0,65.0,70.0,75.0,80.0,200.0"
-                            ),
+                schema=Schema.model_validate(
+                    {
+                        "type": "object",
+                        "properties": {
+                            "iso_classes": {
+                                "type": "string",
+                                "default": (
+                                    "35.0,40.0,45.0,50.0,55.0,60.0,65.0,70.0,75.0,80.0,200.0"
+                                ),
+                            },
+                            "smooth_coefficient": {
+                                "type": "number",
+                                "minimum": 0.0,
+                                "maximum": 100.0,
+                                "default": 0.5,
+                            },
                         },
-                        "smooth_coefficient": {
-                            "type": "number",
-                            "minimum": 0.0,
-                            "maximum": 100.0,
-                            "default": 0.5,
-                        },
-                    },
-                }),
+                    }
+                ),
                 minOccurs=0,
                 maxOccurs=1,
             ),
@@ -1125,9 +1280,7 @@ class TrafficNoiseBuildingsHh(BaseProcess):
         config = NoiseCalculationConfig()
         config.database.in_memory = app_settings.NP_DATABASE_IN_MEMORY
 
-        calculator = ImmissionsAroundBuildingsCalculator(
-            config=config
-        )
+        calculator = ImmissionsAroundBuildingsCalculator(config=config)
         try:
             user_input: NoiseCalculationUserInput = (
                 NoiseCalculationUserInput.model_validate(exec_body["inputs"])
@@ -1180,16 +1333,53 @@ class TrafficNoiseBuildingsHh(BaseProcess):
         outputTransmission=[ProcessOutputTransmission.VALUE],
         inputs={
             "buildings": ProcessInput(
-                title="Buildings Feature Collection",
-                description="A GeoJSON FeatureCollection representing buildings",
-                schema=Schema(
-                    allOf=[
-                        {"format": "geojson-feature-collection"},
-                        {"$ref": "https://geojson.org/schema/FeatureCollection.json"},
-                        {
-                            "$ref": "https://raw.githubusercontent.com/LGV-Hamburg/noiseprocesses/refs/heads/main/schemas/buildings-schema.json"
-                        },
-                    ]
+                title="Buildings",
+                description=(
+                    "Buildings as a GeoJSON FeatureCollection or a CityJSON document "
+                    "(version 1.0, 1.1, or 2.0). "
+                    "GeoJSON: must conform to the buildings schema. "
+                    "CityJSON: footprints and heights are extracted automatically "
+                    "from Building and BuildingPart city objects (LoD0–LoD2). "
+                    "CityJSON schemas: https://3d.bk.tudelft.nl/schemas/cityjson/"
+                ),
+                schema=Schema.model_validate(
+                    {
+                        "oneOf": [
+                            {
+                                "title": "GeoJSON FeatureCollection",
+                                "allOf": [
+                                    {"format": "geojson-feature-collection"},
+                                    {
+                                        "$ref": "https://geojson.org/schema/FeatureCollection.json"
+                                    },
+                                    {
+                                        "$ref": "https://raw.githubusercontent.com/LGV-Hamburg/noiseprocesses/refs/heads/main/schemas/buildings-schema.json"
+                                    },
+                                ],
+                            },
+                            {
+                                "title": "CityJSON 1.x / 2.0",
+                                "type": "object",
+                                "required": [
+                                    "type",
+                                    "version",
+                                    "CityObjects",
+                                    "vertices",
+                                ],
+                                "properties": {
+                                    "type": {"const": "CityJSON"},
+                                    "version": {
+                                        "type": "string",
+                                        "enum": ["1.0", "1.1", "2.0"],
+                                        "description": (
+                                            "CityJSON spec version. Supported: 1.0, 1.1, 2.0. "
+                                            "See https://3d.bk.tudelft.nl/schemas/cityjson/"
+                                        ),
+                                    },
+                                },
+                            },
+                        ]
+                    }
                 ),
                 minOccurs=1,
                 maxOccurs=1,
@@ -1281,123 +1471,137 @@ class TrafficNoiseBuildingsHh(BaseProcess):
             "acoustic_parameters": ProcessInput(
                 title="Acoustic Parameters",
                 description="Parameters for acoustic calculations",
-                schema=Schema.model_validate({
-                    "type": "object",
-                    "properties": {
-                        "wall_alpha": {
-                            "type": "number",
-                            "minimum": 0.0,
-                            "maximum": 1.0,
-                            "default": 0.1,
+                schema=Schema.model_validate(
+                    {
+                        "type": "object",
+                        "properties": {
+                            "wall_alpha": {
+                                "type": "number",
+                                "minimum": 0.0,
+                                "maximum": 1.0,
+                                "default": 0.1,
+                            },
+                            "max_source_distance": {
+                                "type": "number",
+                                "minimum": 0,
+                                "maximum": 1000.0,
+                                "default": 150.0,
+                            },
+                            "max_reflection_distance": {
+                                "type": "number",
+                                "minimum": 0,
+                                "maximum": 1000.0,
+                                "default": 50.0,
+                            },
+                            "reflection_order": {
+                                "type": "integer",
+                                "minimum": 0,
+                                "maximum": 2,
+                                "default": 1,
+                            },
+                            "humidity": {
+                                "type": "number",
+                                "minimum": 0.0,
+                                "maximum": 100.0,
+                                "default": 70.0,
+                            },
+                            "temperature": {
+                                "type": "number",
+                                "minimum": -20.0,
+                                "maximum": 50.0,
+                                "default": 15.0,
+                            },
                         },
-                        "max_source_distance": {
-                            "type": "number",
-                            "minimum": 0,
-                            "maximum": 1000.0,
-                            "default": 150.0,
-                        },
-                        "max_reflection_distance": {
-                            "type": "number",
-                            "minimum": 0,
-                            "maximum": 1000.0,
-                            "default": 50.0,
-                        },
-                        "reflection_order": {
-                            "type": "integer",
-                            "minimum": 0,
-                            "maximum": 2,
-                            "default": 1,
-                        },
-                        "humidity": {
-                            "type": "number",
-                            "minimum": 0.0,
-                            "maximum": 100.0,
-                            "default": 70.0,
-                        },
-                        "temperature": {
-                            "type": "number",
-                            "minimum": -20.0,
-                            "maximum": 50.0,
-                            "default": 15.0,
-                        },
-                    },
-                }),
+                    }
+                ),
                 minOccurs=0,
                 maxOccurs=1,
             ),
             "propagation_settings": ProcessInput(
                 title="Propagation Settings",
                 description="Settings for noise propagation",
-                schema=Schema.model_validate({
-                    "type": "object",
-                    "required": ["vertical_diffraction", "horizontal_diffraction", "favorable_day"],
-                    "properties": {
-                        "vertical_diffraction": {"type": "boolean", "default": False},
-                        "horizontal_diffraction": {"type": "boolean", "default": True},
-                        "favorable_day": {
-                            "type": "string",
-                            "default": "0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5",
+                schema=Schema.model_validate(
+                    {
+                        "type": "object",
+                        "required": [
+                            "vertical_diffraction",
+                            "horizontal_diffraction",
+                            "favorable_day",
+                        ],
+                        "properties": {
+                            "vertical_diffraction": {
+                                "type": "boolean",
+                                "default": False,
+                            },
+                            "horizontal_diffraction": {
+                                "type": "boolean",
+                                "default": True,
+                            },
+                            "favorable_day": {
+                                "type": "string",
+                                "default": "0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5",
+                            },
+                            "favorable_evening": Schema.model_validate(
+                                {
+                                    "default": None,
+                                    "oneOf": [{"type": "string"}, {"type": "null"}],
+                                }
+                            ),
+                            "favorable_night": Schema.model_validate(
+                                {
+                                    "default": None,
+                                    "oneOf": [{"type": "string"}, {"type": "null"}],
+                                }
+                            ),
                         },
-                        "favorable_evening": Schema.model_validate({
-                            "default": None,
-                            "oneOf": [
-                                {"type": "string"},
-                                {"type": "null"}
-                            ]
-                        }),
-                        "favorable_night": Schema.model_validate({
-                            "default": None,
-                            "oneOf": [
-                                {"type": "string"},
-                                {"type": "null"}
-                            ]
-                        }),
-                    },
-                }),
+                    }
+                ),
                 minOccurs=0,
                 maxOccurs=1,
             ),
             "building_grid_settings": ProcessInput(
                 title="Receiver Grid Settings",
                 description="Settings for the receiver grid",
-                schema=Schema.model_validate({
-                    "type": "object",
-                    "properties": {
-                        "grid_type": {
-                            "type": "string",
-                            "enum": ["BUILDINGS_2D", "BUILDINGS_3D"],
-                            "default": "BUILDINGS_2D",
+                schema=Schema.model_validate(
+                    {
+                        "type": "object",
+                        "properties": {
+                            "grid_type": {
+                                "type": "string",
+                                "enum": ["BUILDINGS_2D", "BUILDINGS_3D"],
+                                "default": "BUILDINGS_2D",
+                            },
+                            "receiver_height_2d": {
+                                "type": "number",
+                                "minimum": 0,
+                                "maximum": 100.0,
+                                "default": 3.0,
+                            },
+                            "receiver_distance": {
+                                "type": "number",
+                                "minimum": 1,
+                                "maximum": 25.0,
+                                "default": 10.0,
+                            },
+                            "distance_from_wall": {
+                                "type": "number",
+                                "minimum": 0,
+                                "maximum": 25.0,
+                                "default": 2.0,
+                            },
+                            "height_between_levels_3d": {
+                                "type": "number",
+                                "minimum": 0,
+                                "maximum": 20.0,
+                                "default": 3.0,
+                            },
+                            "join_receivers_by_xy_location_3d": {
+                                "type": "boolean",
+                                "default": False,
+                            },
                         },
-                        "receiver_height_2d": {
-                            "type": "number",
-                            "minimum": 0,
-                            "maximum": 100.0,
-                            "default": 3.0,
-                        },
-                        "receiver_distance": {
-                            "type": "number",
-                            "minimum": 1,
-                            "maximum": 25.0,
-                            "default": 10.0,
-                        },
-                        "distance_from_wall": {
-                            "type": "number",
-                            "minimum": 0,
-                            "maximum": 25.0,
-                            "default": 2.0,
-                        },
-                        "height_between_levels_3d": {
-                            "type": "number",
-                            "minimum": 0,
-                            "maximum": 20.0,
-                            "default": 3.0,
-                        },
-                        "join_receivers_by_xy_location_3d": {
-                            "type": "boolean",
-                            "default": False,
-                        },
-                    },
-                }),
+                    }
+                ),
                 minOccurs=1,
                 maxOccurs=1,
             ),
@@ -1453,19 +1657,18 @@ class TrafficNoiseBuildingsHh(BaseProcess):
     )
 
 
-
 # Create the FastAPI app
 app = OGCProcessesAPI(
     contact={
         "name": "Agency for Geoinformation and Surveying Hamburg",
         "url": "https://www.hamburg.de/politik-und-verwaltung/behoerden/behoerde-fuer-stadtentwicklung-und-wohnen/aemter-und-landesbetrieb/landesbetrieb-geoinformation-und-vermessung",
-        "email": "info@gv.hamburg.de"
+        "email": "info@gv.hamburg.de",
     },
     license={
         "name": "GNU General Public License v3.0",
         "url": "https://github.com/LGV-Hamburg/noiseprocesses/blob/main/LICENSE",
     },
-    terms_of_service=""
+    terms_of_service="",
 ).get_app()
 
 if __name__ == "__main__":
