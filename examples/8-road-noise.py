@@ -8,7 +8,7 @@ import requests
 import json
 
 buildings = {}
-with open("examples/buildings-user.geojson") as f:
+with open("data/example/buildings-lod2cityjson-example.json") as f:
     buildings = json.load(f)
 
 roads_traffic = {}
@@ -30,7 +30,8 @@ request_body = {
         "crs": "http://www.opengis.net/def/crs/EPSG/0/25832",
         # "ground_absorption": grounds,
         "propagation_settings": {
-            "vertical_diffraction": True, "horizontal_diffraction": True
+            "vertical_diffraction": True, "horizontal_diffraction": True,
+            "favorable_day": "0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5"
         },
         "acoustic_parameters": {
             "max_source_distance": 147,
@@ -43,6 +44,7 @@ request_body = {
             "receiver_distance": 10,
             "join_receivers_by_xy_location_3d": True,
         },
+        "emission_coefficients_profile": "cnossos2020"
         # "dem_bbox_feature": dem_bbox_feature,
         # "dem_url": "https://ump-lgv.germanywestcentral.cloudapp.azure.com/raster/dem5_hh/cog/bbox/566700,5934580,566800,5934680/500x500.tif?coord_crs=epsg:25832"
     },
