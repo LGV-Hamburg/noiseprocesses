@@ -200,7 +200,7 @@ class ImmissionsAroundBuildingsCalculator:
             progress_callback(1, "Validating user input")
 
         buildings = BuildingsFeatureCollectionInternal.from_user_collection(
-            user_input.buildings
+            user_input.buildings  # type: ignore[arg-type]  # resolved by model validator
         )
         # - roads user input -> roads internal
         roads_traffic = RoadsFeatureCollectionInternal.from_user_collection(
