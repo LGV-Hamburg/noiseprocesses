@@ -29,6 +29,7 @@ from noiseprocesses.models.roads_properties import RoadsFeature, RoadsFeatureCol
 
 logger = logging.getLogger(__name__)
 
+
 class AcousticParameters(BaseModel):
     model_config = ConfigDict(extra="ignore")
 
@@ -94,17 +95,13 @@ class AdditionalDataOutputControls(BaseModel):
 
 
 class PerformanceSettings(BaseModel):
-
     thread_count: int = Field(
         default=0, ge=0, description="Number of computation threads (0 = auto)"
     )
 
 
 class DatabaseConfig(BaseModel):
-    model_config = ConfigDict(
-        frozen=False,
-        extra="forbid"
-    )
+    model_config = ConfigDict(frozen=False, extra="forbid")
 
     name: str = "Noise"
     in_memory: bool = False
@@ -162,7 +159,7 @@ Crs = Annotated[
 class NoiseCalculationUserInput(BaseModel):
     model_config = ConfigDict(frozen=True)
 
-    buildings: BuildingsFeatureCollection
+    buildings: BuildingsFeatureCollection | None = None
     roads: RoadsFeatureCollection
     crs: Crs
     dem_url: AnyUrl | None = None
@@ -175,11 +172,31 @@ class NoiseCalculationUserInput(BaseModel):
     building_grid_settings: BuildingGridSettingsUser | None = None
     isosurface_settings: IsoSurfaceUserSettings | None = None
 
-    @field_validator('crs')
-    def url_must_have_path(cls, v: HttpUrl):
-        if not v.path or v.path == '/':
+    @model_validator(mode="before")
+    @classmethod
+    def resolve_buildings_input(cls, values: dict) -> dict:
+        """Convert CityJSON buildings input to GeoJSON FeatureCollection if needed."""
+        buildings_raw = values.get("buildings")
+        if buildings_raw is None:
             raise ValueError(
-                'Crs must have a non-empty path: '
+                "'buildings' is required. Provide either a GeoJSON FeatureCollection "
+                "or a CityJSON document."
+            )
+        if isinstance(buildings_raw, dict) and buildings_raw.get("type") == "CityJSON":
+            from noiseprocesses.utils.cityjson_converter import (
+                cityjson_to_buildings_feature_collection,
+            )
+
+            values["buildings"] = cityjson_to_buildings_feature_collection(
+                buildings_raw
+            )
+        return values
+
+    @field_validator("crs")
+    def url_must_have_path(cls, v: HttpUrl):
+        if not v.path or v.path == "/":
+            raise ValueError(
+                "Crs must have a non-empty path: "
                 'e.g. "http://www.opengis.net/def/crs/EPSG/0/25832"'
             )
         return v
@@ -212,17 +229,24 @@ class NoiseCalculationUserInput(BaseModel):
     def validate_feature_collections(cls, values):
         # Validate roads
         roads = values.get("roads")
-        if roads and not roads["features"]:
+        if roads and not roads.get("features"):
             raise ValueError("The 'roads' FeatureCollection contains no features.")
 
-        # Validate buildings
+        # Validate buildings — skip CityJSON dicts, they are converted later by
+        # resolve_buildings_input (which runs after this validator in Pydantic v2
+        # reverse-order execution).
         buildings = values.get("buildings")
-        if buildings and not buildings["features"]:
+        if (
+            buildings
+            and isinstance(buildings, dict)
+            and buildings.get("type") != "CityJSON"
+            and not buildings.get("features")
+        ):
             raise ValueError("The 'buildings' FeatureCollection contains no features.")
 
         # Validate ground absorption
         ground_absorption = values.get("ground_absorption")
-        if ground_absorption and not ground_absorption["features"]:
+        if ground_absorption and not ground_absorption.get("features"):
             raise ValueError(
                 "The 'ground_absorption' FeatureCollection contains no features."
             )
