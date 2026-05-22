@@ -31,9 +31,10 @@ dependencies = [
     "numpy (>=2.2.3,<3.0.0)",
     "geojson-pydantic (>=1.2.0,<2.0.0)",
     "shapely (>=2.0.7,<3.0.0)",
-    "fastprocesses (==0.15.6)",
+    "fastprocesses (==0.20.2)",
     "httpx (>=0.28.1,<0.29.0)",
-    "gdal (==3.10.3)"
+    "gdal (==3.10.3)",
+    "cjio (>=0.9,<1.0)"
 ]
 
 [project.urls]
