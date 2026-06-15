@@ -1,5 +1,5 @@
 from typing import Self
-from geojson_pydantic import Feature, FeatureCollection, Polygon
+from geojson_pydantic import Feature, FeatureCollection, MultiPolygon, Polygon
 from pydantic import BaseModel, Field
 
 
@@ -23,5 +23,5 @@ class BuildingProperties(BaseModel):
         return BuildingPropertiesInternal.from_user_model(self)
 
 BuildingsFeatureCollection = FeatureCollection[
-    Feature[Polygon, BuildingProperties]
+    Feature[Polygon | MultiPolygon, BuildingProperties]
 ]

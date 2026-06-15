@@ -3,6 +3,7 @@ from geojson_pydantic import (
     FeatureCollection,
     LineString,
     MultiLineString,
+    MultiPolygon,
     Polygon,
 )
 from pydantic import model_validator
@@ -57,7 +58,7 @@ class RoadsFeatureCollectionInternal(FeatureCollection[RoadFeature]):
 
 
 class BuildingsFeatureCollectionInternal(
-    FeatureCollection[Feature[Polygon, BuildingPropertiesInternal]]
+    FeatureCollection[Feature[Polygon | MultiPolygon, BuildingPropertiesInternal]]
 ):
     @classmethod
     def from_user_collection(
