@@ -91,6 +91,9 @@
               "$ref": "#/$defs/Polygon"
             },
             {
+              "$ref": "#/$defs/MultiPolygon"
+            },
+            {
               "type": "null"
             }
           ]
@@ -214,6 +217,96 @@
         "coordinates"
       ],
       "title": "Polygon",
+      "type": "object"
+    },
+    "MultiPolygon": {
+      "description": "MultiPolygon Model",
+      "properties": {
+        "bbox": {
+          "anyOf": [
+            {
+              "maxItems": 4,
+              "minItems": 4,
+              "prefixItems": [
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "number"
+                }
+              ],
+              "type": "array"
+            },
+            {
+              "maxItems": 6,
+              "minItems": 6,
+              "prefixItems": [
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "number"
+                }
+              ],
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Bbox"
+        },
+        "type": {
+          "const": "MultiPolygon",
+          "title": "Type",
+          "type": "string"
+        },
+        "coordinates": {
+          "items": {
+            "items": {
+              "items": {
+                "anyOf": [
+                  {
+                    "$ref": "#/$defs/Position2D"
+                  },
+                  {
+                    "$ref": "#/$defs/Position3D"
+                  }
+                ]
+              },
+              "minItems": 4,
+              "type": "array"
+            },
+            "type": "array"
+          },
+          "title": "Coordinates",
+          "type": "array"
+        }
+      },
+      "required": [
+        "type",
+        "coordinates"
+      ],
+      "title": "MultiPolygon",
       "type": "object"
     },
     "Position2D": {
